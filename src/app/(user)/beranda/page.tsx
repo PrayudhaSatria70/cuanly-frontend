@@ -170,29 +170,25 @@ export default function BerandaPage() {
       {/* Smart Budget Warning Alert Banner */}
       {activeBudgetWarning && (
         <div
-          className={`p-4 rounded-2xl border flex items-start justify-between gap-3 shadow-sm transition-all ${
-            activeBudgetWarning.isOverbudget
-              ? 'bg-rose-50 border-rose-200 text-rose-900'
-              : 'bg-amber-50 border-amber-200 text-amber-900'
-          }`}
+          className="p-4 rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 flex items-start justify-between gap-3 shadow-sm transition-all"
         >
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-white shadow-xs mt-0.5">
+            <div className="p-2 rounded-xl bg-white dark:bg-[#112233] shadow-xs mt-0.5">
               {activeBudgetWarning.isOverbudget ? (
-                <AlertCircle className="w-5 h-5 text-rose-600" />
+                <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               ) : (
-                <AlertTriangle className="w-5 h-5 text-amber-600" />
+                <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
               )}
             </div>
             <div>
-              <h4 className="text-sm font-bold">
+              <h4 className="text-sm font-bold text-rose-950 dark:text-rose-100">
                 {activeBudgetWarning.isOverbudget
                   ? (locale === 'en'
                       ? `Warning: Category ${activeBudgetWarning.categoryName} Exceeded Limit!`
                       : `Perhatian: Kategori ${activeBudgetWarning.categoryName} Melebihi Batas!`)
                   : t.home.budgetWarningTitle}
               </h4>
-              <p className="text-xs mt-0.5 leading-relaxed text-gray-700">
+              <p className="text-xs mt-0.5 leading-relaxed text-rose-800 dark:text-rose-200/90">
                 {locale === 'en'
                   ? `Your spending for category ${activeBudgetWarning.categoryName} has reached `
                   : 'Pengeluaran untuk kategori '}
@@ -204,14 +200,14 @@ export default function BerandaPage() {
               <div className="mt-2 flex items-center gap-3">
                 <Link
                   href={`/budget/${activeBudgetWarning.categorySlug}`}
-                  className="text-xs font-bold underline hover:no-underline"
+                  className="text-xs font-bold text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 underline hover:no-underline"
                 >
                   {locale === 'en' ? 'View Budget Details →' : 'Lihat Detail Budget →'}
                 </Link>
                 <button
                   type="button"
                   onClick={dismissWarning}
-                  className="text-xs text-gray-500 hover:text-gray-800"
+                  className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 cursor-pointer"
                 >
                   {locale === 'en' ? 'Dismiss Alert' : 'Tutup Peringatan'}
                 </button>
@@ -294,7 +290,7 @@ export default function BerandaPage() {
                   }`}
                 >
                   {tx.type === 'INCOME' ? '+' : '-'}
-                  {formatCurrency(tx.amount, tx.currencySymbol)}
+                  {formatCurrency(tx.amount)}
                 </div>
                 <span className="text-[10px] text-gray-400">
                   {formatDate(tx.date)}

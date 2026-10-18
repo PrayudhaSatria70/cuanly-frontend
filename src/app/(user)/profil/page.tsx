@@ -21,6 +21,7 @@ import {
   Wallet,
   Sun,
   Moon,
+  Settings,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -142,6 +143,29 @@ export default function ProfilPage() {
             </Link>
           )}
         </div>
+      </GlassCard>
+
+      {/* Full Settings Shortcut Card */}
+      <GlassCard className="p-4 bg-gradient-to-r from-[#4D8DBA]/10 to-[#8AD6D1]/10 border-[#4D8DBA]/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-[#4D8DBA] text-white shadow-xs flex-shrink-0">
+            <Settings className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-cuanly-primaryDark dark:text-white">
+              {t.settings.title}
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-slate-400">
+              {t.settings.subtitle}
+            </p>
+          </div>
+        </div>
+        <Link
+          href="/settings"
+          className="px-3.5 py-2 bg-[#4D8DBA] hover:bg-[#2E678E] text-white text-xs font-bold rounded-xl transition-all shadow-xs text-center flex-shrink-0"
+        >
+          {locale === 'en' ? 'Open Settings →' : 'Buka Pengaturan →'}
+        </Link>
       </GlassCard>
 
       {/* Application Preferences */}

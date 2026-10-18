@@ -26,6 +26,8 @@ interface FinanceContextType {
   getCategoryBudgetInfo: (categoryIdOrSlug: string) => CategoryBudgetInfo;
   activeBudgetWarning: { categoryName: string; categorySlug: string; percent: number; isOverbudget: boolean } | null;
   dismissWarning: () => void;
+  resetToDefaultData: () => void;
+  importFinancialData: (data: { transactions?: Transaction[]; budgets?: BudgetLimit[]; monthlyAllowance?: number; categories?: Category[] }) => void;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -84,6 +86,46 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       localStorage.setItem('cuanly_monthly_allowance', amount.toString());
     } catch {
       // ignore
+    }
+  };
+
+  const resetToDefaultData = () => {
+    setTransactions(INITIAL_TRANSACTIONS);
+    setBudgets(INITIAL_BUDGETS);
+    setCategories(INITIAL_CATEGORIES);
+    setMonthlyAllowanceState(6700000);
+    try {
+      localStorage.setItem('cuanly_transactions', JSON.stringify(INITIAL_TRANSACTIONS));
+      localStorage.setItem('cuanly_budgets', JSON.stringify(INITIAL_BUDGETS));
+      localStorage.setItem('cuanly_categories', JSON.stringify(INITIAL_CATEGORIES));
+      localStorage.setItem('cuanly_monthly_allowance', '6700000');
+    } catch {
+      // ignore
+    }
+  };
+
+  const importFinancialData = (data: {
+    transactions?: Transaction[];
+    budgets?: BudgetLimit[];
+    monthlyAllowance?: number;
+    categories?: Category[];
+  }) => {
+    if (data.transactions && Array.isArray(data.transactions)) {
+      persistTransactions(data.transactions);
+    }
+    if (data.budgets && Array.isArray(data.budgets)) {
+      persistBudgets(data.budgets);
+    }
+    if (data.categories && Array.isArray(data.categories)) {
+      setCategories(data.categories);
+      try {
+        localStorage.setItem('cuanly_categories', JSON.stringify(data.categories));
+      } catch {
+        // ignore
+      }
+    }
+    if (data.monthlyAllowance && typeof data.monthlyAllowance === 'number') {
+      setMonthlyAllowance(data.monthlyAllowance);
     }
   };
 
@@ -246,6 +288,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         getCategoryBudgetInfo,
         activeBudgetWarning,
         dismissWarning,
+        resetToDefaultData,
+        importFinancialData,
       }}
     >
       {children}

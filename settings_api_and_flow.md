@@ -22,13 +22,28 @@ Canonical architectural and operational specification for **Cuanly** Financial W
 | **Sekunder** | `#8AD6D1` | Fresh Mint Cyan | Secondary accents, positive cashflow indicators, progress bars, active icons, glowing highlights, peeking logo bill |
 | **Tersier** | `#AEC4D4` | Slate Ice Blue | Glassmorphism panel borders, canvas gradient tinting, subtle chip backgrounds, neutral table outlines, muted labels |
 
-### 1.3 Session & Security Configuration
+#### 1.2.1 Glassmorphism & Gradient Card Specification
+- **Card Shell**: `bg-gradient-to-b from-white/95 via-white/85 to-[#F4F8FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95` with `backdrop-blur-2xl` and `border-white/80 dark:border-[#4D8DBA]/30`.
+- **Card Content Containers**: Nested demo cards and form input fields utilize `backdrop-blur-xl` / `backdrop-blur-md` with soft linear gradients, specular light borders, and subtle radial ambient background glows.
+- **Interactive Action Buttons**: CTA buttons feature rich multi-stop gradients (`from-[#4D8DBA] via-[#3B7B9E] to-[#2E678E]`), glass specular borders (`border-white/20`), and glowing focus/hover states.
+
+### 1.3 Official Brand Logo Assets & Browser Thumbnail
+| Asset Type | File Path | Specifications | Usage Scenario |
+|---|---|---|---|
+| **Light Mode Full Logo** | `/images/logo-light.png` | Blue navy wallet + blue navy "Cuanly" typography | Light mode headers, auth screens |
+| **Light Mode Icon Only** | `/images/logo-light-icon.png` | Blue navy wallet icon with teal gauge | Light mode compact view / mobile |
+| **Dark Mode Full Logo** | `/images/logo-dark.png` | Pure white wallet + pure white "Cuanly" typography | Dark mode headers, auth screens |
+| **Dark Mode Icon Only** | `/images/logo-dark-icon.png` | Pure white wallet icon with teal gauge | Dark mode compact view / mobile |
+| **Browser Thumbnail (Favicon)** | `/favicon.png`, `/favicon.svg`, `/apple-touch-icon.png`, `/favicon.ico` | Deep blue background squircle (`#00193B`) with white wallet and teal accent dial | Browser tabs, bookmarks, mobile PWA home screen |
+
+### 1.4 Session & Security Configuration
+
 | Setting | Value | Description |
 |---|---|---|
 | `SESSION_TIMEOUT_MS` | `180000` (3 minutes) | Maximum user inactivity duration before session auto-termination |
 | `cuanly_auth_user` | LocalStorage item | Encoded user session payload (cleared on timeout or logout) |
 | `cuanly_last_activity` | LocalStorage item | Unix timestamp of the most recent user interaction |
-| `cuanly_session_timed_out` | SessionStorage item | Transient alert flag triggering the amber notification banner on `/login` |
+| `cuanly_session_timed_out` | SessionStorage item | Transient alert flag triggering the high-visibility red notification banner on `/login` |
 
 ### 1.3 State Keys & Local Storage Registry
 | Key | Storage Engine | Type | Description |
@@ -50,15 +65,16 @@ Canonical architectural and operational specification for **Cuanly** Financial W
 | `cuanly_admin_users` | `localStorage` | `User[]` | Registered users directory |
 
 
-### 1.4 Pre-Configured Demo Credentials
-- **Demo User (Personal Finance):**
+### 1.4 Pre-Configured Demo Credentials & Simplified Action Buttons
+The login screen features simplified, direct action buttons for both demo personas (no nested "Fill Form" or "1-Click Login" sub-buttons):
+- **User Account (Personal):**
   - Identifier: `user` or `user@cuanly.com`
   - PIN: `123456`
-  - Target Path: `/beranda`
-- **Demo Admin (Platform Management):**
+  - Action: Single-click directly authenticates and routes to `/beranda`
+- **Admin Account (Backoffice):**
   - Identifier: `admin` or `admin@cuanly.com`
   - PIN: `999999`
-  - Target Path: `/admin/dashboard`
+  - Action: Single-click directly authenticates and routes to `/admin/dashboard`
 
 ---
 
@@ -191,7 +207,7 @@ Route Navigation Triggered
 
 ### 3.4 Financial Dashboard & Overbudget Alert Flow (`/beranda`)
 - Financial summaries computed reactively.
-- Hick's Law 6 core categories evaluated; if spending reaches >= 80% of limit, warning banner displayed.
+- Hick's Law 6 core categories evaluated; if spending reaches >= 80% of limit, high-visibility red spending warning banner is displayed.
 - Cashflow and Category Donut charts rendered.
 - Floating quick-action buttons for Add Expense and Scan Receipt.
 
@@ -201,8 +217,17 @@ Route Navigation Triggered
 - Review screen enables verification before one-click saving to transaction ledger.
 
 ### 3.6 Multi-Currency & Allowance Editing Flows
-- Currency selector defaults to `IDR`, expandable via custom currency creation modal.
-- Monthly allowance adjustable via interactive modal on home, budget, and profile pages.
+- **Currency-Specific Decimal Precision & Separator Conventions**:
+  - **IDR (Indonesian Rupiah)**: 0 decimals with dot thousands separator (`Rp 1.250.000`).
+  - **USD (US Dollar)**: 2 decimals with comma thousands and dot decimal separator (`$1,250.00`).
+  - **EUR (Euro)**: 2 decimals with dot thousands and comma decimal separator (`€1.250,00`).
+  - **JPY (Japanese Yen)**: 0 decimals with comma thousands separator (`¥1,250`).
+  - **SGD (Singapore Dollar)**: 2 decimals (`S$ 1,250.00`).
+  - **MYR (Malaysian Ringgit)**: 2 decimals (`RM 1,250.00`).
+  - **BHD / KWD / OMR**: 3 decimals (`KWD 1,250.000`).
+  - **Custom Currencies**: User can explicitly select decimal precision (0, 2, or 3 decimal places) when creating custom currencies in `/settings` or `/transaksi/tambah`.
+- **Reactive History Synchronization**: Changing the currency in the Add Transaction menu (`/transaksi/tambah`) immediately updates the active currency globally via `LanguageContext`. All transaction histories on the Transaction Ledger (`/transaksi`), Recent Transactions on Dashboard (`/beranda`), and Transaction Details (`/transaksi/[id]`) reactively synchronize and display using the newly selected currency and its specific decimal format.
+- **Monthly Allowance**: Adjustable via interactive modal on home, budget, and profile pages.
 
 ### 3.7 Dark Mode Theme Switching Flow
 ```
@@ -216,6 +241,37 @@ User clicks Moon/Sun button (TopHeader: directly to the left of Smart Receipt)
 ```
 
 
+### 3.8 Comprehensive Settings & Preferences Flow (`/settings`)
+```
+User navigates to Settings (DesktopNav: directly below Profile, or via Shortcut in /profil)
+  → Tabs: Appearance, Language & Currency, Budget & Warning, Smart OCR Scanner, Security & Timeout, Notifications, Backup & Reset, Account & Access
+  → Appearance: Dark / Light mode toggle, live palette cards (#4D8DBA, #8AD6D1, #AEC4D4)
+  → Localization: EN (default) / ID switcher, dynamic date/currency formatter
+  → Multi-Currency: Active currency selection, currency catalog, integrated "Add Custom Currency" modal
+  → Budget & Warning: Monthly allowance editor (setMonthlyAllowance), spending warning red banner threshold slider (70% - 90%)
+  → Smart OCR: Latency speed selection (Fast 0.6s / Standard 1.2s / Thorough 2.0s), auto-categorization toggle, review before saving toggle
+  → Security & Sesi: Inactivity timeout duration selector (1m, 3m, 5m, 10m) via setSessionTimeoutDuration, transaction PIN update form
+  → Notifications: Spending warning banner toggle, critical overbudget alert toggle, sound toggle, clear all notifications button
+  → Backup & Data: Export full state backup to JSON, export ledger to CSV, restore JSON backup file, factory reset demo data modal
+  → Account: Role indicator (USER / ADMIN), demo role switcher, Backoffice link (ADMIN), logout
+```
+
+### 3.9 Profile Shortcut Modal Flow (`TopHeader` Avatar Popover)
+```
+User clicks Profile Avatar Icon in TopHeader
+  → Popover modal toggles directly beneath the icon (absolute right-0 top-full mt-2.5 z-50)
+  → Identity Header: Renders user avatar photo, display name, user email, and role badge (USER / ADMIN)
+  → Shortcut 1 (Edit Profile): Links to `/profil` with user info subtitle; closes popover on click
+  → Shortcut 2 (Settings): Links to `/settings` with preferences subtitle; closes popover on click
+  → Shortcut 3 (Bahasa / Language Switcher): Inline 2-column switcher (English vs Indonesia)
+       - Immediate reactive language change via `setLocale('en' | 'id')`
+       - Visual checkmark indicator on the active language
+  → Shortcut 4 (Logout): Invokes `logout()`, clears session keys, redirects to `/login`
+  → Outside Click & Keyboard Accessibility:
+       - Clicking anywhere outside `profileMenuRef` automatically closes the modal
+       - Pressing `Escape` key closes the modal
+```
+
 ---
 
 ## 4. Data
@@ -228,9 +284,12 @@ User clicks Moon/Sun button (TopHeader: directly to the left of Smart Receipt)
 
 ## 5. Security
 
-- **Inactivity Protection:** 3-minute inactivity timer cleanses session keys and redirects to `/login`.
+- **Inactivity Protection:** Dynamic inactivity timer (1m, 3m default, 5m, 10m) cleanses session keys and redirects to `/login`.
 - **Root Entrypoint Lockdown:** Directing to domain root `/` always invalidates session and forces re-login.
-- **Role Isolation:** Admin backoffice (`/admin/*`) strictly isolated from regular users via `AppShell` guards.
+- **Role Isolation & Strict RBAC Navigation Visibility:**
+  - When logged in with Demo User (`USER` role), the Admin Backoffice navigation section in `DesktopNav` is completely hidden from the sidebar, and no admin indicators appear in `TopHeader`.
+  - When logged in with Demo Admin (`ADMIN` role), the Admin Backoffice navigation section appears in `DesktopNav` with full access to Dashboard, Users, Verification, All Transactions, Categories, and Complaints.
+  - Route guard in `AppShell` strictly checks `user?.role === 'ADMIN'`; any attempt by non-admins to access `/admin/*` directly via URL is intercepted and redirected to `/beranda`.
 - **Credential Safety:** Client code is sanitized and free of private API keys or hardcoded secrets.
 
 ---
@@ -239,4 +298,4 @@ User clicks Moon/Sun button (TopHeader: directly to the left of Smart Receipt)
 
 - **Build Target:** Next.js 16.4.2 (App Router + Turbopack).
 - **Deployment:** Vercel Serverless / Edge Network.
-- **Static Optimization:** All 17 routes compile statically (`○ Static`).
+- **Static Optimization:** All 18 routes compile statically (`○ Static`).

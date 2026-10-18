@@ -12,6 +12,7 @@ interface NotificationContextType {
   closeDrawer: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  clearAllNotifications: () => void;
   addNotification: (item: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => void;
 }
 
@@ -54,6 +55,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     persist(updated);
   };
 
+  const clearAllNotifications = () => {
+    persist([]);
+  };
+
   const addNotification = (item: Omit<NotificationItem, 'id' | 'timestamp' | 'isRead'>) => {
     const newNotif: NotificationItem = {
       ...item,
@@ -74,6 +79,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         closeDrawer,
         markAsRead,
         markAllAsRead,
+        clearAllNotifications,
         addNotification,
       }}
     >

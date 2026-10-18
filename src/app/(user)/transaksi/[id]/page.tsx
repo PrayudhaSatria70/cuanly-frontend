@@ -128,7 +128,7 @@ export default function TransaksiDetailPage() {
             }`}
           >
             {tx.type === 'INCOME' ? '+' : '-'}
-            {formatCurrency(tx.amount, tx.currencySymbol)}
+            {formatCurrency(tx.amount)}
           </div>
           <p className="text-xs text-gray-500">{formatDate(tx.date)}</p>
         </div>

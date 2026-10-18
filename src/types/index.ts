@@ -35,6 +35,8 @@ export interface Currency {
   code: string;
   symbol: string;
   name: string;
+  decimals?: number;
+  locale?: string;
 }
 
 export interface Transaction {

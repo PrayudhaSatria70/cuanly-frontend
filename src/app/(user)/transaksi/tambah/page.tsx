@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
@@ -47,7 +47,13 @@ export default function TambahTransaksiPage() {
   const [newCurrCode, setNewCurrCode] = useState('');
   const [newCurrSymbol, setNewCurrSymbol] = useState('');
   const [newCurrName, setNewCurrName] = useState('');
+  const [newCurrDecimals, setNewCurrDecimals] = useState<number>(2);
   const [addCurrError, setAddCurrError] = useState('');
+
+  // Keep selectedCurrency synced with activeCurrency
+  useEffect(() => {
+    setSelectedCurrency(activeCurrency);
+  }, [activeCurrency]);
 
   // Available categories based on selected type
   const availableCategories = categories.filter((c) => c.type === type);
@@ -100,12 +106,14 @@ export default function TambahTransaksiPage() {
       code: newCurrCode.trim().toUpperCase(),
       symbol: newCurrSymbol.trim(),
       name: newCurrName.trim() || newCurrCode.trim().toUpperCase(),
+      decimals: Number(newCurrDecimals),
     });
 
     setSelectedCurrency(created);
     setNewCurrCode('');
     setNewCurrSymbol('');
     setNewCurrName('');
+    setNewCurrDecimals(2);
     setAddCurrError('');
     setIsAddCurrencyModalOpen(false);
     setIsCurrencyDropdownOpen(false);
@@ -468,6 +476,22 @@ export default function TambahTransaksiPage() {
                   placeholder={t.currency.namePlaceholder}
                   className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">
+                  {t.currency.decimalsLabel}
+                </label>
+                <select
+                  value={newCurrDecimals}
+                  onChange={(e) => setNewCurrDecimals(Number(e.target.value))}
+                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-gray-800"
+                >
+                  <option value={0}>0 Decimals (e.g. IDR, JPY, KRW)</option>
+                  <option value={2}>2 Decimals (e.g. USD, EUR, GBP, SGD, MYR)</option>
+                  <option value={3}>3 Decimals (e.g. BHD, KWD, OMR)</option>
+                </select>
+                <p className="text-[10px] text-gray-400 mt-1">{t.currency.decimalsDesc}</p>
               </div>
 
               {addCurrError && (

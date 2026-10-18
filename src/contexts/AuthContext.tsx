@@ -17,29 +17,42 @@ interface AuthContextType {
   logout: () => void;
   switchRole: () => void;
   sessionTimeoutMs: number;
+  setSessionTimeoutDuration: (ms: number) => void;
+  updateUserPin: (oldPin: string, newPin: string) => { success: boolean; error?: string };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [sessionTimeoutMs, setSessionTimeoutMs] = useState<number>(SESSION_TIMEOUT_MS);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize authentication & enforce 3-minute session freshness
+  // Initialize authentication & enforce session freshness
   useEffect(() => {
     try {
+      const storedTimeout = localStorage.getItem('cuanly_session_timeout_ms');
+      let effectiveTimeout = SESSION_TIMEOUT_MS;
+      if (storedTimeout) {
+        const parsedTimeout = Number(storedTimeout);
+        if (!isNaN(parsedTimeout) && parsedTimeout >= 60000) {
+          effectiveTimeout = parsedTimeout;
+          setSessionTimeoutMs(parsedTimeout);
+        }
+      }
+
       const stored = localStorage.getItem('cuanly_auth_user');
       const lastActivityStr = localStorage.getItem('cuanly_last_activity');
       const now = Date.now();
 
       if (stored && lastActivityStr) {
         const lastActivity = Number(lastActivityStr);
-        // If last activity was strictly within the past 3 minutes, restore session
-        if (!isNaN(lastActivity) && now - lastActivity < SESSION_TIMEOUT_MS) {
+        // If last activity was strictly within session timeout, restore session
+        if (!isNaN(lastActivity) && now - lastActivity < effectiveTimeout) {
           setUser(JSON.parse(stored));
           localStorage.setItem('cuanly_last_activity', now.toString());
         } else {
-          // Session expired after 3 minutes -> Require login
+          // Session expired -> Require login
           localStorage.removeItem('cuanly_auth_user');
           localStorage.removeItem('cuanly_last_activity');
           sessionStorage.setItem('cuanly_session_timed_out', 'true');
@@ -102,7 +115,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const lastActivity = lastActivityStr ? Number(lastActivityStr) : 0;
         const now = Date.now();
 
-        if (now - lastActivity >= SESSION_TIMEOUT_MS) {
+        if (now - lastActivity >= sessionTimeoutMs) {
           handleTimeout();
         }
       } catch {
@@ -116,7 +129,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       clearInterval(intervalId);
     };
-  }, [user, handleTimeout]);
+  }, [user, handleTimeout, sessionTimeoutMs]);
 
   const persistSession = (loggedInUser: User) => {
     setUser(loggedInUser);
@@ -262,6 +275,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const setSessionTimeoutDuration = (ms: number) => {
+    setSessionTimeoutMs(ms);
+    try {
+      localStorage.setItem('cuanly_session_timeout_ms', ms.toString());
+      localStorage.setItem('cuanly_last_activity', Date.now().toString());
+    } catch {
+      // ignore
+    }
+  };
+
+  const updateUserPin = (oldPin: string, newPin: string): { success: boolean; error?: string } => {
+    if (!user) return { success: false, error: 'User tidak ditemukan.' };
+    if (user.pin && user.pin !== oldPin.trim()) {
+      return { success: false, error: 'PIN saat ini tidak cocok.' };
+    }
+    if (newPin.trim().length < 4 || newPin.trim().length > 6) {
+      return { success: false, error: 'PIN baru harus terdiri dari 4-6 digit angka.' };
+    }
+    const updatedUser = { ...user, pin: newPin.trim() };
+    setUser(updatedUser);
+    try {
+      localStorage.setItem('cuanly_auth_user', JSON.stringify(updatedUser));
+    } catch {
+      // ignore
+    }
+    return { success: true };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -273,7 +314,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         switchRole,
-        sessionTimeoutMs: SESSION_TIMEOUT_MS,
+        sessionTimeoutMs,
+        setSessionTimeoutDuration,
+        updateUserPin,
       }}
     >
       {isInitialized ? children : null}

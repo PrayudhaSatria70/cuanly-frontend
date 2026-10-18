@@ -8,13 +8,65 @@ import { Currency } from '@/types';
 type Locale = 'id' | 'en';
 type TranslationDictionary = typeof id;
 
+// Standard decimal precision lookup for ISO currencies
+export const getCurrencyDecimals = (currencyOrCode?: Currency | string): number => {
+  if (!currencyOrCode) return 0;
+  if (typeof currencyOrCode === 'object' && typeof currencyOrCode.decimals === 'number') {
+    return currencyOrCode.decimals;
+  }
+  const code = (typeof currencyOrCode === 'object' ? currencyOrCode.code : currencyOrCode)
+    .toUpperCase()
+    .trim();
+
+  // 0 Decimals currencies (Rupiah, Yen, Won, Dong, Chilean Peso, etc.)
+  if (['IDR', 'RP', 'JPY', '¥', 'KRW', '₩', 'VND', '₫', 'CLP', 'PYG', 'RWF', 'UGX'].includes(code)) {
+    return 0;
+  }
+
+  // 3 Decimals currencies (Dinars/Rials: Bahrain, Kuwait, Oman, Jordan, Tunisia, Iraq, Libya)
+  if (['BHD', 'KWD', 'OMR', 'JOD', 'TND', 'IQD', 'LYD'].includes(code)) {
+    return 3;
+  }
+
+  // Standard 2 Decimals (USD, EUR, GBP, SGD, MYR, AUD, CAD, CHF, CNY, etc.)
+  return 2;
+};
+
+// Standard formatting locale for currency separators (thousands vs decimals)
+export const getCurrencyLocale = (currencyOrCode?: Currency | string): string => {
+  if (!currencyOrCode) return 'id-ID';
+  if (typeof currencyOrCode === 'object' && currencyOrCode.locale) {
+    return currencyOrCode.locale;
+  }
+  const code = (typeof currencyOrCode === 'object' ? currencyOrCode.code : currencyOrCode)
+    .toUpperCase()
+    .trim();
+
+  if (code === 'IDR' || code === 'RP') return 'id-ID';
+  if (code === 'USD' || code === '$') return 'en-US';
+  if (code === 'EUR' || code === '€') return 'de-DE'; // European decimal convention (thousands ., decimals ,)
+  if (code === 'GBP' || code === '£') return 'en-GB';
+  if (code === 'JPY' || code === '¥') return 'ja-JP';
+  if (code === 'SGD' || code === 'S$') return 'en-SG';
+  if (code === 'MYR' || code === 'RM') return 'ms-MY';
+  if (code === 'AUD' || code === 'A$') return 'en-AU';
+  if (code === 'CAD' || code === 'C$') return 'en-CA';
+  if (code === 'CHF') return 'de-CH';
+  if (code === 'CNY') return 'zh-CN';
+  if (code === 'KRW' || code === '₩') return 'ko-KR';
+
+  return 'en-US';
+};
+
 export const INITIAL_CURRENCIES: Currency[] = [
-  { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah' },
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-  { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit' },
+  { code: 'IDR', symbol: 'Rp', name: 'Indonesian Rupiah', decimals: 0, locale: 'id-ID' },
+  { code: 'USD', symbol: '$', name: 'US Dollar', decimals: 2, locale: 'en-US' },
+  { code: 'EUR', symbol: '€', name: 'Euro', decimals: 2, locale: 'de-DE' },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar', decimals: 2, locale: 'en-SG' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen', decimals: 0, locale: 'ja-JP' },
+  { code: 'MYR', symbol: 'RM', name: 'Malaysian Ringgit', decimals: 2, locale: 'ms-MY' },
+  { code: 'GBP', symbol: '£', name: 'British Pound', decimals: 2, locale: 'en-GB' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar', decimals: 2, locale: 'en-AU' },
 ];
 
 interface LanguageContextType {
@@ -89,10 +141,13 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const addCustomCurrency = (newCurrency: Currency): Currency => {
+    const code = newCurrency.code.trim().toUpperCase();
     const sanitized: Currency = {
-      code: newCurrency.code.trim().toUpperCase(),
+      code,
       symbol: newCurrency.symbol.trim(),
-      name: newCurrency.name.trim(),
+      name: newCurrency.name.trim() || code,
+      decimals: typeof newCurrency.decimals === 'number' ? newCurrency.decimals : getCurrencyDecimals(code),
+      locale: newCurrency.locale || getCurrencyLocale(code),
     };
 
     // Prevent duplicate codes
@@ -119,23 +174,45 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const isNegative = amount < 0;
     const abs = Math.abs(amount);
 
+    let targetCurrency: Currency = activeCurrency;
     let symbol = activeCurrency.symbol;
+
     if (customSymbolOrCode) {
+      const trimmed = customSymbolOrCode.trim();
       const match = allCurrencies.find(
         (c) =>
-          c.code.toUpperCase() === customSymbolOrCode.toUpperCase() ||
-          c.symbol === customSymbolOrCode
+          c.code.toUpperCase() === trimmed.toUpperCase() ||
+          c.symbol === trimmed ||
+          c.symbol.toUpperCase() === trimmed.toUpperCase()
       );
-      symbol = match ? match.symbol : customSymbolOrCode;
+      if (match) {
+        targetCurrency = match;
+        symbol = match.symbol;
+      } else {
+        symbol = trimmed;
+        targetCurrency = {
+          code: trimmed.length <= 4 ? trimmed.toUpperCase() : 'CUSTOM',
+          symbol: trimmed,
+          name: trimmed,
+          decimals: getCurrencyDecimals(trimmed),
+          locale: getCurrencyLocale(trimmed),
+        };
+      }
     }
 
-    // Default currency is Rupiah (Rp)
-    const formattedNumber =
-      locale === 'id'
-        ? abs.toLocaleString('id-ID')
-        : abs.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    const decimals = getCurrencyDecimals(targetCurrency);
+    const targetLocale = getCurrencyLocale(targetCurrency);
 
-    if (symbol === '$' || symbol === '£' || symbol === '€' || symbol === '¥') {
+    // Format number strictly with its currency's standard decimal places and separator conventions
+    const formattedNumber = abs.toLocaleString(targetLocale, {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    });
+
+    // Formatting placement:
+    // USD ($), GBP (£), JPY (¥), EUR (€): directly affixed with standard symbol
+    // IDR (Rp), MYR (RM), SGD (S$), AUD (A$), etc.: separated by a space
+    if (symbol === '$' || symbol === '£' || symbol === '¥' || symbol === '€') {
       return `${isNegative ? '-' : ''}${symbol}${formattedNumber}`;
     }
 

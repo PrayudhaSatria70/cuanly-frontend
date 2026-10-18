@@ -60,7 +60,17 @@ The application UI is styled using a curated, harmonious 3-tier color palette:
 | **Sekunder** | `#8AD6D1` | Fresh Mint Cyan | Secondary accents, positive cashflow indicators, progress bars, active icons, glowing highlights, peeking logo bill |
 | **Tersier** | `#AEC4D4` | Slate Ice Blue | Glassmorphism panel borders, canvas gradient tinting, subtle chip backgrounds, neutral table outlines, muted labels |
 
-### 2.3 Security & Session Inactivity Settings
+### 2.3 Official Brand Logo Assets & Browser Thumbnail
+| Asset Type | File Path | Specifications | Usage Scenario |
+|---|---|---|---|
+| **Light Mode Full Logo** | `/images/logo-light.png` | Blue navy wallet + blue navy "Cuanly" typography | Light mode headers, auth screens |
+| **Light Mode Icon Only** | `/images/logo-light-icon.png` | Blue navy wallet icon with teal gauge | Light mode compact view / mobile |
+| **Dark Mode Full Logo** | `/images/logo-dark.png` | Pure white wallet + pure white "Cuanly" typography | Dark mode headers, auth screens |
+| **Dark Mode Icon Only** | `/images/logo-dark-icon.png` | Pure white wallet icon with teal gauge | Dark mode compact view / mobile |
+| **Browser Thumbnail (Favicon)** | `/favicon.png`, `/favicon.svg`, `/apple-touch-icon.png`, `/favicon.ico` | Deep blue background squircle (`#00193B`) with white wallet and teal accent dial | Browser tabs, bookmarks, mobile PWA home screen |
+
+### 2.4 Security & Session Inactivity Settings
+
 | Setting | Value | Implementation Scope |
 |---|---|---|
 | `SESSION_TIMEOUT_MS` | `180000` (3 Minutes) | Global inactivity threshold before auto-logout |
@@ -69,7 +79,7 @@ The application UI is styled using a curated, harmonious 3-tier color palette:
 | Session Validation on Cold Start | Strict | Checks `cuanly_last_activity`; purges session if older than 3 minutes |
 | Root URL Entry (`/`) | Forced Login | Visiting root domain always clears session and replaces path to `/login` |
 
-### 2.3 LocalStorage & SessionStorage State Schema
+### 2.5 LocalStorage & SessionStorage State Schema
 | Storage Key | Storage Engine | Type | Description |
 |---|---|---|---|
 | `cuanly_auth_user` | `localStorage` | `User` (JSON) | Current authenticated user payload |
@@ -89,7 +99,7 @@ The application UI is styled using a curated, harmonious 3-tier color palette:
 | `cuanly_admin_users` | `localStorage` | `User[]` | Platform user directory |
 
 
-### 2.4 Pre-Configured Demo Credentials
+### 2.6 Pre-Configured Demo Credentials
 | Persona | Role | Username / Identifier | Email | PIN (6 Digits) | Landing Route | Preloaded Data & Scope |
 |---|---|---|---|---|---|---|
 | **Personal User** | `USER` | `user` | `user@cuanly.com` | `123456` | `/beranda` | 10 realistic cashflow transactions, Superindo OCR receipt, 6 budget limits, active overbudget warning |
@@ -373,7 +383,7 @@ User navigates to https://cuanly.vercel.app/ (Root URL `/`)
   └─► User arrives on `/login`
         ├── Shows official Cuanly branding & language switcher
         ├── Presents username/email & 6-digit PIN fields
-        ├── Provides 1-Click Demo User & Admin buttons
+        ├── Provides direct single-touch Demo User (Personal) & Demo Admin (Backoffice) action buttons
         └── User must authenticate before accessing `/beranda` or `/admin/dashboard`
 ```
 
@@ -467,21 +477,33 @@ Receipt Scan Initiated (`/transaksi/scan`)
         └── Redirects to `/transaksi` with instant state update
 ```
 
-### 4.6 Multi-Currency & Custom Currency Addition Flow
+### 4.6 Multi-Currency & Reactive History Synchronization Flow
 ```
-User opens Transaction Form (`/transaksi/tambah`)
+User selects Currency or views formatted amount
   │
-  ├─► Currency Selector displays available currencies:
-  │     ├── Preset: `IDR` (Rp), `USD` ($), `EUR` (€), `SGD` (S$), `JPY` (¥), `MYR` (RM)
-  │     └── User-added Custom Currencies from `cuanly_custom_currencies`
+  ├─► Currency-Specific Decimal Precision & Separator Conventions:
+  │     ├── `IDR` (Rupiah): 0 decimals, dot thousands (`Rp 1.250.000`)
+  │     ├── `USD` (Dollar): 2 decimals, comma thousands, dot decimals (`$1,250.00`)
+  │     ├── `EUR` (Euro): 2 decimals, dot thousands, comma decimals (`€1.250,00`)
+  │     ├── `JPY` (Yen): 0 decimals, comma thousands (`¥1,250`)
+  │     ├── `GBP` (Pound): 2 decimals (`£1,250.00`)
+  │     ├── `SGD` / `MYR` / `AUD`: 2 decimals (`S$ 1,250.00`, `RM 1,250.00`)
+  │     └── `KWD` / `BHD` / `OMR`: 3 decimals (`KWD 1,250.000`)
   │
-  ├─► User taps "+ Add New Currency":
-  │     ├── Modal prompts: Currency ISO Code (e.g. "AUD"), Symbol (e.g. "A$"), Name ("Australian Dollar")
-  │     ├── Input validated against duplicate codes
-  │     └── Persisted to `LanguageContext` and `cuanly_custom_currencies`
+  ├─► Currency Switch in Add Transaction Menu (`/transaksi/tambah`):
+  │     ├── User selects currency from the dropdown (or creates a custom currency)
+  │     ├── Triggers `setActiveCurrency(curr.code)` in `LanguageContext`
+  │     ├── Immediately persists selection to `localStorage` (`cuanly_active_currency`)
+  │     └── Broadcasts reactive re-rendering across all history views
   │
-  └─► Transaction Saved with Specific Currency:
-        └── Displays formatted amounts with the transaction's native symbol throughout the app
+  ├─► Adding Custom Currency (`/settings` or `/transaksi/tambah`):
+  │     ├── Inputs: ISO Code, Symbol, Name, and Decimal Precision (0, 2, or 3 digits)
+  │     ├── Auto-detection: Standard ISO code decimal mapping if unspecified
+  │     └── Persisted to `cuanly_custom_currencies` in localStorage
+  │
+  └─► Reactive Transaction Ledger & Financial History Synchronization:
+        ├── Transaction history items call `formatCurrency(tx.amount)` dynamically without hardcoded currency overrides
+        └── All historical entries across `/transaksi`, `/beranda` (Recent Transactions), and `/transaksi/[id]` instantly re-render with the newly selected active currency, appropriate decimals, and native locale formatting
 ```
 
 ### 4.7 Monthly Allowance Adjustment Flow (`EditAllowanceModal.tsx`)
@@ -544,6 +566,45 @@ User clicks Moon/Sun Toggle Button (TopHeader: strictly positioned to the left o
         ├── Admin Backoffice (/admin/*): Dark metrics cards, partner verification queues, dark audit tables
         ├── Modals & Drawers: EditAllowanceModal & NotificationDrawer with dark surfaces and cyan focus highlights
         └── Navigation: DesktopNav & BottomNav with dark glass styling, active cyan icon glow, and floating CTA
+```
+
+### 4.10 Comprehensive System Settings & Preferences Flow (`/settings`)
+```
+User navigates to Settings (DesktopNav: directly below Profile, or via TopHeader Profile Shortcut)
+  │
+  ├─► Centralized Tab Navigation:
+  │     ├── Appearance: Dark / Light mode toggle, live palette cards (#4D8DBA, #8AD6D1, #AEC4D4)
+  │     ├── Language & Currency: EN (default) / ID switcher, active currency picker, custom currency creator
+  │     ├── Budget & Warnings: Monthly allowance editor, spending warning red banner threshold slider (70% - 90%)
+  │     ├── Smart OCR Scanner: Latency speed selection (Fast 0.6s / Standard 1.2s / Thorough 2.0s), toggles
+  │     ├── Security & Session: Inactivity timeout selector (1m, 3m default, 5m, 10m), PIN update form
+  │     ├── Notifications: Spending warning alert toggle, sound toggle, clear all notifications button
+  │     ├── Backup & Data: Export full state backup to JSON, export ledger to CSV, restore JSON backup file, factory reset
+  │     └── Account & Access: Role indicator (USER / ADMIN), demo role switcher, Backoffice link, logout
+  │
+  └─► Cross-Feature Synchronization:
+        └── All setting changes immediately broadcast through their respective Context providers and persist in LocalStorage.
+```
+
+### 4.11 Profile Shortcut Modal Flow (`TopHeader` Avatar Popover)
+```
+User clicks Profile Avatar Icon in TopHeader
+  │
+  ├─► Popover Anchoring & Visibility:
+  │     ├── Toggles open directly beneath the avatar (absolute right-0 top-full mt-2.5 z-50)
+  │     └── Outside-click (mousedown) and Escape key listeners close the popover automatically
+  │
+  ├─► Modal Content & Interactive Shortcuts:
+  │     ├── 1. User Identity Header: Displays user avatar photo, full name, email address, and role badge
+  │     ├── 2. Shortcut: Edit Profile (`/profil`): Direct link with subtitle description; closes modal on click
+  │     ├── 3. Shortcut: Settings (`/settings`): Direct link with subtitle description; closes modal on click
+  │     ├── 4. Shortcut: Bahasa (Language Switcher): Inline 2-column switcher (English vs Indonesia)
+  │     │       ├── Real-time locale toggle via LanguageContext (`setLocale('en' | 'id')`)
+  │     │       └── Active checkmark indicator on the selected language
+  │     └── 5. Shortcut: Logout: High-visibility action calling `logout()` to terminate session and redirect to `/login`
+  │
+  └─► Responsive Glassmorphic Aesthetic:
+        └── Uses semi-transparent glass panel with backdrop blur (`backdrop-blur-xl`), dark mode support, and smooth zoom-in transition.
 ```
 
 ---
@@ -697,13 +758,15 @@ export interface NotificationItem {
 
 1. **Inactivity Session Hardening (3-Minute Rule)**:
    - Eliminates risks of unauthorized access on unattended public or shared terminals.
-   - Automatically cleanses `localStorage` tokens upon timeout and renders an explicit amber alert.
+   - Automatically cleanses `localStorage` tokens upon timeout and renders an explicit high-visibility red alert banner.
 2. **Forced Entry Authentication on Root URL**:
    - Visiting `https://cuanly.vercel.app/` unconditionally executes `logout()` and points to `/login`.
    - Prevents stale sessions from immediately loading user financial balances when opening the public link.
-3. **Role-Based Access Control (RBAC)**:
+3. **Role-Based Access Control (RBAC) & Navigation Isolation**:
    - Guarded at the component shell level ([src/components/layout/AppShell.tsx](file:///c:/Users/muhas/Desktop/WORK%20Projects/cuanly-frontend/src/components/layout/AppShell.tsx)).
-   - Regular users attempting to navigate to `/admin/*` are automatically bounced to `/beranda`.
+   - In [src/components/layout/DesktopNav.tsx](file:///c:/Users/muhas/Desktop/WORK%20Projects/cuanly-frontend/src/components/layout/DesktopNav.tsx), the entire **Admin Backoffice** navigation block is conditionally rendered strictly when `role === 'ADMIN'`. When logging in with Demo User (`USER` role), the Admin Backoffice is completely hidden.
+   - In [src/components/layout/TopHeader.tsx](file:///c:/Users/muhas/Desktop/WORK%20Projects/cuanly-frontend/src/components/layout/TopHeader.tsx), admin indicators/badges appear only for `ADMIN` role.
+   - Any non-admin attempting to navigate to `/admin/*` via URL is automatically intercepted and redirected to `/beranda`.
 4. **Input Sanitization & Validation**:
    - All monetary amounts are validated strictly as positive numbers.
    - PINs require minimum length (4–6 numeric digits) before submission.
@@ -716,7 +779,7 @@ export interface NotificationItem {
 
 - **Runtime & Framework**: Next.js 16.4.2 (App Router with Turbopack).
 - **TypeScript**: Strict compilation (`tsc --noEmit`).
-- **Build Output**: Clean static generation (`○ Static`) for all 17 public and authenticated routes.
+- **Build Output**: Clean static generation (`○ Static`) for all 18 public and authenticated routes (including the comprehensive `/settings` system preferences module).
 - **Verification Command**:
   ```bash
   npm run build

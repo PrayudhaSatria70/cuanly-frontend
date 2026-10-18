@@ -29,8 +29,8 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       return;
     }
 
-    // 2. If regular user trying to access /admin -> redirect to /beranda
-    if (isAuthenticated && user?.role === 'USER' && pathname.startsWith('/admin')) {
+    // 2. If non-admin user trying to access /admin -> redirect to /beranda
+    if (isAuthenticated && user?.role !== 'ADMIN' && pathname.startsWith('/admin')) {
       router.replace('/beranda');
     }
   }, [mounted, isAuthenticated, isAuthPage, pathname, router, user]);

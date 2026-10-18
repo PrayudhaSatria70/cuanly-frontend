@@ -228,7 +228,7 @@ export default function TransaksiPage() {
                       }`}
                     >
                       {tx.type === 'INCOME' ? '+' : '-'}
-                      {formatCurrency(tx.amount, tx.currencySymbol)}
+                      {formatCurrency(tx.amount)}
                     </div>
                     <Link
                       href={`/transaksi/${tx.id}`}
