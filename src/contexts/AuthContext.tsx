@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Role } from '@/types';
 import { DEMO_USER, DEMO_ADMIN } from '@/services/mockData';
+import { authApi } from '@/services/api';
 
 // 3 Minutes Session Inactivity Timeout (180,000 ms)
 export const SESSION_TIMEOUT_MS = 3 * 60 * 1000;
@@ -20,7 +21,8 @@ interface AuthContextType {
   setSessionTimeoutDuration: (ms: number) => void;
   updateUserPassword: (oldPassword: string, newPassword: string) => { success: boolean; error?: string };
   updateUserPin: (oldPin: string, newPin: string) => { success: boolean; error?: string };
-  updateUserProfile: (updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>) => { success: boolean; error?: string };
+  updateUserProfile: (updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>) => Promise<{ success: boolean; error?: string }>;
+  uploadAvatar: (avatarUrl: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -74,6 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           // Session expired -> Require login
           localStorage.removeItem('cuanly_auth_user');
+      localStorage.removeItem('cuanly_auth_token');
           localStorage.removeItem('cuanly_last_activity');
           sessionStorage.setItem('cuanly_session_timed_out', 'true');
           setUser(null);
@@ -162,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const login = async (identifier: string, pin: string): Promise<{ success: boolean; error?: string }> => {
+    const login = async (identifier: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     const cleanId = identifier.trim().toLowerCase();
     const cleanPin = pin.trim();
 
@@ -178,65 +181,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const overrides = getCredentialsOverrides();
 
-    // 1. Check Demo Admin (Username 'admin' or email 'admin@cuanly.com')
-    const isAdminMatch =
-      cleanId === DEMO_ADMIN.email.toLowerCase() ||
-      cleanId === DEMO_ADMIN.username?.toLowerCase() ||
-      cleanId === 'admin';
-    if (isAdminMatch) {
-      const expectedAdminPassword =
-        overrides['usr_admin_01'] ||
-        overrides['admin'] ||
-        overrides['admin@cuanly.com'];
+    // 1. Demo User Hardcoded Local Login (stays hardcoded without BE integration)
+    const isDemoUserMatch =
+      (cleanId === DEMO_USER.email.toLowerCase() ||
+       cleanId === DEMO_USER.username?.toLowerCase() ||
+       cleanId === 'user') &&
+      (cleanPin === DEMO_USER.pin || cleanPin === (DEMO_USER.password || 'user123') || cleanPin === '123456');
 
-      const isMatch = expectedAdminPassword
-        ? cleanPin === expectedAdminPassword
-        : cleanPin === DEMO_ADMIN.pin || cleanPin === (DEMO_ADMIN.password || 'admin123') || cleanPin === '999999';
-
-      if (isMatch) {
-        const effectiveCred = expectedAdminPassword || DEMO_ADMIN.password || DEMO_ADMIN.pin || '999999';
-        persistSession({ ...DEMO_ADMIN, password: effectiveCred, pin: effectiveCred });
-        return { success: true };
-      }
-      return {
-        success: false,
-        error:
-          getAuthLocale() === 'en'
-            ? 'Incorrect Admin account Password or PIN.'
-            : 'Password atau PIN akun Admin salah.',
-      };
-    }
-
-    // 2. Check Demo User (Username 'user' or email 'user@cuanly.com')
-    const isUserMatch =
-      cleanId === DEMO_USER.email.toLowerCase() ||
-      cleanId === DEMO_USER.username?.toLowerCase() ||
-      cleanId === 'user';
-    if (isUserMatch) {
+    if (isDemoUserMatch) {
       const expectedUserPassword =
         overrides['usr_demo_01'] ||
         overrides['user'] ||
-        overrides['user@cuanly.com'];
-
-      const isMatch = expectedUserPassword
-        ? cleanPin === expectedUserPassword
-        : cleanPin === DEMO_USER.pin || cleanPin === (DEMO_USER.password || 'user123') || cleanPin === '123456';
-
-      if (isMatch) {
-        const effectiveCred = expectedUserPassword || DEMO_USER.password || DEMO_USER.pin || '123456';
-        persistSession({ ...DEMO_USER, password: effectiveCred, pin: effectiveCred });
-        return { success: true };
-      }
-      return {
-        success: false,
-        error:
-          getAuthLocale() === 'en'
-            ? 'Incorrect User account Password or PIN.'
-            : 'Password atau PIN akun Pengguna salah.',
-      };
+        overrides['user@cuanly.com'] ||
+        DEMO_USER.password ||
+        DEMO_USER.pin ||
+        '123456';
+      localStorage.removeItem('cuanly_auth_token');
+      persistSession({ ...DEMO_USER, password: expectedUserPassword, pin: expectedUserPassword });
+      return { success: true };
     }
 
-    // 3. Check custom registered users from localStorage
+    // 2. Demo Admin Hardcoded Local Login (via Demo PIN 999999 or hardcoded admin overrides)
+    if (cleanPin === '999999' && (cleanId === 'admin' || cleanId === 'admin@cuanly.com')) {
+      localStorage.removeItem('cuanly_auth_token');
+      persistSession({ ...DEMO_ADMIN, password: '999999', pin: '999999' });
+      return { success: true };
+    }
+
+    // 3. Live Backend Authentication (Live Admin admin/admin123 & Registered Accounts via Username/Email + Password/PIN)
+    try {
+      const res = await authApi.login({ identifier: cleanId, password: cleanPin });
+      if (res && res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem('cuanly_auth_token', res.token);
+        }
+        persistSession({
+          ...res.user,
+          password: cleanPin,
+          pin: cleanPin,
+        });
+        return { success: true };
+      }
+    } catch (apiErr: any) {
+      // If error is 401 or invalid credentials, capture it
+      if (apiErr.statusCode === 401) {
+        return {
+          success: false,
+          error: apiErr.message || (getAuthLocale() === 'en' ? 'Invalid credentials' : 'Password atau kredensial salah'),
+        };
+      }
+      console.warn('Backend login attempt fell back to local registry:', apiErr.message);
+    }
+
+    // 4. Local Registered Users fallback (if backend is unreachable or local-only)
     try {
       const registeredUsers = JSON.parse(localStorage.getItem('cuanly_registered_users') || '[]');
       const found = registeredUsers.find((u: User) => {
@@ -269,70 +266,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ignore
     }
 
-    // 4. Check admin portal custom users from cuanly_admin_users
-    try {
-      const adminUsers = JSON.parse(localStorage.getItem('cuanly_admin_users') || '[]');
-      const foundAdmin = adminUsers.find((u: User) => {
-        const matchesEmail = u.email && u.email.toLowerCase() === cleanId;
-        const matchesUsername = u.username && u.username.toLowerCase() === cleanId;
-        return matchesEmail || matchesUsername;
-      });
-      if (foundAdmin) {
-        const expectedPassword =
-          overrides[foundAdmin.id] ||
-          (foundAdmin.username ? overrides[foundAdmin.username.toLowerCase()] : undefined) ||
-          overrides[foundAdmin.email.toLowerCase()] ||
-          foundAdmin.password ||
-          foundAdmin.pin;
-
-        if (cleanPin === expectedPassword) {
-          persistSession({ ...foundAdmin, password: expectedPassword, pin: expectedPassword });
-          return { success: true };
-        } else {
-          return {
-            success: false,
-            error:
-              getAuthLocale() === 'en'
-                ? 'Incorrect admin account password.'
-                : 'Password akun admin tidak sesuai.',
-          };
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    // 5. Flexible test login if identifier has at least 3 chars and pin >= 4 digits
-    if (cleanId.length >= 3 && cleanPin.length >= 4) {
-      const isEmail = cleanId.includes('@');
-      const role: Role = cleanId.includes('admin') ? 'ADMIN' : 'USER';
-      const username = isEmail ? cleanId.split('@')[0] : cleanId;
-      const email = isEmail ? cleanId : `${cleanId}@cuanly.com`;
-
-      const newUser: User = {
-        id: `usr_${Date.now()}`,
-        name: username.charAt(0).toUpperCase() + username.slice(1),
-        username,
-        email,
-        role,
-        password: cleanPin,
-        pin: cleanPin,
-        createdAt: new Date().toISOString(),
-      };
-      persistSession(newUser);
-      return { success: true };
-    }
-
     return {
       success: false,
       error:
         getAuthLocale() === 'en'
-          ? 'Invalid credentials. Please use demo accounts (Username: user / 123456 or admin / 999999).'
-          : 'Kredensial tidak sesuai. Gunakan akun demo (Username: user / 123456 atau admin / 999999).',
+          ? 'Invalid credentials. Please use admin / admin123, registered account, or demo (user / 123456).'
+          : 'Kredensial tidak sesuai. Gunakan akun admin / admin123, akun registrasi, atau demo (user / 123456).',
     };
   };
 
   const loginAsDemo = (targetRole: Role) => {
+    localStorage.removeItem('cuanly_auth_token');
     const selected = targetRole === 'ADMIN' ? DEMO_ADMIN : DEMO_USER;
     const overrides = getCredentialsOverrides();
     const effectiveCred =
@@ -347,11 +291,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (
     name: string,
     email: string,
-    pin: string,
+    passwordOrPin: string,
     username?: string,
     phone?: string
   ): Promise<{ success: boolean; error?: string }> => {
-    if (!name || !email || !pin) {
+    if (!name || !email || !passwordOrPin) {
       return {
         success: false,
         error:
@@ -360,10 +304,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const cleanPass = passwordOrPin.trim();
     const resolvedUsername = username
       ? username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
       : cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '');
 
+    // 1. Try Backend Registration
+    try {
+      const res = await authApi.register({
+        name: name.trim(),
+        email: cleanEmail,
+        password: cleanPass,
+        pin: cleanPass,
+        username: resolvedUsername,
+        phone: phone?.trim(),
+      });
+
+      if (res && res.success && res.user) {
+        if (res.token) {
+          localStorage.setItem('cuanly_auth_token', res.token);
+        }
+        const createdUser: User = {
+          ...res.user,
+          password: cleanPass,
+          pin: cleanPass,
+        };
+        // Also save to registeredUsers in local cache
+        try {
+          const registeredUsers = JSON.parse(localStorage.getItem('cuanly_registered_users') || '[]');
+          registeredUsers.push(createdUser);
+          localStorage.setItem('cuanly_registered_users', JSON.stringify(registeredUsers));
+
+          const overrides = getCredentialsOverrides();
+          overrides[createdUser.id] = cleanPass;
+          overrides[cleanEmail] = cleanPass;
+          if (resolvedUsername) overrides[resolvedUsername] = cleanPass;
+          localStorage.setItem('cuanly_credentials_override', JSON.stringify(overrides));
+        } catch {}
+
+        persistSession(createdUser);
+        return { success: true };
+      }
+    } catch (apiErr: any) {
+      if (apiErr.statusCode === 409 || apiErr.statusCode === 400) {
+        return {
+          success: false,
+          error: apiErr.message || (getAuthLocale() === 'en' ? 'Registration failed' : 'Registrasi gagal'),
+        };
+      }
+      console.warn('Backend register attempt fell back to local:', apiErr.message);
+    }
+
+    // Fallback local registration
     const newUser: User = {
       id: `usr_${Date.now()}`,
       name: name.trim(),
@@ -371,8 +363,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: cleanEmail,
       phone: phone?.trim(),
       role: 'USER',
-      password: pin.trim(),
-      pin: pin.trim(),
+      password: cleanPass,
+      pin: cleanPass,
       createdAt: new Date().toISOString(),
     };
 
@@ -380,6 +372,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const registeredUsers = JSON.parse(localStorage.getItem('cuanly_registered_users') || '[]');
       registeredUsers.push(newUser);
       localStorage.setItem('cuanly_registered_users', JSON.stringify(registeredUsers));
+
+      const overrides = getCredentialsOverrides();
+      overrides[newUser.id] = cleanPass;
+      overrides[cleanEmail] = cleanPass;
+      if (resolvedUsername) overrides[resolvedUsername] = cleanPass;
+      localStorage.setItem('cuanly_credentials_override', JSON.stringify(overrides));
+
       persistSession(newUser);
       return { success: true };
     } catch {
@@ -521,9 +520,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return updateUserPassword(oldPin, newPin);
   };
 
-  const updateUserProfile = (
+  const updateUserProfile = async (
     updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>
-  ): { success: boolean; error?: string } => {
+  ): Promise<{ success: boolean; error?: string }> => {
     const isEn = getAuthLocale() === 'en';
     if (!user) return { success: false, error: isEn ? 'User not found.' : 'User tidak ditemukan.' };
 
@@ -538,6 +537,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: isEn ? 'Full name cannot be empty.' : 'Nama lengkap tidak boleh kosong.' };
     }
 
+    let finalAvatar = updates.avatarUrl !== undefined ? updates.avatarUrl : user.avatarUrl;
+
+    // Synchronize with backend API if user has active session
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('cuanly_auth_token');
+      if (token) {
+        try {
+          const apiRes = await authApi.updateProfile({
+            name: updates.name !== undefined ? updates.name.trim() : user.name,
+            username: updates.username !== undefined ? updates.username.trim() : user.username,
+            email: updates.email !== undefined ? updates.email.trim() : user.email,
+            phone: updates.phone !== undefined ? updates.phone.trim() : user.phone,
+            avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : user.avatarUrl,
+          });
+          if (apiRes?.user?.avatarUrl !== undefined) {
+            finalAvatar = apiRes.user.avatarUrl;
+          }
+        } catch (apiErr: any) {
+          console.warn('Backend updateProfile sync notice:', apiErr);
+          const errMsg = apiErr?.response?.data?.message;
+          if (errMsg && typeof errMsg === 'string') {
+            return { success: false, error: errMsg };
+          }
+        }
+      }
+    }
+
     const updatedUser: User = {
       ...user,
       ...updates,
@@ -545,7 +571,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       username: updates.username !== undefined ? updates.username.trim() : user.username,
       email: updates.email !== undefined ? updates.email.trim() : user.email,
       phone: updates.phone !== undefined ? updates.phone.trim() : user.phone,
-      avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : user.avatarUrl,
+      avatarUrl: finalAvatar,
     };
 
     setUser(updatedUser);
@@ -583,6 +609,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
+  const uploadAvatar = async (avatarUrl: string): Promise<{ success: boolean; error?: string }> => {
+    return updateUserProfile({ avatarUrl });
+  };
   return (
     <AuthContext.Provider
       value={{
@@ -599,6 +628,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateUserPassword,
         updateUserPin,
         updateUserProfile,
+        uploadAvatar,
       }}
     >
       {isInitialized ? children : null}

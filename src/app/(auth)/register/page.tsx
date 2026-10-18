@@ -8,7 +8,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { CuanlyLogo } from '@/components/common/CuanlyLogo';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { User, Mail, Lock, Phone, ArrowRight, ArrowLeft, Sun, Moon } from 'lucide-react';
+import { User, Mail, Lock, Phone, ArrowRight, ArrowLeft, Sun, Moon, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -21,7 +21,8 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
@@ -30,14 +31,14 @@ export default function RegisterPage() {
     e.preventDefault();
     setErrorMsg('');
 
-    if (pin.length < 4) {
+    if (password.length < 4) {
       setErrorMsg(t.auth.pinMinError);
       return;
     }
 
     setLoading(true);
     try {
-      const res = await register(name, email, pin, username, phone);
+      const res = await register(name, email, password, username, phone);
       if (res.success) {
         router.push('/beranda');
       } else {
@@ -189,14 +190,22 @@ export default function RegisterPage() {
             <div className="relative group">
               <Lock className="w-4 h-4 text-[#4D8DBA] group-focus-within:text-[#2E678E] dark:text-[#8AD6D1] absolute left-3 top-1/2 -translate-y-1/2 transition-colors" />
               <input
-                type="password"
-                maxLength={6}
-                value={pin}
-                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                type={showPassword ? 'text' : 'password'}
+                maxLength={64}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 placeholder={t.auth.createPinPlaceholder}
                 required
-                className="w-full pl-9 pr-3 py-2.5 text-xs sm:text-sm bg-gradient-to-r from-white/90 to-[#F8FAFC]/80 dark:from-[#071018]/80 dark:to-[#0B1520]/80 backdrop-blur-md border border-[#AEC4D4]/50 dark:border-[#4D8DBA]/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/35 focus:border-[#4D8DBA] dark:focus:border-[#8AD6D1] transition-all num-tabular tracking-widest text-gray-900 dark:text-white shadow-2xs"
+                className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm bg-gradient-to-r from-white/90 to-[#F8FAFC]/80 dark:from-[#071018]/80 dark:to-[#0B1520]/80 backdrop-blur-md border border-[#AEC4D4]/50 dark:border-[#4D8DBA]/35 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/35 focus:border-[#4D8DBA] dark:focus:border-[#8AD6D1] transition-all font-mono tracking-wider text-gray-900 dark:text-white shadow-2xs"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors"
+                title={showPassword ? t.auth.hidePin : t.auth.showPin}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
             </div>
           </div>
 

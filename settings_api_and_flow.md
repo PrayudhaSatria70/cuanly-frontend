@@ -84,6 +84,14 @@ The login screen features simplified, direct action buttons for both demo person
 
 ---
 
+### 1.5 Account Authentication Triad Specifications
+| Persona | Identifier | Password / PIN | Storage & Lifecycle | Integration Scope |
+|---|---|---|---|---|
+| **Demo User** | `user` or `user@cuanly.com` | `123456` or `user123` | LocalStorage Mock | Pure client-side mock (No BE network requests) |
+| **Demo Admin** | `admin` (via 1-Click Demo) | `999999` or `admin123` | LocalStorage Mock | Pure client-side mock (No BE network requests) |
+| **Live Admin** | `admin` or `admin@cuanly.com` | `admin123` | PostgreSQL Database | Live NestJS backend + PostgreSQL DB (Full Admin Access, Role ADMIN, Tier B2B) |
+| **Registered User** | Custom Username / Email | Custom Password / PIN | PostgreSQL Database | Live NestJS backend + PostgreSQL DB (User Access, Role USER, Tier FREE) |
+
 ## 2. API Contract
 
 ### 2.1 Authentication Endpoints
@@ -101,6 +109,13 @@ The login screen features simplified, direct action buttons for both demo person
   - Response (400 Bad Request): `{ "statusCode": 400, "message": "New password confirmation does not match or length < 6." }`
   - Response (401 Unauthorized): `{ "statusCode": 401, "message": "Current password incorrect." }`
 
+- **`POST /api/v1/auth/avatar` (Profile Picture Edit & Upload)**
+  - Request Body: `{ "avatarUrl": "data:image/png;base64,... | https://..." }`
+  - Headers: `Authorization: Bearer <token>`, `Content-Type: application/json` (Supports payloads up to 10MB)
+  - Processing: Stores Base64 Data URL or hosted image URL directly in PostgreSQL `users.avatar_url` column.
+  - Response (200 OK): `{ "success": true, "user": { "id": "...", "name": "...", "avatarUrl": "...", ... } }`
+  - Response (401 Unauthorized): `{ "statusCode": 401, "message": "Unauthorized" }`
+
 - **`PUT /api/v1/auth/profile` (Settings -> Account & Profile)**
   - Request Body: `{ "name": "...", "username": "...", "email": "...", "phone": "...", "avatarUrl": "..." }`
   - Headers: `Authorization: Bearer <token>`, `Content-Type: application/json`
@@ -110,12 +125,29 @@ The login screen features simplified, direct action buttons for both demo person
   - Response (401 Unauthorized): `{ "statusCode": 401, "message": "Unauthorized" }`
 
 - **`POST /api/v1/auth/register`**
-  - Request Body: `{ "name": "...", "email": "...", "username": "...", "phone": "...", "password": "..." }`
+  - Request Body: `{ "name": "...", "email": "...", "username": "...", "phone": "...", "password": "...", "pin": "..." }` (Min. 4 chars/digits)
   - Response (201 Created): `{ "token": "jwt_...", "user": { ... } }`
 
 - **`POST /api/v1/auth/logout`**
   - Headers: `Authorization: Bearer <token>`
   - Response (200 OK): `{ "success": true, "message": "Session invalidated." }`
+
+- **`GET /api/v1/users/settings`**
+  - Headers: `Authorization: Bearer <token>`
+  - Response (200 OK): `{ "success": true, "settings": { "theme": "light", "locale": "en", "activeCurrency": "IDR", "monthlyAllowance": 6700000, "spendingWarningThreshold": 80, ... } }`
+
+- **`PUT /api/v1/users/settings`**
+  - Headers: `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - Request Body: `Partial<UserSettings>` (Theme, Locale, Currency, Monthly Allowance, Threshold, OCR Settings, Timeout, Notifications)
+  - Response (200 OK): `{ "success": true, "message": "Settings updated successfully", "settings": { ... } }`
+
+- **`GET /api/v1/admin/users`** (Admin Only)
+  - Headers: `Authorization: Bearer <token>`
+  - Response (200 OK): `{ "success": true, "users": User[] }`
+
+- **`PUT /api/v1/admin/users/:id/toggle-status`** (Admin Only)
+  - Headers: `Authorization: Bearer <token>`
+  - Response (200 OK): `{ "success": true, "message": "User activated/deactivated successfully", "user": User }`
 
 ### 2.2 Transactions & Cashflow Endpoints
 - **`GET /api/v1/transactions`**
@@ -529,3 +561,84 @@ Strict role-based segregation governs pricing plan enforcement:
 - **Deployment:** Vercel Serverless / Edge Network.
 - **Static Optimization:** All 19 routes compile cleanly (`○ Static` / `ƒ Dynamic`).
 - **Zero-Bug Verification:** `npx tsc --noEmit` and `next build` executed with exit code 0.
+
+## 8. Neon PostgreSQL Cloud & Vercel Backend Deployment Guide
+
+### 8.1 Database Architecture (Neon PostgreSQL)
+Neon is a serverless, autoscaling PostgreSQL cloud database with built-in connection pooling:
+- **Connection Pooling (`DATABASE_URL`):** Used by Vercel serverless functions to avoid exhausting database connections under high concurrent traffic.
+  ```env
+  DATABASE_URL="postgresql://neondb_owner:YOUR_PASSWORD@ep-pooler-xyz.region.aws.neon.tech/neondb?sslmode=require"
+  ```
+- **Direct Connection (`DIRECT_URL`):** Used during migrations, seed scripts, and DDL schema pushes.
+  ```env
+  DIRECT_URL="postgresql://neondb_owner:YOUR_PASSWORD@ep-direct-xyz.region.aws.neon.tech/neondb?sslmode=require"
+  ```
+- **Prisma Dual-URL Support:**
+  ```prisma
+  datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+  }
+  ```
+- **Deployment Steps for Neon:**
+  1. Create a database on [Neon Console](https://console.neon.tech).
+  2. Copy both the pooled and direct connection strings.
+  3. Run initial schema push and seed:
+     ```bash
+     npx prisma db push
+     npx ts-node prisma/seed.ts
+     ```
+
+### 8.2 Backend Serverless Architecture (Vercel)
+The backend is structured for immediate zero-config deployment on Vercel:
+- **Serverless Entrypoint (`api/index.ts`):** Wraps NestJS with an Express adapter with persistent module caching across warm invocations.
+- **Large Payload Support:** Express body parser configured with `10mb` limit for Base64 profile pictures and OCR receipt scans:
+  ```typescript
+  server.use(express.json({ limit: '10mb' }));
+  server.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  ```
+- **Vercel Route Specification (`vercel.json`):**
+  ```json
+  {
+    "version": 2,
+    "builds": [{ "src": "api/index.ts", "use": "@vercel/node" }],
+    "routes": [{ "src": "/(.*)", "dest": "api/index.ts" }],
+    "env": { "NODE_ENV": "production" }
+  }
+  ```
+- **Build Lifecycle (`package.json`):**
+  - `"vercel-build": "prisma generate && nest build"`
+  - `"postinstall": "prisma generate"`
+- **Required Vercel Project Environment Variables:**
+  - `DATABASE_URL`: Neon pooled connection string.
+  - `DIRECT_URL`: Neon direct unpooled connection string.
+  - `JWT_SECRET`: Strong random secret key.
+  - `NODE_ENV`: `production`
+
+### 8.3 User Profile Picture Architecture & Data Flow
+1. **Selection / Capture:** User uploads an image via the interactive camera button on `/profil` or file picker on `/settings?tab=account`.
+2. **Client-Side Validation & Conversion:** File is validated (max 2.5MB) and encoded as a base64 Data URL (`data:image/jpeg;base64,...`).
+3. **Transport & Ingestion:** Frontend sends `POST /api/v1/auth/avatar` or `PUT /api/v1/auth/profile` to the NestJS backend with JWT Bearer authentication.
+4. **Storage:** Backend saves the string directly in Neon PostgreSQL `users.avatar_url` column.
+5. **Immediate Multi-Component Propagation:**
+   - Saved in React AuthContext state and LocalStorage cache.
+   - Instantly updates avatar in `TopHeader` (header pill + profile shortcut modal).
+   - Instantly updates avatar in `ProfilPage` (hero user card).
+   - Instantly updates avatar in `SettingsPage` (preview and form details).
+
+### 8.4 Unified Password & PIN Authentication Architecture
+1. **Registration Form (`/register`):**
+   - User inputs their full name, email, optional username, optional phone number, and creates their credentials via the "Create your Password or PIN" ("Buat Password atau PIN") field.
+   - Accepts both alphanumeric passwords with symbols and numeric PINs (min. 4 characters, up to 64 chars).
+   - Interactive show/hide visibility toggle with accessible eye icons (`Eye` and `EyeOff`).
+   - Dispatches payload with synchronized `password` and `pin` fields to `POST /api/v1/auth/register`.
+2. **Backend & Database Synchronization:**
+   - Both `password` and `pin` fields are stored / hashed on PostgreSQL and cached in local registry (`cuanly_registered_users` and `cuanly_credentials_override`).
+   - Ensures zero friction regardless of whether the user remembers their credential as a password or a PIN.
+3. **Login Form (`/login`):**
+   - User enters their identifier (Username or Email) and their Password or PIN.
+   - Backend login receives `{ identifier, password }` matching either credential representation.
+   - Client-side fallback validates against overrides, `user.password`, and `user.pin`.
+

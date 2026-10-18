@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { SubscriptionTier, Wallet, DebtItem, WorkspaceMember } from '@/types';
 import { INITIAL_WALLETS, INITIAL_DEBTS, INITIAL_WORKSPACE_MEMBERS } from '@/services/mockData';
+import { walletsApi, debtsApi, workspaceApi } from '@/services/api';
 import { useAuth } from './AuthContext';
 
 interface UpgradeModalData {

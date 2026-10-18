@@ -23,12 +23,13 @@ import {
   Moon,
   Settings,
   Edit3,
+  Camera,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProfilPage() {
   const { t, locale, activeCurrency, formatCurrency } = useLanguage();
-  const { user, role, switchRole, logout } = useAuth();
+  const { user, role, switchRole, logout, updateUserProfile } = useAuth();
   const { transactions, summary } = useFinance();
   const { isDark, toggleTheme } = useTheme();
 
@@ -36,6 +37,36 @@ export default function ProfilPage() {
   const [downloadSuccess, setDownloadSuccess] = useState(false);
 
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
+  const [avatarUploadStatus, setAvatarUploadStatus] = useState<string | null>(null);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleDirectAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2.5 * 1024 * 1024) {
+      setAvatarUploadStatus(locale === 'en' ? 'Max photo size is 2.5MB.' : 'Maksimal ukuran foto 2.5MB.');
+      setTimeout(() => setAvatarUploadStatus(null), 3000);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const dataUrl = event.target?.result as string;
+      if (dataUrl) {
+        setAvatarUploadStatus(locale === 'en' ? 'Saving photo...' : 'Menyimpan foto...');
+        const res = await updateUserProfile({ avatarUrl: dataUrl });
+        if (res.success) {
+          setAvatarUploadStatus(locale === 'en' ? 'Photo updated successfully!' : 'Foto profil berhasil diperbarui!');
+        } else {
+          setAvatarUploadStatus(res.error || (locale === 'en' ? 'Failed to upload photo.' : 'Gagal memperbarui foto.'));
+        }
+        setTimeout(() => setAvatarUploadStatus(null), 3500);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   const handleExportData = () => {
     // Generate CSV
@@ -72,19 +103,34 @@ export default function ProfilPage() {
 
       {/* User Info Card */}
       <GlassCard className="p-6 flex items-center gap-4">
-        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-500/30 flex-shrink-0 bg-gray-100">
+        <div
+          onClick={() => avatarInputRef.current?.click()}
+          className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-emerald-500/30 flex-shrink-0 bg-gray-100 group cursor-pointer shadow-inner"
+          title={locale === 'en' ? 'Click to upload new profile picture' : 'Klik untuk unggah foto profil baru'}
+        >
           {user?.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={user.avatarUrl}
               alt={user.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
             <div className="w-full h-full bg-cuanly-primaryDark text-white flex items-center justify-center font-bold text-xl">
               {user?.name?.charAt(0) || 'U'}
             </div>
           )}
+          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white text-[9px] font-semibold">
+            <Camera className="w-4 h-4 mb-0.5" />
+            <span>{locale === 'en' ? 'Upload' : 'Ubah'}</span>
+          </div>
+          <input
+            type="file"
+            ref={avatarInputRef}
+            onChange={handleDirectAvatarUpload}
+            accept="image/*"
+            className="hidden"
+          />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -103,6 +149,11 @@ export default function ProfilPage() {
             </span>
           </div>
           <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+          {avatarUploadStatus && (
+            <p className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded mt-1 inline-block">
+              {avatarUploadStatus}
+            </p>
+          )}
           <p className="text-[10px] text-gray-400 mt-0.5">
             {t.profile.joined} {locale === 'en' ? 'January 15, 2026' : '15 Januari 2026'}
           </p>

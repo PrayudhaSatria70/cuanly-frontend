@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { Transaction, Category, BudgetLimit, FinancialSummary } from '@/types';
 import { INITIAL_CATEGORIES, INITIAL_BUDGETS, INITIAL_TRANSACTIONS } from '@/services/mockData';
+import { transactionsApi, categoriesApi, financeApi } from '@/services/api';
 
 interface CategoryBudgetInfo {
   limit: number;

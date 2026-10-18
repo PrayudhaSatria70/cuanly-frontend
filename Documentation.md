@@ -149,7 +149,7 @@ All endpoints follow REST conventions and are typed via TypeScript interfaces in
   }
   ```
 
-#### 2. Registration
+#### 2. Registration (Password or PIN)
 - **Endpoint:** `POST /api/v1/auth/register`
 - **Headers:** `Content-Type: application/json`
 - **Request Body:**
@@ -159,9 +159,11 @@ All endpoints follow REST conventions and are typed via TypeScript interfaces in
     "email": "rian@gmail.com",
     "username": "rianp",
     "phone": "0812-1111-2222",
-    "pin": "654321"
+    "password": "mypassword123",
+    "pin": "mypassword123"
   }
   ```
+- **Description:** Allows user to set a secure password or numeric PIN during sign up (Min. 4 characters, up to 64 chars). Both `password` and `pin` are synchronized to database and local store so users can log in using either format alongside their username or email.
 - **Response (201 Created):**
   ```json
   {

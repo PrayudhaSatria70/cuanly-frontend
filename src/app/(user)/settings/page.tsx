@@ -47,6 +47,7 @@ import Link from 'next/link';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
 import { CustomThresholdModal } from '@/components/finance/CustomThresholdModal';
+import { usersApi } from '@/services/api';
 
 export default function SettingsPage() {
   const { locale, setLocale, t, currencies, activeCurrency, setActiveCurrency, addCustomCurrency, formatCurrency } = useLanguage();
@@ -57,6 +58,15 @@ export default function SettingsPage() {
   const { tier, hasAccess, openUpgradeModal, warningThresholdPercent } = useSubscription();
 
   const [isCustomThresholdOpen, setIsCustomThresholdOpen] = useState(false);
+
+  // Helper to sync settings to NestJS / PostgreSQL backend for live accounts
+  const syncSettingsToBackend = (partialSettings: any) => {
+    if (typeof window !== 'undefined' && localStorage.getItem('cuanly_auth_token')) {
+      usersApi.updateSettings(partialSettings).catch((err) => {
+        console.warn('Settings sync to backend warning:', err.message);
+      });
+    }
+  };
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
@@ -147,7 +157,7 @@ export default function SettingsPage() {
     e.target.value = '';
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profileName.trim()) {
       showFeedback(locale === 'en' ? 'Full Name is required.' : 'Nama lengkap wajib diisi.', 'error');
@@ -160,7 +170,7 @@ export default function SettingsPage() {
 
     setIsSavingProfile(true);
     try {
-      const res = updateUserProfile({
+      const res = await updateUserProfile({
         name: profileName.trim(),
         username: profileUsername.trim(),
         email: profileEmail.trim(),
@@ -213,6 +223,7 @@ export default function SettingsPage() {
     const val = Number(allowanceInput.replace(/[^0-9]/g, ''));
     if (!isNaN(val) && val > 0) {
       setMonthlyAllowance(val);
+      syncSettingsToBackend({ monthlyAllowance: val });
       addNotification({
         title: t.allowance.modalTitle,
         message: `${t.allowance.successMsg} (${formatCurrency(val)})`,
@@ -238,6 +249,7 @@ export default function SettingsPage() {
     setWarningThreshold(newThreshold);
     try {
       localStorage.setItem('cuanly_spending_warning_threshold', newThreshold.toString());
+      syncSettingsToBackend({ spendingWarningThreshold: newThreshold });
     } catch {
       // ignore
     }
@@ -267,6 +279,7 @@ export default function SettingsPage() {
   const handleOcrSpeedChange = (speed: 'fast' | 'standard' | 'thorough') => {
     setOcrSpeed(speed);
     localStorage.setItem('cuanly_ocr_speed', speed);
+    syncSettingsToBackend({ ocrSpeed: speed });
     showFeedback(
       locale === 'en' ? `OCR scanning speed set to ${speed}.` : `Kecepatan scan OCR diubah ke ${speed}.`
     );
@@ -276,6 +289,7 @@ export default function SettingsPage() {
     const nextVal = !ocrAutoCat;
     setOcrAutoCat(nextVal);
     localStorage.setItem('cuanly_ocr_autocat', nextVal.toString());
+    syncSettingsToBackend({ ocrAutoCat: nextVal });
     showFeedback(
       nextVal
         ? locale === 'en' ? 'Auto-categorization enabled.' : 'Klasifikasi otomatis diaktifkan.'
@@ -287,6 +301,7 @@ export default function SettingsPage() {
     const nextVal = !ocrReview;
     setOcrReview(nextVal);
     localStorage.setItem('cuanly_ocr_review', nextVal.toString());
+    syncSettingsToBackend({ ocrReview: nextVal });
     showFeedback(
       nextVal
         ? locale === 'en' ? 'Review screen before saving enabled.' : 'Layar review sebelum simpan diaktifkan.'
@@ -299,6 +314,7 @@ export default function SettingsPage() {
   const handleTimeoutChange = (minutes: number) => {
     const ms = minutes * 60 * 1000;
     setSessionTimeoutDuration(ms);
+    syncSettingsToBackend({ sessionTimeoutMs: ms });
     showFeedback(
       locale === 'en'
         ? `Inactivity timeout updated to ${minutes} minute(s).`

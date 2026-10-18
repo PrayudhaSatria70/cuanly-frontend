@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Mitra, Complaint, PlatformStats, User, VerificationStatus, ComplaintStatus } from '@/types';
 import { INITIAL_MITRA, INITIAL_COMPLAINTS, DEMO_USER, DEMO_ADMIN } from '@/services/mockData';
+import { adminApi, usersApi } from '@/services/api';
 
 interface AdminContextType {
   mitraList: Mitra[];
@@ -53,6 +54,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     } catch {
       // ignore
     }
+
+    // Live backend fetch for Admin
+    const token = typeof window !== 'undefined' ? localStorage.getItem('cuanly_auth_token') : null;
+    if (token) {
+      Promise.all([
+        adminApi.getMitraList().catch(() => null),
+        adminApi.getComplaints().catch(() => null),
+        usersApi.getAllUsers().catch(() => null),
+      ]).then(([liveMitra, liveComplaints, liveUsersRes]) => {
+        if (liveMitra && Array.isArray(liveMitra) && liveMitra.length > 0) {
+          setMitraList(liveMitra);
+        }
+        if (liveComplaints && Array.isArray(liveComplaints) && liveComplaints.length > 0) {
+          setComplaints(liveComplaints);
+        }
+        if (liveUsersRes && liveUsersRes.users && liveUsersRes.users.length > 0) {
+          setAllUsers(liveUsersRes.users);
+        }
+      });
+    }
   }, []);
 
   const persistMitra = (items: Mitra[]) => {
@@ -78,6 +99,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       m.id === id ? { ...m, verificationStatus: status, notes: notes || m.notes } : m
     );
     persistMitra(updated);
+
+    if (typeof window !== 'undefined' && localStorage.getItem('cuanly_auth_token')) {
+      adminApi.verifyMitra(id, status, notes).catch((err) => {
+        console.warn('Backend verifyMitra warning:', err.message);
+      });
+    }
   };
 
   const updateComplaint = (id: string, status: ComplaintStatus, resolutionNote?: string) => {
@@ -92,6 +119,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         : c
     );
     persistComplaints(updated);
+
+    if (typeof window !== 'undefined' && localStorage.getItem('cuanly_auth_token')) {
+      adminApi.updateComplaint(id, status, resolutionNote).catch((err) => {
+        console.warn('Backend updateComplaint warning:', err.message);
+      });
+    }
   };
 
   const toggleUserStatus = (id: string) => {
@@ -99,6 +132,12 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setAllUsers((prev) =>
       prev.map((u) => (u.id === id ? { ...u, name: u.name.includes('(Nonaktif)') ? u.name.replace(' (Nonaktif)', '') : `${u.name} (Nonaktif)` } : u))
     );
+
+    if (typeof window !== 'undefined' && localStorage.getItem('cuanly_auth_token')) {
+      usersApi.toggleUserStatus(id).catch((err) => {
+        console.warn('Backend toggleUserStatus warning:', err.message);
+      });
+    }
   };
 
   const stats: PlatformStats = {
