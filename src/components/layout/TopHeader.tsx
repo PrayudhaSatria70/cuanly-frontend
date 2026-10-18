@@ -217,7 +217,7 @@ export const TopHeader: React.FC = () => {
                 <div className="space-y-1">
                   {/* Shortcut A: Edit Profile */}
                   <Link
-                    href="/profil"
+                    href="/settings?tab=account"
                     onClick={() => setIsProfileMenuOpen(false)}
                     className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-slate-200 hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 hover:text-[#4D8DBA] dark:hover:text-[#8AD6D1] transition-all group"
                   >

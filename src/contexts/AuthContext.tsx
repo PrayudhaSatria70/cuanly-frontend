@@ -19,6 +19,7 @@ interface AuthContextType {
   sessionTimeoutMs: number;
   setSessionTimeoutDuration: (ms: number) => void;
   updateUserPin: (oldPin: string, newPin: string) => { success: boolean; error?: string };
+  updateUserProfile: (updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>) => { success: boolean; error?: string };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -303,6 +304,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true };
   };
 
+  const updateUserProfile = (
+    updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>
+  ): { success: boolean; error?: string } => {
+    if (!user) return { success: false, error: 'User tidak ditemukan.' };
+
+    if (updates.email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(updates.email.trim())) {
+        return { success: false, error: 'Format email tidak valid.' };
+      }
+    }
+
+    if (updates.name !== undefined && !updates.name.trim()) {
+      return { success: false, error: 'Nama lengkap tidak boleh kosong.' };
+    }
+
+    const updatedUser: User = {
+      ...user,
+      ...updates,
+      name: updates.name !== undefined ? updates.name.trim() : user.name,
+      username: updates.username !== undefined ? updates.username.trim() : user.username,
+      email: updates.email !== undefined ? updates.email.trim() : user.email,
+      phone: updates.phone !== undefined ? updates.phone.trim() : user.phone,
+      avatarUrl: updates.avatarUrl !== undefined ? updates.avatarUrl : user.avatarUrl,
+    };
+
+    setUser(updatedUser);
+
+    try {
+      localStorage.setItem('cuanly_auth_user', JSON.stringify(updatedUser));
+
+      const storedUsers = localStorage.getItem('cuanly_registered_users');
+      if (storedUsers) {
+        const parsed = JSON.parse(storedUsers);
+        if (Array.isArray(parsed)) {
+          const index = parsed.findIndex((u: User) => u.id === user.id);
+          if (index !== -1) {
+            parsed[index] = { ...parsed[index], ...updatedUser };
+            localStorage.setItem('cuanly_registered_users', JSON.stringify(parsed));
+          }
+        }
+      }
+
+      const storedAdminUsers = localStorage.getItem('cuanly_admin_users');
+      if (storedAdminUsers) {
+        const parsedAdmin = JSON.parse(storedAdminUsers);
+        if (Array.isArray(parsedAdmin)) {
+          const idx = parsedAdmin.findIndex((u: User) => u.id === user.id);
+          if (idx !== -1) {
+            parsedAdmin[idx] = { ...parsedAdmin[idx], ...updatedUser };
+            localStorage.setItem('cuanly_admin_users', JSON.stringify(parsedAdmin));
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return { success: true };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -317,6 +379,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         sessionTimeoutMs,
         setSessionTimeoutDuration,
         updateUserPin,
+        updateUserProfile,
       }}
     >
       {isInitialized ? children : null}

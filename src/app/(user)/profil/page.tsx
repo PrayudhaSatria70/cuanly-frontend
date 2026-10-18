@@ -106,6 +106,15 @@ export default function ProfilPage() {
             {t.profile.joined} 15 Januari 2026
           </p>
         </div>
+
+        <Link
+          href="/settings"
+          className="px-3.5 py-2 rounded-xl bg-[#4D8DBA]/10 hover:bg-[#4D8DBA]/20 text-[#4D8DBA] dark:text-[#8AD6D1] border border-[#4D8DBA]/30 text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
+          title={locale === 'en' ? 'Edit Profile & Avatar in Settings' : 'Edit Profil & Foto di Pengaturan'}
+        >
+          <Settings className="w-3.5 h-3.5" />
+          <span>{locale === 'en' ? 'Edit Profile' : 'Edit Profil'}</span>
+        </Link>
       </GlassCard>
 
       {/* Quick Demo Role Switcher */}

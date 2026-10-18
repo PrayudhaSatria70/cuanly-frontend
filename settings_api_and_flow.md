@@ -253,7 +253,7 @@ User navigates to Settings (DesktopNav: directly below Profile, or via Shortcut 
   → Security & Sesi: Inactivity timeout duration selector (1m, 3m, 5m, 10m) via setSessionTimeoutDuration, transaction PIN update form
   → Notifications: Spending warning banner toggle, critical overbudget alert toggle, sound toggle, clear all notifications button
   → Backup & Data: Export full state backup to JSON, export ledger to CSV, restore JSON backup file, factory reset demo data modal
-  → Account: Role indicator (USER / ADMIN), demo role switcher, Backoffice link (ADMIN), logout
+  → Account & Profile: Edit full name, username, email, phone number; profile picture editor (custom local file upload with Base64 preview, 6 curated avatar presets, direct image URL, remove photo option); role indicator (USER / ADMIN), demo role switcher, Backoffice link (ADMIN), logout
 ```
 
 ### 3.9 Profile Shortcut Modal Flow (`TopHeader` Avatar Popover)
@@ -261,7 +261,7 @@ User navigates to Settings (DesktopNav: directly below Profile, or via Shortcut 
 User clicks Profile Avatar Icon in TopHeader
   → Popover modal toggles directly beneath the icon (absolute right-0 top-full mt-2.5 z-50)
   → Identity Header: Renders user avatar photo, display name, user email, and role badge (USER / ADMIN)
-  → Shortcut 1 (Edit Profile): Links to `/profil` with user info subtitle; closes popover on click
+  → Shortcut 1 (Edit Profile): Links to `/settings?tab=account` to directly open interactive profile and avatar editor; closes popover on click
   → Shortcut 2 (Settings): Links to `/settings` with preferences subtitle; closes popover on click
   → Shortcut 3 (Bahasa / Language Switcher): Inline 2-column switcher (English vs Indonesia)
        - Immediate reactive language change via `setLocale('en' | 'id')`

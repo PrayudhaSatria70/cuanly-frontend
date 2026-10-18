@@ -580,7 +580,7 @@ User navigates to Settings (DesktopNav: directly below Profile, or via TopHeader
   │     ├── Security & Session: Inactivity timeout selector (1m, 3m default, 5m, 10m), PIN update form
   │     ├── Notifications: Spending warning alert toggle, sound toggle, clear all notifications button
   │     ├── Backup & Data: Export full state backup to JSON, export ledger to CSV, restore JSON backup file, factory reset
-  │     └── Account & Access: Role indicator (USER / ADMIN), demo role switcher, Backoffice link, logout
+  │     └── Profile & Account: Edit full name, username, email, phone; interactive profile picture editor (local image upload with Base64 preview, 6 curated presets, direct image URL, remove photo); role indicator (USER / ADMIN), demo switcher, logout
   │
   └─► Cross-Feature Synchronization:
         └── All setting changes immediately broadcast through their respective Context providers and persist in LocalStorage.
@@ -596,7 +596,7 @@ User clicks Profile Avatar Icon in TopHeader
   │
   ├─► Modal Content & Interactive Shortcuts:
   │     ├── 1. User Identity Header: Displays user avatar photo, full name, email address, and role badge
-  │     ├── 2. Shortcut: Edit Profile (`/profil`): Direct link with subtitle description; closes modal on click
+  │     ├── 2. Shortcut: Edit Profile (`/settings?tab=account`): Opens Profile & Avatar Editor directly in settings; closes modal on click
   │     ├── 3. Shortcut: Settings (`/settings`): Direct link with subtitle description; closes modal on click
   │     ├── 4. Shortcut: Bahasa (Language Switcher): Inline 2-column switcher (English vs Indonesia)
   │     │       ├── Real-time locale toggle via LanguageContext (`setLocale('en' | 'id')`)

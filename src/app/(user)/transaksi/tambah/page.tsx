@@ -251,8 +251,8 @@ export default function TambahTransaksiPage() {
                       className="fixed inset-0 z-20"
                       onClick={() => setIsCurrencyDropdownOpen(false)}
                     />
-                    <div className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 mt-1.5 w-60 rounded-2xl bg-white shadow-xl border border-gray-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
-                      <div className="px-3 py-1.5 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                    <div className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 mt-1.5 w-60 rounded-2xl bg-white dark:bg-[#0B1520] shadow-xl border border-gray-100 dark:border-[#4D8DBA]/30 py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-1.5 border-b border-gray-100 dark:border-[#4D8DBA]/20 text-[11px] font-bold text-gray-400 dark:text-slate-400 uppercase tracking-wider">
                         {t.currency.selectCurrency}
                       </div>
 
@@ -266,36 +266,36 @@ export default function TambahTransaksiPage() {
                               onClick={() => handleSelectCurrency(curr)}
                               className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left transition-colors ${
                                 isSelected
-                                  ? 'bg-emerald-50 text-emerald-800 font-bold'
-                                  : 'text-gray-700 hover:bg-gray-50'
+                                  ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-bold'
+                                  : 'text-gray-700 dark:text-slate-300 hover:bg-gray-50 dark:hover:bg-[#112233]'
                               }`}
                             >
                               <div className="flex items-center gap-2">
-                                <span className="font-extrabold w-8 text-center text-gray-900 bg-gray-100 rounded px-1 py-0.5">
+                                <span className="font-extrabold w-8 text-center text-gray-900 dark:text-white bg-gray-100 dark:bg-[#172D42] rounded px-1 py-0.5">
                                   {curr.symbol}
                                 </span>
                                 <div>
                                   <span className="block">{curr.code}</span>
-                                  <span className="text-[10px] text-gray-400 block truncate max-w-[120px]">
+                                  <span className="text-[10px] text-gray-400 dark:text-slate-400 block truncate max-w-[120px]">
                                     {curr.name}
                                   </span>
                                 </div>
                               </div>
-                              {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                              {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
                             </button>
                           );
                         })}
                       </div>
 
                       {/* Add Custom Currency CTA Button */}
-                      <div className="p-1.5 border-t border-gray-100">
+                      <div className="p-1.5 border-t border-gray-100 dark:border-[#4D8DBA]/20">
                         <button
                           type="button"
                           onClick={() => {
                             setIsCurrencyDropdownOpen(false);
                             setIsAddCurrencyModalOpen(true);
                           }}
-                          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
                         >
                           <Plus className="w-3.5 h-3.5" />
                           <span>{t.currency.addCustom}</span>
@@ -411,7 +411,7 @@ export default function TambahTransaksiPage() {
       {isAddCurrencyModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div
-            className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md bg-white dark:bg-[#0B1520] rounded-3xl shadow-2xl border border-gray-100 dark:border-[#4D8DBA]/30 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200"
             role="dialog"
             aria-modal="true"
           >
@@ -428,7 +428,7 @@ export default function TambahTransaksiPage() {
               <button
                 type="button"
                 onClick={() => setIsAddCurrencyModalOpen(false)}
-                className="p-1.5 text-gray-400 hover:text-white rounded-xl hover:bg-white/10"
+                className="p-1.5 text-gray-400 hover:text-white rounded-xl hover:bg-white/10 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -436,7 +436,7 @@ export default function TambahTransaksiPage() {
 
             <form onSubmit={handleSaveCustomCurrency} className="p-6 space-y-4">
               <div>
-                <label className="text-xs font-bold text-gray-600 block mb-1">
+                <label className="text-xs font-bold text-gray-600 dark:text-slate-300 block mb-1">
                   {t.currency.codeLabel}
                 </label>
                 <input
@@ -446,12 +446,12 @@ export default function TambahTransaksiPage() {
                   placeholder={t.currency.codePlaceholder}
                   maxLength={5}
                   required
-                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase font-mono font-bold"
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:bg-white dark:focus:bg-[#0B1520] focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 uppercase font-mono font-bold text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-600 block mb-1">
+                <label className="text-xs font-bold text-gray-600 dark:text-slate-300 block mb-1">
                   {t.currency.symbolLabel}
                 </label>
                 <input
@@ -461,12 +461,12 @@ export default function TambahTransaksiPage() {
                   placeholder={t.currency.symbolPlaceholder}
                   maxLength={6}
                   required
-                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:bg-white dark:focus:bg-[#0B1520] focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 font-bold text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-600 block mb-1">
+                <label className="text-xs font-bold text-gray-600 dark:text-slate-300 block mb-1">
                   {t.currency.nameLabel}
                 </label>
                 <input
@@ -474,18 +474,18 @@ export default function TambahTransaksiPage() {
                   value={newCurrName}
                   onChange={(e) => setNewCurrName(e.target.value)}
                   placeholder={t.currency.namePlaceholder}
-                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:bg-white dark:focus:bg-[#0B1520] focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-gray-600 block mb-1">
+                <label className="text-xs font-bold text-gray-600 dark:text-slate-300 block mb-1">
                   {t.currency.decimalsLabel}
                 </label>
                 <select
                   value={newCurrDecimals}
                   onChange={(e) => setNewCurrDecimals(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold text-gray-800"
+                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:bg-white dark:focus:bg-[#0B1520] focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 font-semibold text-gray-800 dark:text-slate-200"
                 >
                   <option value={0}>0 Decimals (e.g. IDR, JPY, KRW)</option>
                   <option value={2}>2 Decimals (e.g. USD, EUR, GBP, SGD, MYR)</option>
@@ -502,13 +502,13 @@ export default function TambahTransaksiPage() {
                 <button
                   type="button"
                   onClick={() => setIsAddCurrencyModalOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs sm:text-sm font-semibold"
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-gray-800 text-xs sm:text-sm font-semibold cursor-pointer"
                 >
                   {t.common.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-cuanly-primaryDark hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md"
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#4D8DBA] hover:bg-[#2E678E] text-white text-xs sm:text-sm font-bold shadow-md cursor-pointer"
                 >
                   <Check className="w-4 h-4 text-emerald-400" />
                   <span>{t.currency.saveBtn}</span>

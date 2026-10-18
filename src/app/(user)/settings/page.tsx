@@ -41,7 +41,7 @@ import Link from 'next/link';
 
 export default function SettingsPage() {
   const { locale, setLocale, t, currencies, activeCurrency, setActiveCurrency, addCustomCurrency, formatCurrency } = useLanguage();
-  const { user, role, switchRole, logout, sessionTimeoutMs, setSessionTimeoutDuration, updateUserPin } = useAuth();
+  const { user, role, switchRole, logout, sessionTimeoutMs, setSessionTimeoutDuration, updateUserPin, updateUserProfile } = useAuth();
   const { monthlyAllowance, setMonthlyAllowance, transactions, budgets, categories, resetToDefaultData, importFinancialData } = useFinance();
   const { isDark, toggleTheme } = useTheme();
   const { addNotification, clearAllNotifications, notifications } = useNotification();
@@ -51,12 +51,130 @@ export default function SettingsPage() {
     'appearance' | 'localization' | 'budget' | 'ocr' | 'security' | 'notifications' | 'data' | 'account'
   >('appearance');
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      const validTabs = ['appearance', 'localization', 'budget', 'ocr', 'security', 'notifications', 'data', 'account'];
+      if (tabParam && validTabs.includes(tabParam)) {
+        setActiveTab(tabParam as typeof activeTab);
+      }
+    }
+  }, []);
+
   // Success / Feedback Toast
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const showFeedback = (text: string, type: 'success' | 'error' = 'success') => {
     setFeedbackMsg({ type, text });
     setTimeout(() => setFeedbackMsg(null), 3500);
+  };
+
+  // Profile Editor state
+  const [profileName, setProfileName] = useState(user?.name || '');
+  const [profileUsername, setProfileUsername] = useState(user?.username || '');
+  const [profileEmail, setProfileEmail] = useState(user?.email || '');
+  const [profilePhone, setProfilePhone] = useState(user?.phone || '');
+  const [profileAvatarUrl, setProfileAvatarUrl] = useState(user?.avatarUrl || '');
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [avatarUrlInput, setAvatarUrlInput] = useState('');
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileUsername(user.username || '');
+      setProfileEmail(user.email || '');
+      setProfilePhone(user.phone || '');
+      setProfileAvatarUrl(user.avatarUrl || '');
+    }
+  }, [user]);
+
+  const PRESET_AVATARS = [
+    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=400&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&auto=format&fit=crop&q=80',
+    'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80',
+  ];
+
+  const handleAvatarFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2.5 * 1024 * 1024) {
+      showFeedback(
+        locale === 'en'
+          ? 'File size too large. Maximum allowed size is 2.5MB.'
+          : 'Ukuran file terlalu besar. Maksimal 2.5MB.',
+        'error'
+      );
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setProfileAvatarUrl(result);
+        showFeedback(
+          locale === 'en'
+            ? 'New photo loaded! Click "Save Profile Changes" to apply.'
+            : 'Foto baru dimuat! Klik "Simpan Perubahan Profil" untuk menerapkan.'
+        );
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileName.trim()) {
+      showFeedback(locale === 'en' ? 'Full Name is required.' : 'Nama lengkap wajib diisi.', 'error');
+      return;
+    }
+    if (!profileEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileEmail.trim())) {
+      showFeedback(locale === 'en' ? 'Valid email is required.' : 'Email tidak valid.', 'error');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    try {
+      const res = updateUserProfile({
+        name: profileName.trim(),
+        username: profileUsername.trim(),
+        email: profileEmail.trim(),
+        phone: profilePhone.trim(),
+        avatarUrl: profileAvatarUrl.trim(),
+      });
+
+      if (res.success) {
+        addNotification({
+          title: t.profile.title,
+          message: t.profile.saveProfileSuccess,
+          type: 'SUCCESS',
+        });
+        showFeedback(t.profile.saveProfileSuccess);
+      } else {
+        showFeedback(res.error || 'Failed to update profile', 'error');
+      }
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleResetProfileForm = () => {
+    if (user) {
+      setProfileName(user.name || '');
+      setProfileUsername(user.username || '');
+      setProfileEmail(user.email || '');
+      setProfilePhone(user.phone || '');
+      setProfileAvatarUrl(user.avatarUrl || '');
+      showFeedback(locale === 'en' ? 'Form reset to saved profile.' : 'Form dikembalikan ke profil tersimpan.');
+    }
   };
 
   // 1. Monthly Allowance state
@@ -375,7 +493,7 @@ export default function SettingsPage() {
     { id: 'security', label: locale === 'en' ? 'Security & Timeout' : 'Keamanan & Sesi', icon: Shield },
     { id: 'notifications', label: locale === 'en' ? 'Notifications' : 'Notifikasi', icon: Bell },
     { id: 'data', label: locale === 'en' ? 'Backup & Reset' : 'Data & Cadangan', icon: Database },
-    { id: 'account', label: locale === 'en' ? 'Account & Roles' : 'Akun & Akses', icon: User },
+    { id: 'account', label: locale === 'en' ? 'Profile & Account' : 'Profil & Akun', icon: User },
   ] as const;
 
   return (
@@ -1274,57 +1392,313 @@ export default function SettingsPage() {
         </div>
       )}
 
-      {/* TAB 8: ACCOUNT & ROLES */}
+      {/* TAB 8: ACCOUNT & PROFILE EDITING */}
       {activeTab === 'account' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <GlassCard className="p-6 space-y-6">
-            <div className="flex items-center gap-2.5 border-b border-gray-100 dark:border-[#4D8DBA]/20 pb-4">
-              <User className="w-5 h-5 text-[#4D8DBA] dark:text-[#8AD6D1]" />
-              <div>
-                <h3 className="text-base font-bold text-cuanly-primaryDark dark:text-white">
-                  Account Identity & RBAC Roles
-                </h3>
-                <p className="text-xs text-gray-500 dark:text-slate-400">
-                  Manage active login credentials and demo switching
-                </p>
+            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#4D8DBA]/20 pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-[#4D8DBA]/15 text-[#4D8DBA] dark:text-[#8AD6D1]">
+                  <User className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-cuanly-primaryDark dark:text-white">
+                    {t.profile.editProfileTitle}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    {t.profile.editProfileSubtitle}
+                  </p>
+                </div>
+              </div>
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                  role === 'ADMIN'
+                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                    : 'bg-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1] border-[#8AD6D1]/40'
+                }`}
+              >
+                {role === 'ADMIN' ? 'Admin Role' : 'User Role'}
+              </span>
+            </div>
+
+            {/* Profile Avatar Section */}
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-white/80 via-[#EDF5FA]/40 to-white/70 dark:from-[#0B1520]/80 dark:via-[#071018]/60 dark:to-[#0B1520]/80 border border-[#AEC4D4]/40 dark:border-[#4D8DBA]/25 space-y-4">
+              <span className="text-xs font-bold text-gray-700 dark:text-slate-300 block uppercase tracking-wider">
+                {t.profile.avatarLabel}
+              </span>
+
+              <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                {/* Large Preview */}
+                <div className="relative group self-center sm:self-auto">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-[#4D8DBA] dark:border-[#8AD6D1] shadow-md bg-gray-100 dark:bg-[#071018] flex items-center justify-center">
+                    {profileAvatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={profileAvatarUrl}
+                        alt="Profile preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-[#4D8DBA]/20 text-[#1C4A6B] dark:text-[#8AD6D1] flex items-center justify-center text-3xl font-extrabold">
+                        {profileName ? profileName.charAt(0).toUpperCase() : 'U'}
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 p-2 rounded-full bg-[#4D8DBA] text-white hover:bg-[#2E678E] shadow-md border-2 border-white dark:border-[#0B1520] transition-all cursor-pointer"
+                    title={t.profile.uploadPhotoBtn}
+                  >
+                    <Camera className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Avatar Actions & Presets */}
+                <div className="space-y-3 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleAvatarFileUpload}
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="px-3.5 py-2 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>{t.profile.uploadPhotoBtn}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowUrlInput(!showUrlInput)}
+                      className="px-3.5 py-2 bg-white dark:bg-[#071018] hover:bg-gray-50 dark:hover:bg-[#112233] text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                    >
+                      {showUrlInput ? (locale === 'en' ? 'Close URL' : 'Tutup URL') : t.profile.photoUrlLabel}
+                    </button>
+
+                    {profileAvatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setProfileAvatarUrl('');
+                          showFeedback(
+                            locale === 'en'
+                              ? 'Avatar removed. Save to apply.'
+                              : 'Foto profil dihapus. Klik simpan untuk menerapkan.'
+                          );
+                        }}
+                        className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        <span>{t.profile.removePhotoBtn}</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Optional Image URL Input */}
+                  {showUrlInput && (
+                    <div className="flex items-center gap-2 pt-1 animate-in fade-in">
+                      <input
+                        type="url"
+                        value={avatarUrlInput}
+                        onChange={(e) => setAvatarUrlInput(e.target.value)}
+                        placeholder="https://example.com/avatar.jpg"
+                        className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 text-gray-900 dark:text-white"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (avatarUrlInput.trim()) {
+                            setProfileAvatarUrl(avatarUrlInput.trim());
+                            setAvatarUrlInput('');
+                            setShowUrlInput(false);
+                            showFeedback(
+                              locale === 'en'
+                                ? 'Avatar URL applied! Click Save to apply.'
+                                : 'URL Avatar diterapkan! Klik Simpan untuk menerapkan.'
+                            );
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-[#4D8DBA] text-white rounded-xl text-xs font-bold hover:bg-[#2E678E]"
+                      >
+                        {locale === 'en' ? 'Apply' : 'Terapkan'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Preset Avatars Carousel */}
+                  <div className="pt-2">
+                    <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 block mb-2">
+                      {t.profile.presetAvatarsTitle}:
+                    </span>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                      {PRESET_AVATARS.map((presetUrl, idx) => {
+                        const isSelected = profileAvatarUrl === presetUrl;
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              setProfileAvatarUrl(presetUrl);
+                              showFeedback(
+                                locale === 'en'
+                                  ? 'Preset avatar selected! Click Save to apply.'
+                                  : 'Avatar preset dipilih! Klik Simpan untuk menerapkan.'
+                              );
+                            }}
+                            className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
+                              isSelected
+                                ? 'border-[#4D8DBA] ring-2 ring-[#4D8DBA]/40 scale-105'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-[#4D8DBA] opacity-75 hover:opacity-100'
+                            }`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={presetUrl}
+                              alt={`Preset avatar ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Account Info Details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-gray-400">Full Name</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white block">{user?.name || 'Cuanly User'}</span>
+            {/* Profile Form Details */}
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Full Name */}
+                <div>
+                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
+                    {t.profile.fullNameLabel} <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={profileName}
+                    onChange={(e) => setProfileName(e.target.value)}
+                    placeholder="e.g. Budi Santoso"
+                    required
+                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Username */}
+                <div>
+                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
+                    {t.profile.usernameLabel}
+                  </label>
+                  <input
+                    type="text"
+                    value={profileUsername}
+                    onChange={(e) => setProfileUsername(e.target.value)}
+                    placeholder="e.g. budisantoso"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Email Address */}
+                <div>
+                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
+                    {t.profile.emailLabel} <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    value={profileEmail}
+                    onChange={(e) => setProfileEmail(e.target.value)}
+                    placeholder="e.g. user@cuanly.com"
+                    required
+                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                  />
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
+                    {t.profile.phoneLabel}
+                  </label>
+                  <input
+                    type="tel"
+                    value={profilePhone}
+                    onChange={(e) => setProfilePhone(e.target.value)}
+                    placeholder="e.g. 0812-3456-7890"
+                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                  />
+                </div>
               </div>
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-gray-400">Email Address</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white block font-mono">{user?.email || 'user@cuanly.com'}</span>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-[#4D8DBA]/20">
+                <button
+                  type="button"
+                  onClick={handleResetProfileForm}
+                  className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                >
+                  {locale === 'en' ? 'Reset to Saved' : 'Batal / Reset'}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={isSavingProfile}
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-[#4D8DBA]/30 active:scale-95 disabled:opacity-50"
+                >
+                  <Check className="w-4 h-4 stroke-[3]" />
+                  <span>{isSavingProfile ? (locale === 'en' ? 'Saving...' : 'Menyimpan...') : t.profile.saveProfileBtn}</span>
+                </button>
               </div>
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-gray-400">Role Authority</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white block">{role}</span>
-              </div>
-              <div className="p-4 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800 space-y-1">
-                <span className="text-[11px] font-bold uppercase text-gray-400">Inactivity Timeout</span>
-                <span className="text-sm font-bold text-gray-900 dark:text-white block font-mono">{currentTimeoutMinutes} Minutes</span>
+            </form>
+
+            {/* Account Metadata Overview */}
+            <div className="pt-4 border-t border-gray-100 dark:border-[#4D8DBA]/20">
+              <span className="text-[11px] font-bold uppercase text-gray-400 block mb-3">
+                {locale === 'en' ? 'Account Details & Session' : 'Ringkasan Akun & Sesi'}
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800">
+                  <span className="text-[10px] text-gray-400 block uppercase font-bold">Role</span>
+                  <span className="text-xs font-bold text-gray-800 dark:text-slate-200">{role}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800">
+                  <span className="text-[10px] text-gray-400 block uppercase font-bold">Session Timeout</span>
+                  <span className="text-xs font-mono font-bold text-gray-800 dark:text-slate-200">{currentTimeoutMinutes} Menit</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800">
+                  <span className="text-[10px] text-gray-400 block uppercase font-bold">Joined</span>
+                  <span className="text-xs font-bold text-gray-800 dark:text-slate-200">Jan 2026</span>
+                </div>
+                <div className="p-3 rounded-xl bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-gray-800">
+                  <span className="text-[10px] text-gray-400 block uppercase font-bold">Auth Status</span>
+                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Active
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* Demo Role Switcher */}
+            {/* Switch Demo Role */}
             <div className="pt-4 border-t border-gray-100 dark:border-[#4D8DBA]/20 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h4 className="text-sm font-bold text-gray-800 dark:text-white">
-                    Switch Demo Account
+                    {t.profile.accountSwitch || 'Switch Demo Account'}
                   </h4>
                   <p className="text-xs text-gray-500">
-                    Toggle instantly between Demo User and Demo Admin for test evaluation
+                    {locale === 'en'
+                      ? 'Toggle instantly between Demo User and Demo Admin for test evaluation'
+                      : 'Beralih seketika antara Demo User dan Demo Admin untuk evaluasi fitur'}
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={switchRole}
-                  className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                  className="px-3.5 py-2 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/50 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 rounded-xl text-xs font-bold transition-all cursor-pointer"
                 >
                   Switch to {role === 'ADMIN' ? 'Demo User' : 'Demo Admin'}
                 </button>
