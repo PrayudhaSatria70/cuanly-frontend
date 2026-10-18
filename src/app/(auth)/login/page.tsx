@@ -239,54 +239,34 @@ export default function LoginPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {/* Demo Button 1: User Account (Personal) with Gradient Glass Effect */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Demo Button 1: Demo User with Gradient Glass Effect */}
               <button
                 type="button"
                 onClick={() => handleDirectDemoLogin('USER')}
-                className="group p-3 bg-gradient-to-br from-white/90 via-[#EDF5FA]/90 to-[#E2F0F8]/80 dark:from-[#0B1520]/90 dark:via-[#112233]/70 dark:to-[#071018]/90 hover:from-white hover:via-[#DFF0FA] hover:to-[#CEE7F6] dark:hover:from-[#112233] dark:hover:to-[#172D42] backdrop-blur-xl border border-white/80 dark:border-[#4D8DBA]/35 hover:border-[#4D8DBA] dark:hover:border-[#8AD6D1] rounded-xl transition-all flex items-center justify-between text-left cursor-pointer shadow-xs hover:shadow-md active:scale-[0.98]"
-                title={t.auth.userAccountTitle}
+                className="group py-2.5 px-3 bg-gradient-to-br from-white/90 via-[#EDF5FA]/90 to-[#E2F0F8]/80 dark:from-[#0B1520]/90 dark:via-[#112233]/70 dark:to-[#071018]/90 hover:from-white hover:via-[#DFF0FA] hover:to-[#CEE7F6] dark:hover:from-[#112233] dark:hover:to-[#172D42] backdrop-blur-xl border border-white/80 dark:border-[#4D8DBA]/35 hover:border-[#4D8DBA] dark:hover:border-[#8AD6D1] rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md active:scale-[0.98]"
+                title="Demo User"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white to-[#EDF5FA] dark:from-[#0D1926] dark:to-[#172D42] group-hover:from-[#4D8DBA] group-hover:to-[#2E678E] text-[#4D8DBA] group-hover:text-white flex items-center justify-center transition-all shadow-2xs border border-[#AEC4D4]/30 dark:border-[#4D8DBA]/30 flex-shrink-0">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-[#1C4A6B] dark:text-slate-200 block truncate group-hover:text-[#4D8DBA] dark:group-hover:text-[#8AD6D1] transition-colors">
-                      {t.auth.userAccountTitle}
-                    </span>
-                    <span className="text-[10px] text-gray-500 dark:text-slate-400 font-mono block">
-                      user &bull; 123456
-                    </span>
-                  </div>
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-white to-[#EDF5FA] dark:from-[#0D1926] dark:to-[#172D42] group-hover:from-[#4D8DBA] group-hover:to-[#2E678E] text-[#4D8DBA] group-hover:text-white flex items-center justify-center transition-all shadow-2xs border border-[#AEC4D4]/30 dark:border-[#4D8DBA]/30 flex-shrink-0">
+                  <User className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px] bg-gradient-to-r from-[#8AD6D1]/35 to-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1] border border-[#8AD6D1]/40 px-2 py-0.5 rounded-md font-mono font-bold flex-shrink-0 ml-1">
-                  user
+                <span className="text-xs font-bold text-[#1C4A6B] dark:text-slate-200 group-hover:text-[#4D8DBA] dark:group-hover:text-[#8AD6D1] transition-colors whitespace-nowrap">
+                  {t.auth.demoUser || 'Demo User'}
                 </span>
               </button>
 
-              {/* Demo Button 2: Admin Account (Backoffice) with Gradient Glass Effect */}
+              {/* Demo Button 2: Demo Admin with Gradient Glass Effect */}
               <button
                 type="button"
                 onClick={() => handleDirectDemoLogin('ADMIN')}
-                className="group p-3 bg-gradient-to-br from-white/90 via-[#F4F8FA]/90 to-[#EBF3F7]/80 dark:from-[#0B1520]/90 dark:via-[#112233]/70 dark:to-[#071018]/90 hover:from-white hover:via-[#E7F1F7] hover:to-[#D7E8F2] dark:hover:from-[#112233] dark:hover:to-[#1A334D] backdrop-blur-xl border border-white/80 dark:border-[#4D8DBA]/35 hover:border-[#1C4A6B] dark:hover:border-[#8AD6D1] rounded-xl transition-all flex items-center justify-between text-left cursor-pointer shadow-xs hover:shadow-md active:scale-[0.98]"
-                title={t.auth.adminAccountTitle}
+                className="group py-2.5 px-3 bg-gradient-to-br from-white/90 via-[#F4F8FA]/90 to-[#EBF3F7]/80 dark:from-[#0B1520]/90 dark:via-[#112233]/70 dark:to-[#071018]/90 hover:from-white hover:via-[#E7F1F7] hover:to-[#D7E8F2] dark:hover:from-[#112233] dark:hover:to-[#1A334D] backdrop-blur-xl border border-white/80 dark:border-[#4D8DBA]/35 hover:border-[#1C4A6B] dark:hover:border-[#8AD6D1] rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs hover:shadow-md active:scale-[0.98]"
+                title="Demo Admin"
               >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-white to-[#F4F8FA] dark:from-[#0D1926] dark:to-[#172D42] group-hover:from-[#1C4A6B] group-hover:to-[#2E678E] text-[#2E678E] group-hover:text-white flex items-center justify-center transition-all shadow-2xs border border-[#AEC4D4]/30 dark:border-[#4D8DBA]/30 flex-shrink-0">
-                    <Shield className="w-4 h-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-[#1C4A6B] dark:text-slate-200 block truncate group-hover:text-[#1C4A6B] dark:group-hover:text-[#8AD6D1] transition-colors">
-                      {t.auth.adminAccountTitle}
-                    </span>
-                    <span className="text-[10px] text-gray-500 dark:text-slate-400 font-mono block">
-                      admin &bull; 999999
-                    </span>
-                  </div>
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-white to-[#F4F8FA] dark:from-[#0D1926] dark:to-[#172D42] group-hover:from-[#1C4A6B] group-hover:to-[#2E678E] text-[#2E678E] group-hover:text-white flex items-center justify-center transition-all shadow-2xs border border-[#AEC4D4]/30 dark:border-[#4D8DBA]/30 flex-shrink-0">
+                  <Shield className="w-3.5 h-3.5" />
                 </div>
-                <span className="text-[10px] bg-gradient-to-r from-[#AEC4D4]/40 to-[#AEC4D4]/20 text-[#1C4A6B] dark:text-[#8AD6D1] border border-[#AEC4D4]/45 px-2 py-0.5 rounded-md font-mono font-bold flex-shrink-0 ml-1">
-                  admin
+                <span className="text-xs font-bold text-[#1C4A6B] dark:text-slate-200 group-hover:text-[#1C4A6B] dark:group-hover:text-[#8AD6D1] transition-colors whitespace-nowrap">
+                  {t.auth.demoAdmin || 'Demo Admin'}
                 </span>
               </button>
             </div>

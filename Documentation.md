@@ -383,7 +383,7 @@ User navigates to https://cuanly.vercel.app/ (Root URL `/`)
   └─► User arrives on `/login`
         ├── Shows official Cuanly branding & language switcher
         ├── Presents username/email & 6-digit PIN fields
-        ├── Provides direct single-touch Demo User (Personal) & Demo Admin (Backoffice) action buttons
+        ├── Provides direct single-touch Demo User & Demo Admin action buttons
         └── User must authenticate before accessing `/beranda` or `/admin/dashboard`
 ```
 
