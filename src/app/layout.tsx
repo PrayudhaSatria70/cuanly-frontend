@@ -6,6 +6,8 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { FinanceProvider } from '@/contexts/FinanceContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+import { SubscriptionProvider } from '@/contexts/SubscriptionContext';
+import { UpgradeModal } from '@/components/common/UpgradeModal';
 import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
@@ -58,13 +60,16 @@ export default function RootLayout({
         <ThemeProvider>
           <LanguageProvider>
             <AuthProvider>
-              <FinanceProvider>
-                <NotificationProvider>
-                  <AdminProvider>
-                    <AppShell>{children}</AppShell>
-                  </AdminProvider>
-                </NotificationProvider>
-              </FinanceProvider>
+              <SubscriptionProvider>
+                <FinanceProvider>
+                  <NotificationProvider>
+                    <AdminProvider>
+                      <AppShell>{children}</AppShell>
+                      <UpgradeModal />
+                    </AdminProvider>
+                  </NotificationProvider>
+                </FinanceProvider>
+              </SubscriptionProvider>
             </AuthProvider>
           </LanguageProvider>
         </ThemeProvider>

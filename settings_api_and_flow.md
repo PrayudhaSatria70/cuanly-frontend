@@ -64,6 +64,11 @@ Canonical architectural and operational specification for **Cuanly** Financial W
 | `cuanly_admin_mitra` | `localStorage` | `Mitra[]` | Business partner verification records |
 | `cuanly_admin_complaints` | `localStorage` | `Complaint[]` | User support complaints |
 | `cuanly_admin_users` | `localStorage` | `User[]` | Registered users directory |
+| `cuanly_subscription_tier` | `localStorage` | `'FREE' \| 'SILVER' \| 'GOLD' \| 'B2B'` | Active subscription plan tier (default `FREE`) |
+| `cuanly_wallets` | `localStorage` | `Wallet[]` | Multi-wallet directory (Free capped at 2, Silver+ unlimited) |
+| `cuanly_debts` | `localStorage` | `DebtItem[]` | Debt & receivables entries (Gold+ feature) |
+| `cuanly_workspace_members` | `localStorage` | `WorkspaceMember[]` | Multi-user team workspace accounts (B2B feature) |
+| `cuanly_custom_budget_threshold` | `localStorage` | `number` | Custom overbudget threshold percentage (Gold+ feature) |
 
 
 ### 1.4 Pre-Configured Demo Credentials & Simplified Action Buttons
@@ -211,7 +216,10 @@ User is authenticated and active on `/beranda` or `/admin/*`
 Route Navigation Triggered
   │
   ├─► Route is Auth Page (`/login` or `/register`):
-  │     └── Render Auth Layout immediately (no auto-bouncing to beranda)
+  │     └── Render Auth Layout immediately (centered modal view)
+  │
+  ├─► Route is Standalone Public Page (`/pricing`):
+  │     └── Render Standalone Full-Width Layout (accessible without authentication)
   │
   ├─► Route is Protected (`/beranda`, `/transaksi`, `/budget`, `/profil`, `/admin/*`):
   │     ├── If `!isAuthenticated`:
@@ -220,6 +228,53 @@ Route Navigation Triggered
   │     │     └── `router.replace('/beranda')`
   │     └── If `isAuthenticated` with valid role:
   │           └── Render page with AppShell layout (TopHeader, DesktopNav, BottomNav)
+```
+
+### 3.4 Pricing Plan & Subscription Flow (`/pricing`)
+```
+Login Screen (`/login`)
+  │
+  ├─► User clicks "Pricing Plan" button in top-left corner (`fixed top-4 left-4 sm:top-6 sm:left-6 z-30`)
+  │     └── Routed to `/pricing` via Next.js client-side navigation (`Link href="/pricing"`)
+  │
+  ├─► Pricing Plan Screen (`/pricing`):
+  │     ├── Top Header: Back button (to `/login` or `/beranda`), Cuanly Logo, Theme Toggle, Language Switcher
+  │     │
+  │     ├── Hero Section:
+  │     │     ├── Summary Cuanly ("Apa itu Cuanly?"):
+  │     │     │     Comprehensive explanation of Cuanly as an all-in-one financial and budgeting platform.
+  │     │     ├── Subscription Hook ("Tingkatkan Kemampuan Finansial Anda ke Level Berikutnya"):
+  │     │     │     Compelling subscription value proposition highlighting unlimited wallets, CSV exports,
+  │     │     │     smart threshold budgeting, priority cloud backups, and shared team workspaces.
+  │     │     └── Billing Cycle Toggle: "Tagihan Bulanan" vs. "Tagihan Tahunan" (with up to 34% savings badge)
+  │     │
+  │     ├── 4 Pricing Plan Cards (derived from existing Cuanly feature matrix):
+  │     │     1. Basic (Free):
+  │     │        • Target: Pengguna Baru / Kasual
+  │     │        • Price: Rp0 (Selamanya)
+  │     │        • Features: Pencatatan manual dasar, maksimal 2 Wallets, laporan grafik bulanan standar, sinkronisasi cloud dasar.
+  │     │     2. Silver Plan:
+  │     │        • Target: Active User Personal
+  │     │        • Price: Rp10.000 / bulan (atau Rp89.000/tahun)
+  │     │        • Features: Unlimited Wallets, ekspor laporan ke CSV/Excel, akses filter grafik kustom (by rentang tanggal), bebas iklan.
+  │     │     3. Gold Plan (Best Value / Recommended):
+  │     │        • Target: Power User / Kreator
+  │     │        • Price: Rp25.000 / bulan (atau Rp199.000/tahun)
+  │     │        • Features: Semua fitur Silver + Fitur Budgeting (Custom Threshold), manajemen utang/piutang manual, prioritas cloud backup.
+  │     │     4. B2B Plan (Team / Business):
+  │     │        • Target: UMKM / Keuangan Bersama
+  │     │        • Price: Rp59.000 / bulan (Maks. 3-5 akun)
+  │     │        • Features: Semua fitur Gold + Shared Workspace (Satu database dompet bersama yang bisa diakses & diedit beberapa akun tim).
+  │     │
+  │     ├── Comparative Table ("📊 Tabel Pricelist Berdasarkan Fitur Eksisting Cuanly"):
+  │     │     Full tabular view matching the canonical pricelist specifications verbatim.
+  │     │
+  │     ├── FAQ Section:
+  │     │     Collapsible accordion answering core questions regarding pricing, security, and workspaces.
+  │     │
+  │     └── Action Handling:
+  │           ├── Unauthenticated users clicking CTA -> routes to `/register?plan={id}&billing={cycle}`
+  │           └── Authenticated users clicking CTA -> opens interactive plan confirmation modal with simulated activation
 ```
 
 ### 3.4 Financial Dashboard & Overbudget Alert Flow (`/beranda`)
@@ -386,11 +441,91 @@ User changes Language (via LanguageSwitcher in TopHeader, Login, Settings, or Pr
   - When logged in with Demo Admin (`ADMIN` role), the Admin Backoffice navigation section appears in `DesktopNav` with full access to Dashboard, Users, Verification, All Transactions, Categories, and Complaints.
   - Route guard in `AppShell` strictly checks `user?.role === 'ADMIN'`; any attempt by non-admins to access `/admin/*` directly via URL is intercepted and redirected to `/beranda`.
 - **Credential Safety:** Client code is sanitized and free of private API keys or hardcoded secrets.
+- **CSV Formula Injection Mitigation (CWE-1236):**
+  - Both `/transaksi` and `/settings` CSV export engines execute automated cell prefix sanitization (`sanitizeCsvCell`).
+  - Cells starting with dangerous formula triggers (`=`, `+`, `-`, `@`, `\t`, `\r`) are automatically escaped with a leading single quote (`'`), preventing remote code execution or spreadsheet formula exploitation when exported files are opened in MS Excel or LibreOffice Calc.
+- **XSS & Injection Protection (OWASP Top 10):**
+  - Zero dynamic HTML string interpolation into DOM sinks.
+  - The single static usage of `dangerouslySetInnerHTML` in `src/app/layout.tsx` is confined to static dark-mode anti-flicker initialization without external or user parameters.
+- **Input Validation & Sanitization:**
+  - Strict RegExp boundary verification for emails, non-negative numbers for monetary transactions, and defensive array bounds.
+- **SonarQube Quality Gate & Static Analysis:**
+  - 0 syntax/runtime errors, strict TypeScript compiler check (`tsc --noEmit`), and 0 broken links across 19 static/dynamic Next.js routes.
+
+## 6. Subscription & Pricing Plan Architecture
+
+### 6.1 Pricing Plan Matrix
+The subscription model adheres strictly to the canonical pricing tier structure:
+| Plan Tier | Price / Month | Key Features Included | Restrictions / Gates |
+|---|---|---|---|
+| **Basic (Free)** | Rp0 | Pencatatan manual, grafik bulanan standar, cloud sync dasar | Maksimal **2 dompet/rekening**, tidak ada ekspor CSV, filter tanggal standar |
+| **Silver Plan** | Rp10.000 | **Unlimited dompet**, Ekspor CSV & Excel, Filter grafik rentang tanggal kustom, Bebas iklan | Bebas iklan, tidak termasuk custom threshold, utang/piutang, atau workspace |
+| **Gold Plan** | Rp25.000 | Seluruh fitur Silver + **Budgeting custom threshold alert**, **Manajemen utang & piutang manual**, **Prioritas cloud backup** | Tidak termasuk shared team workspace multi-user |
+| **B2B Plan** | Rp59.000 | Seluruh fitur Gold + **Shared workspace tim kecil (3-5 user)**, **Multi-user role permissions**, **Dompet bersama (shared pool)** | Akses penuh tanpa batasan fitur |
+
+### 6.2 Canva-Style Premium Thumbnail Badges (`PremiumCrownBadge`)
+In alignment with Canva's Pro visual language, premium feature triggers display a gold crown thumbnail badge:
+- **Visual Spec:** Lucide `Crown` icon with rich amber gradient fill (`fill-amber-400 text-amber-500` or gold pill gradient `from-amber-400 to-amber-500`).
+- **Placement Locations:**
+  - `src/components/finance/WalletManagerModal.tsx`: Rendered on "+ Tambah Dompet Baru" button when free quota (2 wallets) is reached.
+  - `src/app/(user)/transaksi/page.tsx`:
+    - "Ekspor CSV" button (`PremiumCrownBadge plan="SILVER"`)
+    - "Rentang Tanggal" filter button (`PremiumCrownBadge plan="SILVER"`)
+  - `src/app/(user)/budget/page.tsx`:
+    - "Threshold: X%" custom alert button (`PremiumCrownBadge plan="GOLD"`)
+  - `src/app/(user)/beranda/page.tsx`:
+    - "Kelola Dompet" quick action
+    - "Utang & Piutang" feature button (`PremiumCrownBadge plan="GOLD"`)
+    - "Shared Workspace" feature button (`PremiumCrownBadge plan="B2B"`)
+  - `src/components/layout/TopHeader.tsx`:
+    - Header plan badge pill with Canva gold crown
+    - Profile shortcut modal subscription card
+  - `src/components/layout/DesktopNav.tsx`:
+    - "Fitur Berlangganan" sidebar items
+    - Bottom sidebar upgrade card with Canva crown thumbnail button
+  - `src/app/(user)/settings/page.tsx`:
+    - Data tab "Export CSV" button (`PremiumCrownBadge plan="SILVER"`)
+    - Data tab "Prioritas Cloud Backup" card (`PremiumCrownBadge plan="GOLD"`)
+    - Budget tab "Custom Threshold" button (`PremiumCrownBadge plan="GOLD"`)
+
+### 6.3 Upgrade Modal Flow (`UpgradeModal.tsx`)
+When an unauthorized user clicks on any locked feature:
+1. `openUpgradeModal(featureName, requiredPlan, description, benefits)` is invoked via `SubscriptionContext`.
+2. The modal pops up globally above the UI with title:
+   > **"Upgrade Plan untuk Mengakses Fitur Lebih Lanjut"**
+3. It presents:
+   - Feature name badge with required plan tier (`Silver`, `Gold`, or `B2B`).
+   - Feature description explaining why the feature is locked and how it benefits the user.
+   - Comprehensive checklist of included benefits in the target tier.
+   - Monthly and annual pricing comparison (`Rp10.000/bln` for Silver, `Rp25.000/bln` for Gold, `Rp59.000/bln` for B2B).
+   - Primary CTA: **"Lihat Halaman Pricing Plan"** (navigates user to `/pricing`).
+   - Secondary Instant Simulation CTA: **"Aktifkan [Plan] (Simulasi Instan)"** (allows immediate client-side unlocking for testing).
+
+### 6.4 Role-Based Pricing Exemption Policy (Admin Full Feature Access)
+Strict role-based segregation governs pricing plan enforcement:
+- **Pengguna Personal (`USER` & Demo User):**
+  - Tunduk pada sistem kuota dan tier paket berlangganan (`FREE` secara default).
+  - Dibatasi maksimal 2 dompet pada akun Free.
+  - Tombol fitur premium (Ekspor CSV, Filter Rentang Tanggal, Custom Threshold, Utang & Piutang, Shared Workspace, Prioritas Backup) menampilkan **Canva-style gold crown badge** (`PremiumCrownBadge`).
+  - Mengklik fitur terkunci akan memicu kemunculan modal *"Upgrade Plan untuk Mengakses Fitur Lebih Lanjut"*.
+  - Menampilkan banner/pill ajakan upgrade di `TopHeader`, `DesktopNav`, dan `beranda`.
+- **Pengguna Admin (`ADMIN` & Demo Admin):**
+  - **TIDAK KENA** pricing plan apapun dan **WAJIB FULL FEATURE** secara permanen.
+  - Evaluasi `isAdmin = role === 'ADMIN' || user?.role === 'ADMIN'`.
+  - `effectivePlan` otomatis di-set ke level tertinggi (`B2B`).
+  - `hasAccess(tier)` mengembalikan nilai `true` tanpa syarat untuk seluruh tier (`SILVER`, `GOLD`, `B2B`).
+  - Batas 2 dompet pada `addWallet()` di-bypass; admin bebas membuat dompet tanpa batas (*unlimited wallets*).
+  - Bebas ekspor laporan CSV/Excel, filter tanggal kustom, manajemen utang/piutang, shared team workspace, dan custom threshold alert.
+  - Pemanggilan `openUpgradeModal()` langsung di-bypass (`if (isAdmin) return;`) sehingga pop-up upgrade **tidak akan pernah muncul**.
+  - Komponen `PremiumCrownBadge` me-return `null` jika `isAdmin === true`, sehingga seluruh tombol di aplikasi bersih dari icon gembok/mahkota untuk akun admin.
+  - Indikator profil di `TopHeader` menampilkan badge `FULL` dengan keterangan *"Admin Full Access (Full Feature • Tanpa Kuota)"*, serta banner upgrade di sidebar `DesktopNav` disembunyikan.
+
 
 ---
 
-## 6. Operations
+## 7. Operations
 
 - **Build Target:** Next.js 16.4.2 (App Router + Turbopack).
 - **Deployment:** Vercel Serverless / Edge Network.
-- **Static Optimization:** All 18 routes compile statically (`○ Static`).
+- **Static Optimization:** All 19 routes compile cleanly (`○ Static` / `ƒ Dynamic`).
+- **Zero-Bug Verification:** `npx tsc --noEmit` and `next build` executed with exit code 0.

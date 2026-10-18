@@ -3,9 +3,12 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { Badge } from '@/components/common/Badge';
 import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
+import { CustomThresholdModal } from '@/components/finance/CustomThresholdModal';
+import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
 import {
   PieChart,
   Edit2,
@@ -15,16 +18,19 @@ import {
   CheckCircle,
   X,
   Wallet,
+  Sliders,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function BudgetPage() {
-  const { t, formatCurrency, activeCurrency } = useLanguage();
+  const { t, locale, formatCurrency, activeCurrency } = useLanguage();
   const { categories, summary, getCategoryBudgetInfo, updateBudget } = useFinance();
+  const { hasAccess, openUpgradeModal, warningThresholdPercent } = useSubscription();
 
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingLimit, setEditingLimit] = useState<number>(0);
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState<boolean>(false);
+  const [isThresholdModalOpen, setIsThresholdModalOpen] = useState<boolean>(false);
 
   const expenseCategories = categories.filter((c) => c.type === 'EXPENSE');
 
@@ -59,14 +65,51 @@ export default function BudgetPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsEditAllowanceOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-[#4D8DBA]/25 transition-all hover:scale-[1.02] active:scale-95"
-        >
-          <Wallet className="w-4 h-4 text-[#8AD6D1]" />
-          <span>{t.budget.editOverallAllowance}</span>
-        </button>
+        <div className="flex items-center flex-wrap gap-2">
+          {/* Canva-style Button: Custom Threshold with Crown 👑 */}
+          <button
+            type="button"
+            onClick={() => {
+              if (!hasAccess('GOLD')) {
+                openUpgradeModal(
+                  t.modals.threshold.title,
+                  'GOLD',
+                  t.modals.threshold.subtitle,
+                  locale === 'en'
+                    ? [
+                        'Customize category spending warning threshold with flexible percentages',
+                        'Proactive overspending prevention before your budget is exhausted',
+                        'Comprehensive manual debt and receivables tracking',
+                        'Priority encrypted cloud backup sync with redundant SLA servers',
+                      ]
+                    : [
+                        'Tentukan ambang batas peringatan pengeluaran per kategori secara fleksibel',
+                        'Pencegahan overspending lebih dini sebelum saldo habis',
+                        'Manajemen utang dan piutang manual tercatat rapi',
+                        'Prioritas sinkronisasi cloud backup otomatis & cepat',
+                      ]
+                );
+              } else {
+                setIsThresholdModalOpen(true);
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white dark:bg-[#0D1926] hover:bg-gray-50 border border-amber-400/60 text-[#0C2340] dark:text-white rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all hover:scale-[1.02] active:scale-95 cursor-pointer group"
+            title={t.modals.threshold.title}
+          >
+            <Sliders className="w-4 h-4 text-amber-500" />
+            <span>Threshold: {warningThresholdPercent}%</span>
+            {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" size="sm" />}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsEditAllowanceOpen(true)}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-[#4D8DBA]/25 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+          >
+            <Wallet className="w-4 h-4 text-[#8AD6D1]" />
+            <span>{t.budget.editOverallAllowance}</span>
+          </button>
+        </div>
       </div>
 
       {/* Total Budget Summary Hero */}
@@ -272,6 +315,12 @@ export default function BudgetPage() {
       <EditAllowanceModal
         isOpen={isEditAllowanceOpen}
         onClose={() => setIsEditAllowanceOpen(false)}
+      />
+
+      {/* Gold Plan: Custom Threshold Modal */}
+      <CustomThresholdModal
+        isOpen={isThresholdModalOpen}
+        onClose={() => setIsThresholdModalOpen(false)}
       />
     </div>
   );

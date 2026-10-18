@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { CuanlyLogo } from '@/components/common/CuanlyLogo';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import {
   Bell,
   Camera,
@@ -18,6 +19,7 @@ import {
   LogOut,
   Settings,
   Check,
+  Crown,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -27,6 +29,7 @@ export const TopHeader: React.FC = () => {
   const { t, locale, setLocale } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const { unreadCount, openDrawer } = useNotification();
+  const { tier } = useSubscription();
   const pathname = usePathname();
 
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
@@ -88,6 +91,26 @@ export const TopHeader: React.FC = () => {
 
         {/* Right Actions */}
         <div className="flex items-center gap-2 sm:gap-3">
+          {/* Pricing Plan Pill with Canva Gold Crown - ONLY VISIBLE TO USER / DEMO USER */}
+          {role !== 'ADMIN' && (
+            <Link
+              href="/pricing"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-2xs hover:scale-105 active:scale-95 bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 text-amber-700 dark:text-amber-300 border-amber-400/40"
+              title={locale === 'en' ? 'View Pricing Plans & Feature Comparison' : 'Lihat Detail & Perbandingan Paket Langganan'}
+            >
+              <Crown className="w-3.5 h-3.5 fill-amber-400 text-amber-500 flex-shrink-0" />
+              <span className="hidden sm:inline">
+                {tier === 'FREE' && 'Basic'}
+                {tier === 'SILVER' && 'Silver'}
+                {tier === 'GOLD' && 'Gold'}
+                {tier === 'B2B' && 'B2B'}
+              </span>
+              <span className="text-[10px] uppercase font-mono tracking-tight opacity-75">
+                Plan
+              </span>
+            </Link>
+          )}
+
           {/* Dark Mode Toggle Button: Situated directly to the left of Smart Receipt */}
           <button
             type="button"
@@ -215,6 +238,58 @@ export const TopHeader: React.FC = () => {
 
                 {/* 2. Shortcuts Menu List */}
                 <div className="space-y-1">
+                  {/* Shortcut 0: Subscription Tier / Admin Full Feature Status */}
+                  {role === 'ADMIN' ? (
+                    <div className="flex items-center justify-between p-2.5 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 text-xs">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-lg bg-purple-200 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                          <Shield className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-purple-950 dark:text-purple-200 block">
+                            {t.nav.adminFullAccess}
+                          </span>
+                          <span className="text-[10px] text-purple-700 dark:text-purple-300 block font-medium">
+                            {t.nav.fullFeatureNoQuota}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-purple-200 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                        {t.nav.fullBadge}
+                      </span>
+                    </div>
+                  ) : (
+                    <Link
+                      href="/pricing"
+                      onClick={() => setIsProfileMenuOpen(false)}
+                      className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-400/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border border-amber-400/30 text-xs transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-lg bg-amber-400/20 text-amber-600 dark:text-amber-400">
+                          <Crown className="w-4 h-4 fill-amber-400 text-amber-500" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-gray-900 dark:text-white">
+                              {tier === 'FREE' && (locale === 'en' ? 'Basic Plan (Free)' : 'Paket Basic (Gratis)')}
+                              {tier === 'SILVER' && (locale === 'en' ? 'Silver Pro Plan' : 'Paket Silver Pro')}
+                              {tier === 'GOLD' && (locale === 'en' ? 'Gold Max Plan' : 'Paket Gold Max')}
+                              {tier === 'B2B' && (locale === 'en' ? 'B2B Enterprise Plan' : 'Paket B2B Enterprise')}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-amber-700 dark:text-amber-300 block font-medium">
+                            {tier === 'B2B'
+                              ? (locale === 'en' ? 'Full Feature Access' : 'Akses Fitur Penuh')
+                              : (locale === 'en' ? 'Upgrade features & limits →' : 'Upgrade fitur & kuota →')}
+                          </span>
+                        </div>
+                      </div>
+                      <span className="text-amber-600 dark:text-amber-400 group-hover:translate-x-0.5 transition-transform text-xs font-bold">
+                        &rarr;
+                      </span>
+                    </Link>
+                  )}
+
                   {/* Shortcut A: Edit Profile */}
                   <Link
                     href="/settings?tab=account&edit=true"

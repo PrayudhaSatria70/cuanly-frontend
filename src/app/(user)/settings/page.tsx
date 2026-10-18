@@ -39,8 +39,14 @@ import {
   Eye,
   EyeOff,
   Edit3,
+  Cloud,
+  Crown,
+  Sliders,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSubscription } from '@/contexts/SubscriptionContext';
+import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
+import { CustomThresholdModal } from '@/components/finance/CustomThresholdModal';
 
 export default function SettingsPage() {
   const { locale, setLocale, t, currencies, activeCurrency, setActiveCurrency, addCustomCurrency, formatCurrency } = useLanguage();
@@ -48,6 +54,9 @@ export default function SettingsPage() {
   const { monthlyAllowance, setMonthlyAllowance, transactions, budgets, categories, resetToDefaultData, importFinancialData } = useFinance();
   const { isDark, toggleTheme } = useTheme();
   const { addNotification, clearAllNotifications, notifications } = useNotification();
+  const { tier, hasAccess, openUpgradeModal, warningThresholdPercent } = useSubscription();
+
+  const [isCustomThresholdOpen, setIsCustomThresholdOpen] = useState(false);
 
   // Active Tab
   const [activeTab, setActiveTab] = useState<
@@ -473,21 +482,39 @@ export default function SettingsPage() {
   };
 
   const handleExportCsv = () => {
+    if (!hasAccess('SILVER')) {
+      openUpgradeModal(
+        locale === 'en' ? 'Export CSV & Excel' : 'Ekspor CSV & Excel',
+        'SILVER',
+        locale === 'en'
+          ? 'Export unlimited transaction records directly to CSV and Excel format.'
+          : 'Ekspor seluruh catatan pembukuan transaksi keuangan tanpa batas langsung ke format CSV / Excel.'
+      );
+      return;
+    }
+
     if (transactions.length === 0) {
       showFeedback(locale === 'en' ? 'No transactions to export.' : 'Tidak ada transaksi untuk diekspor.', 'error');
       return;
     }
 
+    const sanitizeCsvCell = (val: string | number | undefined | null) => {
+      if (val === undefined || val === null) return '""';
+      const str = String(val);
+      const safeStr = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+      return `"${safeStr.replace(/"/g, '""')}"`;
+    };
+
     const headers = ['ID', 'Date', 'Type', 'Category', 'Amount', 'Currency', 'Note', 'Merchant'];
     const rows = transactions.map((t) => [
-      t.id,
-      t.date,
-      t.type,
-      t.categoryName || t.categorySlug || '',
+      sanitizeCsvCell(t.id),
+      sanitizeCsvCell(t.date),
+      sanitizeCsvCell(t.type),
+      sanitizeCsvCell(t.categoryName || t.categorySlug || ''),
       t.amount,
-      t.currency || activeCurrency.code,
-      `"${(t.notes || '').replace(/"/g, '""')}"`,
-      `"${(t.receipt?.merchant || '').replace(/"/g, '""')}"`,
+      sanitizeCsvCell(t.currency || activeCurrency.code),
+      sanitizeCsvCell(t.notes || ''),
+      sanitizeCsvCell(t.receipt?.merchant || ''),
     ]);
 
     const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
@@ -972,6 +999,27 @@ export default function SettingsPage() {
                     {th}%
                   </button>
                 ))}
+
+                {/* Custom Threshold (Gold Plan) */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!hasAccess('GOLD')) {
+                      openUpgradeModal(
+                        t.modals.threshold.title,
+                        'GOLD',
+                        t.modals.threshold.subtitle
+                      );
+                      return;
+                    }
+                    setIsCustomThresholdOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold border border-amber-400 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 transition-all cursor-pointer shadow-xs"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-amber-500" />
+                  <span>Custom ({warningThresholdPercent}%)</span>
+                  {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+                </button>
               </div>
             </div>
 
@@ -1461,15 +1509,68 @@ export default function SettingsPage() {
                     <FileSpreadsheet className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-white group-hover:text-emerald-600">
-                      {t.settings.exportCsv}
-                    </h4>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-sm font-bold text-gray-800 dark:text-white group-hover:text-emerald-600">
+                        {t.settings.exportCsv}
+                      </h4>
+                      {!hasAccess('SILVER') && (
+                        <PremiumCrownBadge plan="SILVER" />
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500">
-                      Export {transactions.length} rows to spreadsheet CSV
+                      Export {transactions.length} {locale === 'en' ? 'rows to spreadsheet CSV' : 'baris ke spreadsheet CSV'} {!hasAccess('SILVER') && (locale === 'en' ? '(Requires Silver)' : '(Perlu Silver)')}
                     </p>
                   </div>
                 </div>
               </button>
+            </div>
+
+            {/* Prioritas Cloud Backup (Gold Feature) */}
+            <div className="pt-4 border-t border-gray-100 dark:border-[#4D8DBA]/20">
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-400/10 to-yellow-500/10 border border-amber-400/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 mt-0.5">
+                    <Cloud className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-gray-900 dark:text-white">
+                        {locale === 'en' ? 'Priority Cloud Backup (Server SLA 99.9%)' : 'Prioritas Cloud Backup (Server SLA 99.9%)'}
+                      </h4>
+                      {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                      {locale === 'en'
+                        ? 'Instant encrypted automatic cloud backup sync with redundant priority servers'
+                        : 'Sinkronisasi instan cadangan cloud otomatis terenkripsi dengan server redundan prioritas'}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!hasAccess('GOLD')) {
+                      openUpgradeModal(
+                        locale === 'en' ? 'Priority Cloud Backup' : 'Prioritas Cloud Backup',
+                        'GOLD',
+                        locale === 'en'
+                          ? 'Instant encrypted automatic cloud backup sync with redundant 99.9% priority SLA servers.'
+                          : 'Sinkronisasi instan cadangan cloud otomatis terenkripsi dengan server SLA prioritas 99.9%.'
+                      );
+                      return;
+                    }
+                    showFeedback(
+                      locale === 'en'
+                        ? 'Priority cloud backup completed successfully.'
+                        : 'Sinkronisasi cloud prioritas selesai terenkripsi.'
+                    );
+                  }}
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex-shrink-0"
+                >
+                  <Crown className="w-3.5 h-3.5 fill-amber-300 text-amber-100" />
+                  <span>{hasAccess('GOLD') ? (locale === 'en' ? 'Sync Now' : 'Sinkronisasi Sekarang') : (locale === 'en' ? 'Unlock Gold Access' : 'Buka Akses Gold')}</span>
+                </button>
+              </div>
             </div>
 
             {/* Restore File Uploader */}
@@ -1480,9 +1581,11 @@ export default function SettingsPage() {
               <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 dark:border-gray-700 hover:border-[#4D8DBA] rounded-2xl cursor-pointer bg-gray-50/50 dark:bg-[#071018]/50 transition-all">
                 <Upload className="w-6 h-6 text-gray-400 mb-2" />
                 <span className="text-xs font-bold text-gray-700 dark:text-slate-200">
-                  Click to browse or drop JSON backup file
+                  {locale === 'en' ? 'Click to browse or drop JSON backup file' : 'Klik untuk memilih atau lepas file backup JSON'}
                 </span>
-                <span className="text-[10px] text-gray-400 mt-0.5">Accepts .json backup files</span>
+                <span className="text-[10px] text-gray-400 mt-0.5">
+                  {locale === 'en' ? 'Accepts .json backup files' : 'Menerima file backup berformat .json'}
+                </span>
                 <input
                   type="file"
                   accept=".json,application/json"
@@ -2154,6 +2257,12 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {/* Custom Threshold Modal (Gold Plan) */}
+      <CustomThresholdModal
+        isOpen={isCustomThresholdOpen}
+        onClose={() => setIsCustomThresholdOpen(false)}
+      />
     </div>
   );
 }

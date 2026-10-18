@@ -19,12 +19,14 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   }, []);
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isPricingPage = pathname === '/pricing';
+  const isStandalonePage = isAuthPage || isPricingPage;
 
   useEffect(() => {
     if (!mounted) return;
 
     // 1. If not authenticated and trying to access protected route -> redirect to /login
-    if (!isAuthenticated && !isAuthPage) {
+    if (!isAuthenticated && !isStandalonePage) {
       router.replace('/login');
       return;
     }
@@ -33,7 +35,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     if (isAuthenticated && user?.role !== 'ADMIN' && pathname.startsWith('/admin')) {
       router.replace('/beranda');
     }
-  }, [mounted, isAuthenticated, isAuthPage, pathname, router, user]);
+  }, [mounted, isAuthenticated, isStandalonePage, pathname, router, user]);
 
   if (!mounted) {
     return null;
@@ -45,6 +47,15 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <main className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-cuanly-canvas dark:bg-[#071018] text-cuanly-primaryDark dark:text-slate-100 transition-colors duration-200">
         {children}
       </main>
+    );
+  }
+
+  // Standalone full-width public page (Pricing Plan)
+  if (isPricingPage) {
+    return (
+      <div className="min-h-screen w-full bg-cuanly-canvas dark:bg-[#071018] text-cuanly-primaryDark dark:text-slate-100 transition-colors duration-200">
+        {children}
+      </div>
     );
   }
 

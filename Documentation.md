@@ -820,11 +820,88 @@ export interface NotificationItem {
   isRead: boolean;
   link?: string;
 }
+
+export type SubscriptionTier = 'FREE' | 'SILVER' | 'GOLD' | 'B2B';
+
+export interface Wallet {
+  id: string;
+  name: string;
+  type: 'BANK' | 'EWALLET' | 'CASH' | 'INVESTMENT';
+  balance: number;
+  accountNumber?: string;
+  color?: string;
+}
+
+export interface DebtItem {
+  id: string;
+  type: 'PAYABLE' | 'RECEIVABLE';
+  personName: string;
+  amount: number;
+  dueDate: string;
+  notes?: string;
+  isSettled: boolean;
+  createdAt: string;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  name: string;
+  email: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  status: 'ACTIVE' | 'INVITED';
+}
 ```
 
 ---
 
-## 6. Security & Compliance Architecture
+## 6. Subscription & Pricing Plan System (Canva-Style Feature Gating)
+
+### 6.1 Tier Specification Matrix
+| Plan | Price | Included Capabilities | Tier Gate Policy |
+|---|---|---|---|
+| **Basic (Free)** | Rp0/bln | Manual transaction recording, basic monthly analytics, default cloud sync | Max **2 wallets/rekening**, no CSV export, standard calendar filter |
+| **Silver Plan** | Rp10.000/bln | Unlimited Wallets, CSV/Excel Export, Custom Date Range Filter, Ad-Free | Unlocks all Silver features |
+| **Gold Plan** | Rp25.000/bln | All Silver + Budgeting Custom Threshold Alert, Debt & Receivables Manual Tracker, Priority Cloud Backup (SLA 99.9%) | Unlocks all Gold features |
+| **B2B Plan** | Rp59.000/bln | All Gold + Shared Workspace Team Accounts (3-5 users), Multi-User Role Permissions, Shared Wallet Pool | Full enterprise team access |
+
+### 6.2 Canva-Style Premium Thumbnail Badges (`PremiumCrownBadge`)
+- Styled after Canva Pro's iconic gold crown badge.
+- Utilizes Lucide's `Crown` icon with glowing amber gradients (`fill-amber-400 text-amber-500` or gold pill).
+- Displayed on locked action buttons across the interface to clearly signal premium requirements before interaction.
+
+### 6.3 Upgrade Prompt Modal (`UpgradeModal.tsx`)
+- Triggered whenever an unauthorized tier clicks on a restricted feature button.
+- Title: **"Upgrade Plan untuk Mengakses Fitur Lebih Lanjut"**.
+- Displays dynamic feature context:
+  1. Target tier badge & feature title.
+  2. Concise explanation of the feature's capability.
+  3. Feature benefits bullet points.
+  4. Pricing breakdown (monthly / annual).
+  5. **"Lihat Halaman Pricing Plan"** (redirects to `/pricing`).
+  6. **"Aktifkan [Plan] (Simulasi Instan)"** (instant client-side unlock for immediate testing).
+
+### 6.4 Role-Based Pricing Exemption Policy (Admin Full Feature Access)
+Strict role-based segregation governs pricing plan enforcement:
+- **Pengguna Personal (`USER` & Demo User):**
+  - Tunduk pada sistem kuota dan tier paket berlangganan (`FREE` secara default).
+  - Dibatasi maksimal 2 dompet pada akun Free.
+  - Tombol fitur premium (Ekspor CSV, Filter Rentang Tanggal, Custom Threshold, Utang & Piutang, Shared Workspace, Prioritas Backup) menampilkan **Canva-style gold crown badge** (`PremiumCrownBadge`).
+  - Mengklik fitur terkunci akan memicu kemunculan modal *"Upgrade Plan untuk Mengakses Fitur Lebih Lanjut"*.
+  - Menampilkan banner/pill ajakan upgrade di `TopHeader`, `DesktopNav`, dan `beranda`.
+- **Pengguna Admin (`ADMIN` & Demo Admin):**
+  - **TIDAK KENA** pricing plan apapun dan **WAJIB FULL FEATURE** secara permanen.
+  - Evaluasi `isAdmin = role === 'ADMIN' || user?.role === 'ADMIN'`.
+  - `effectivePlan` otomatis di-set ke level tertinggi (`B2B`).
+  - `hasAccess(tier)` mengembalikan nilai `true` tanpa syarat untuk seluruh tier (`SILVER`, `GOLD`, `B2B`).
+  - Batas 2 dompet pada `addWallet()` di-bypass; admin bebas membuat dompet tanpa batas (*unlimited wallets*).
+  - Bebas ekspor laporan CSV/Excel, filter tanggal kustom, manajemen utang/piutang, shared team workspace, dan custom threshold alert.
+  - Pemanggilan `openUpgradeModal()` langsung di-bypass (`if (isAdmin) return;`) sehingga pop-up upgrade **tidak akan pernah muncul**.
+  - Komponen `PremiumCrownBadge` me-return `null` jika `isAdmin === true`, sehingga seluruh tombol di aplikasi bersih dari icon gembok/mahkota untuk akun admin.
+  - Indikator profil di `TopHeader` menampilkan badge `FULL` dengan keterangan *"Admin Full Access (Full Feature • Tanpa Kuota)"*, serta banner upgrade di sidebar `DesktopNav` disembunyikan.
+
+---
+
+## 7. Security & Compliance Architecture
 
 1. **Inactivity Session Hardening (3-Minute Rule)**:
    - Eliminates risks of unauthorized access on unattended public or shared terminals.
@@ -848,11 +925,11 @@ export interface NotificationItem {
 
 ---
 
-## 7. Operations & Build Verification
+## 8. Operations & Build Verification
 
 - **Runtime & Framework**: Next.js 16.4.2 (App Router with Turbopack).
 - **TypeScript**: Strict compilation (`tsc --noEmit`).
-- **Build Output**: Clean static generation (`○ Static`) for all 18 public and authenticated routes (including the comprehensive `/settings` system preferences module).
+- **Build Output**: Clean static generation (`○ Static`) for all 19 public and authenticated routes.
 - **Verification Command**:
   ```bash
   npm run build

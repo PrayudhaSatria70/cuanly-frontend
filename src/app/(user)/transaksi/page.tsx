@@ -3,7 +3,9 @@
 import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { GlassCard } from '@/components/common/GlassCard';
+import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
 import {
   Search,
   Plus,
@@ -12,16 +14,109 @@ import {
   Trash2,
   ChevronRight,
   Receipt as ReceiptIcon,
+  Download,
+  Calendar,
+  X,
+  FileSpreadsheet,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TransaksiPage() {
   const { t, locale, formatCurrency, formatDate } = useLanguage();
   const { transactions, categories, deleteTransaction } = useFinance();
+  const { hasAccess, openUpgradeModal } = useSubscription();
 
   const [activeTab, setActiveTab] = useState<'ALL' | 'EXPENSE' | 'INCOME'>('ALL');
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isCustomDateOpen, setIsCustomDateOpen] = useState(false);
+
+  // Handle Export CSV (Silver Plan Feature)
+  const handleExportCsv = () => {
+    if (!hasAccess('SILVER')) {
+      openUpgradeModal(
+        locale === 'en' ? 'Export Financial Reports to CSV / Excel' : 'Ekspor Laporan ke CSV / Excel',
+        'SILVER',
+        locale === 'en'
+          ? 'Export entire financial mutation books to CSV and Excel files, exclusive for Silver Plan subscribers and above.'
+          : 'Fitur ekspor seluruh pembukuan keuangan ke file CSV dan Excel eksklusif untuk pelanggan Silver Plan ke atas.',
+        locale === 'en'
+          ? [
+              'Download full financial book in CSV/Excel anytime',
+              'Unlimited Wallets without account limits',
+              'Custom date-range mutation and chart filters',
+              'Ad-free uninterrupted financial workflow',
+            ]
+          : [
+              'Unduh pembukuan lengkap dalam format CSV/Excel kapan saja',
+              'Unlimited Wallets tanpa batasan dompet',
+              'Akses filter grafik kustom berdasarkan rentang tanggal',
+              'Bebas iklan tanpa gangguan',
+            ]
+      );
+      return;
+    }
+
+    // Sanitize CSV cells against CSV Formula Injection (CWE-1236)
+    const sanitizeCsvCell = (val: string | number | undefined | null) => {
+      if (val === undefined || val === null) return '""';
+      const str = String(val);
+      const safeStr = /^[=+\-@\t\r]/.test(str) ? `'${str}` : str;
+      return `"${safeStr.replace(/"/g, '""')}"`;
+    };
+
+    // Generate CSV content
+    const headers = [locale === 'en' ? 'ID,Date,Type,Category,Amount,Note,Merchant' : 'ID,Tanggal,Tipe,Kategori,Nominal,Catatan,Merchant'];
+    const rows = filtered.map((tx) =>
+      [
+        sanitizeCsvCell(tx.id),
+        sanitizeCsvCell(tx.date),
+        sanitizeCsvCell(tx.type),
+        sanitizeCsvCell(tx.categoryName),
+        tx.amount,
+        sanitizeCsvCell(tx.notes || ''),
+        sanitizeCsvCell(tx.receipt?.merchant || ''),
+      ].join(',')
+    );
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers, ...rows].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `cuanly-transaksi-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Handle Custom Date Range toggle (Silver Plan Feature)
+  const handleToggleCustomDate = () => {
+    if (!hasAccess('SILVER')) {
+      openUpgradeModal(
+        locale === 'en' ? 'Custom Date Range Chart Filter' : 'Akses Filter Grafik Kustom (by Rentang Tanggal)',
+        'SILVER',
+        locale === 'en'
+          ? 'Filter transaction mutation history and charts by custom date ranges, exclusive for Silver Plan subscribers and above.'
+          : 'Filter riwayat mutasi dan grafik berdasarkan rentang tanggal kustom eksklusif untuk pelanggan Silver Plan ke atas.',
+        locale === 'en'
+          ? [
+              'Set start and end dates with precision',
+              'Analyze specific period spending without monthly calendar boundaries',
+              'Export transaction mutation records to CSV/Excel',
+              'Unlimited Wallets without account limits',
+            ]
+          : [
+              'Pilih tanggal awal dan akhir transaksi secara presisi',
+              'Analisis pengeluaran periode tertentu tanpa batasan bulan kalender',
+              'Ekspor laporan mutasi ke format CSV/Excel',
+              'Unlimited Wallets tanpa batasan dompet',
+            ]
+      );
+      return;
+    }
+    setIsCustomDateOpen(!isCustomDateOpen);
+  };
 
   // Filter transactions
   const filtered = transactions.filter((tx) => {
@@ -33,6 +128,10 @@ export default function TransaksiPage() {
     if (selectedCategory !== 'ALL' && tx.categoryId !== selectedCategory && tx.categorySlug !== selectedCategory) {
       return false;
     }
+
+    // Custom date range filter (Silver)
+    if (startDate && tx.date < startDate) return false;
+    if (endDate && tx.date > endDate) return false;
 
     // Search query
     if (searchQuery.trim()) {
@@ -60,10 +159,22 @@ export default function TransaksiPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center flex-wrap gap-2">
+          {/* Canva-style Button: Ekspor CSV / Excel with Crown 👑 */}
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="flex items-center gap-1.5 px-3 py-2 bg-white dark:bg-[#0D1926] hover:bg-gray-50 dark:hover:bg-[#112233] text-gray-700 dark:text-slate-200 border border-[#AEC4D4]/60 dark:border-[#4D8DBA]/35 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all cursor-pointer group"
+            title={t.nav.exportCsv}
+          >
+            <FileSpreadsheet className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1]" />
+            <span>{t.nav.exportCsv}</span>
+            {!hasAccess('SILVER') && <PremiumCrownBadge plan="SILVER" size="sm" />}
+          </button>
+
           <Link
             href="/transaksi/scan"
-            className="flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-gray-50 text-cuanly-primaryDark border border-gray-200 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-[#0D1926] hover:bg-gray-50 text-cuanly-primaryDark border border-gray-200 dark:border-gray-700 rounded-xl text-xs sm:text-sm font-semibold shadow-xs transition-all"
           >
             <Camera className="w-4 h-4 text-emerald-600" />
             <span>{t.receipt.scannerTitle}</span>
@@ -141,7 +252,7 @@ export default function TransaksiPage() {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full sm:w-48 py-2 px-3 text-xs sm:text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-cuanly-primary/30"
+              className="w-full sm:w-48 py-2 px-3 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-cuanly-primary/30"
             >
               <option value="ALL">{t.common.allCategories}</option>
               {categories.map((c) => (
@@ -150,8 +261,65 @@ export default function TransaksiPage() {
                 </option>
               ))}
             </select>
+
+            {/* Canva-style Button: Filter Rentang Tanggal with Crown 👑 */}
+            <button
+              type="button"
+              onClick={handleToggleCustomDate}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold border transition-all cursor-pointer whitespace-nowrap shadow-2xs ${
+                startDate || endDate || isCustomDateOpen
+                  ? 'bg-[#4D8DBA]/15 border-[#4D8DBA] text-[#1C4A6B] dark:text-[#8AD6D1]'
+                  : 'bg-white dark:bg-[#071018] border-gray-200 dark:border-gray-700 text-gray-700 dark:text-slate-300 hover:bg-gray-50'
+              }`}
+              title={t.nav.dateRange}
+            >
+              <Calendar className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1]" />
+              <span className="hidden sm:inline">{t.nav.dateRange}</span>
+              <span className="sm:hidden">{t.common.date}</span>
+              {!hasAccess('SILVER') && <PremiumCrownBadge plan="SILVER" size="sm" />}
+            </button>
           </div>
         </div>
+
+        {/* Collapsible Date Range Inputs (when Silver+ unlocked) */}
+        {isCustomDateOpen && hasAccess('SILVER') && (
+          <div className="p-3 rounded-2xl bg-gradient-to-r from-[#EDF5FA] to-white dark:from-[#0B1520] dark:to-[#071018] border border-[#8AD6D1]/50 flex flex-wrap items-center justify-between gap-3 animate-in fade-in duration-150">
+            <div className="flex items-center flex-wrap gap-2 text-xs">
+              <span className="font-bold text-[#1C4A6B] dark:text-[#8AD6D1] flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                {t.nav.period}
+              </span>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#071018]"
+                />
+                <span className="text-gray-400">{t.nav.to}</span>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-[#071018]"
+                />
+              </div>
+            </div>
+            {(startDate || endDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="text-xs text-rose-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+              >
+                <X className="w-3.5 h-3.5" />
+                <span>{locale === 'en' ? 'Reset Dates' : 'Reset Tanggal'}</span>
+              </button>
+            )}
+          </div>
+        )}
       </GlassCard>
 
       {/* Transactions List */}

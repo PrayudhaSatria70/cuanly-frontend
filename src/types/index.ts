@@ -1,4 +1,5 @@
 export type Role = 'USER' | 'ADMIN';
+export type SubscriptionTier = 'FREE' | 'SILVER' | 'GOLD' | 'B2B';
 
 export interface User {
   id: string;
@@ -6,11 +7,44 @@ export interface User {
   username?: string;
   email: string;
   role: Role;
+  subscriptionPlan?: SubscriptionTier;
   password?: string;
   pin?: string;
   avatarUrl?: string;
   phone?: string;
   createdAt: string;
+}
+
+export interface Wallet {
+  id: string;
+  userId: string;
+  name: string;
+  type: 'CASH' | 'BANK' | 'E_WALLET' | 'SAVINGS';
+  accountNumber?: string;
+  balance: number;
+  color?: string;
+  isShared?: boolean;
+}
+
+export interface DebtItem {
+  id: string;
+  userId: string;
+  type: 'DEBT' | 'RECEIVABLE'; // DEBT = Utang saya ke orang, RECEIVABLE = Piutang (orang berutang ke saya)
+  personName: string;
+  amount: number;
+  dueDate: string;
+  notes?: string;
+  isSettled: boolean;
+  createdAt: string;
+}
+
+export interface WorkspaceMember {
+  id: string;
+  name: string;
+  email: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  avatarUrl?: string;
+  status: 'ACTIVE' | 'INVITED';
 }
 
 export type TransactionType = 'INCOME' | 'EXPENSE';

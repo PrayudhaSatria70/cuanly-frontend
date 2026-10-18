@@ -81,12 +81,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto py-6 space-y-6">
-      {/* Top Bar with Brand Logo, Dark Mode Toggle & Language Switcher */}
-      <div className="flex items-center justify-between">
-        <Link href="/login" className="hover:opacity-90 transition-opacity">
-          <CuanlyLogo size="sm" variant="full" />
-        </Link>
+    <>
+      {/* Top Left: Pricing Plan Button (Pojok Kiri Atas Layar) */}
+      <Link
+        href="/pricing"
+        id="pricing-plan-btn"
+        className="fixed top-4 left-4 sm:top-6 sm:left-6 z-30 inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-xl bg-white/90 dark:bg-[#0D1926]/90 backdrop-blur-xl border border-[#AEC4D4]/60 dark:border-[#4D8DBA]/40 text-[#1C4A6B] dark:text-[#8AD6D1] hover:text-[#4D8DBA] dark:hover:text-white text-xs font-bold shadow-md shadow-[#4D8DBA]/10 hover:shadow-lg hover:border-[#4D8DBA] dark:hover:border-[#8AD6D1] hover:scale-[1.02] active:scale-[0.98] transition-all group cursor-pointer"
+        title={t.pricing?.buttonTooltip || 'Lihat daftar paket dan fitur Cuanly'}
+      >
+        <span className="p-1 rounded-lg bg-[#4D8DBA]/15 group-hover:bg-[#4D8DBA]/25 text-[#4D8DBA] dark:text-[#8AD6D1] transition-colors">
+          <Sparkles className="w-3.5 h-3.5" />
+        </span>
+        <span className="tracking-tight">{t.pricing?.buttonLabel || 'Pricing Plan'}</span>
+        <ArrowRight className="w-3.5 h-3.5 text-[#4D8DBA] dark:text-[#8AD6D1] group-hover:translate-x-0.5 transition-transform" />
+      </Link>
+
+      <div className="w-full max-w-md mx-auto py-6 pt-16 sm:pt-6 space-y-6">
+        {/* Top Bar with Brand Logo, Dark Mode Toggle & Language Switcher */}
+        <div className="flex items-center justify-between">
+          <Link href="/login" className="hover:opacity-90 transition-opacity">
+            <CuanlyLogo size="sm" variant="full" />
+          </Link>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -274,5 +289,6 @@ export default function LoginPage() {
         </div>
       </GlassCard>
     </div>
+    </>
   );
 }

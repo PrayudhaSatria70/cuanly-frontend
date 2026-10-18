@@ -1,4 +1,4 @@
-import { Category, User, Transaction, BudgetLimit, Mitra, Complaint, NotificationItem } from '@/types';
+import { Category, User, Transaction, BudgetLimit, Mitra, Complaint, NotificationItem, Wallet, DebtItem, WorkspaceMember } from '@/types';
 
 export const INITIAL_CATEGORIES: Category[] = [
   // 6 Expense Categories (Hick's Law)
@@ -431,5 +431,109 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     timestamp: '2026-10-17T14:20:00Z',
     isRead: true,
     link: '/transaksi',
+  },
+];
+
+export const INITIAL_WALLETS: Wallet[] = [
+  {
+    id: 'wlt_cash',
+    userId: 'usr_demo_01',
+    name: 'Dompet Tunai (Cash)',
+    type: 'CASH',
+    balance: 850000,
+    color: '#10B981',
+    isShared: false,
+  },
+  {
+    id: 'wlt_bca',
+    userId: 'usr_demo_01',
+    name: 'Rekening Bank BCA',
+    type: 'BANK',
+    accountNumber: '8820-192-381',
+    balance: 5850000,
+    color: '#2563EB',
+    isShared: false,
+  },
+  {
+    id: 'wlt_gopay',
+    userId: 'usr_demo_01',
+    name: 'GoPay & OVO Digital',
+    type: 'E_WALLET',
+    accountNumber: '0812-3456-7890',
+    balance: 420000,
+    color: '#06B6D4',
+    isShared: false,
+  },
+  {
+    id: 'wlt_shared_team',
+    userId: 'usr_demo_01',
+    name: 'Kas Operasional Usaha (Shared)',
+    type: 'BANK',
+    accountNumber: '7190-281-990',
+    balance: 14500000,
+    color: '#8B5CF6',
+    isShared: true,
+  },
+];
+
+export const INITIAL_DEBTS: DebtItem[] = [
+  {
+    id: 'debt_01',
+    userId: 'usr_demo_01',
+    type: 'RECEIVABLE', // Orang berhutang ke saya
+    personName: 'Rian Pratama',
+    amount: 350000,
+    dueDate: '2026-10-25',
+    notes: 'Pinjaman patungan tiket konser',
+    isSettled: false,
+    createdAt: '2026-10-10T10:00:00Z',
+  },
+  {
+    id: 'debt_02',
+    userId: 'usr_demo_01',
+    type: 'DEBT', // Saya berhutang ke orang
+    personName: 'Dewi Lestari',
+    amount: 150000,
+    dueDate: '2026-10-22',
+    notes: 'Talangan makan malam reuni',
+    isSettled: false,
+    createdAt: '2026-10-12T19:30:00Z',
+  },
+  {
+    id: 'debt_03',
+    userId: 'usr_demo_01',
+    type: 'RECEIVABLE',
+    personName: 'Andi Wijaya (Klien)',
+    amount: 1200000,
+    dueDate: '2026-10-30',
+    notes: 'Pelunasan sisa jasa desain logo',
+    isSettled: false,
+    createdAt: '2026-10-05T08:00:00Z',
+  },
+];
+
+export const INITIAL_WORKSPACE_MEMBERS: WorkspaceMember[] = [
+  {
+    id: 'mem_01',
+    name: 'Budi Santoso (Anda)',
+    email: 'user@cuanly.com',
+    role: 'OWNER',
+    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'mem_02',
+    name: 'Siti Admin',
+    email: 'admin@cuanly.com',
+    role: 'ADMIN',
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    status: 'ACTIVE',
+  },
+  {
+    id: 'mem_03',
+    name: 'Finance Partner',
+    email: 'keuangan@tokocuan.com',
+    role: 'MEMBER',
+    status: 'ACTIVE',
   },
 ];

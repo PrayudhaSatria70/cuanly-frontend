@@ -8,6 +8,11 @@ import { GlassCard } from '@/components/common/GlassCard';
 import { CashflowChart } from '@/components/charts/CashflowChart';
 import { CategoryDonutChart } from '@/components/charts/CategoryDonutChart';
 import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
+import { WalletManagerModal } from '@/components/finance/WalletManagerModal';
+import { DebtManagerModal } from '@/components/finance/DebtManagerModal';
+import { SharedWorkspaceModal } from '@/components/finance/SharedWorkspaceModal';
+import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import {
   Wallet,
   ArrowUpRight,
@@ -20,6 +25,10 @@ import {
   Receipt,
   Sparkles,
   Edit3,
+  HandCoins,
+  Building2,
+  Crown,
+  Shield,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -27,8 +36,12 @@ export default function BerandaPage() {
   const { t, locale, formatCurrency, formatDate } = useLanguage();
   const { user } = useAuth();
   const { summary, activeBudgetWarning, dismissWarning, transactions } = useFinance();
+  const { tier, hasAccess, openUpgradeModal, wallets, debts, workspaceMembers } = useSubscription();
 
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
   const recentTransactions = transactions.slice(0, 5);
 
@@ -42,11 +55,31 @@ export default function BerandaPage() {
       {/* User Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#8AD6D1]/20 text-[#1C4A6B] border border-[#8AD6D1]/40 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-[#4D8DBA]" />
               Cuanly Personal
             </span>
+            {user?.role === 'ADMIN' ? (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border border-purple-300 dark:border-purple-800">
+                <Shield className="w-3 h-3 text-purple-600 dark:text-purple-400" />
+                <span>Admin Full Feature</span>
+              </span>
+            ) : (
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 transition-all hover:scale-105 active:scale-95"
+                title="Lihat / Kelola Paket Langganan"
+              >
+                <Crown className="w-3 h-3 fill-amber-400 text-amber-500" />
+                <span>
+                  {tier === 'FREE' && 'Plan: Basic (Free)'}
+                  {tier === 'SILVER' && 'Plan: Silver Pro'}
+                  {tier === 'GOLD' && 'Plan: Gold Max'}
+                  {tier === 'B2B' && 'Plan: B2B Enterprise'}
+                </span>
+              </Link>
+            )}
           </div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-cuanly-primaryDark mt-1">
             {t.home.greeting} {user?.name || 'Kawan Cuanly'} 👋
@@ -84,10 +117,23 @@ export default function BerandaPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           {/* Balance info */}
           <div className="space-y-1">
-            <span className="text-xs font-semibold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
-              <Wallet className="w-4 h-4 text-[#8AD6D1]" />
-              {t.home.totalBalance}
-            </span>
+            <div className="flex items-center justify-between sm:justify-start gap-3">
+              <span className="text-xs font-semibold text-gray-200 uppercase tracking-wider flex items-center gap-1.5">
+                <Wallet className="w-4 h-4 text-[#8AD6D1]" />
+                {t.home.totalBalance}
+              </span>
+              <button
+                type="button"
+                onClick={() => setIsWalletModalOpen(true)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                title={t.nav.myWallets}
+              >
+                <span>{wallets.length} {locale === 'en' ? 'Wallets' : 'Dompet'}</span>
+                {!hasAccess('SILVER') && (
+                  <PremiumCrownBadge plan="SILVER" />
+                )}
+              </button>
+            </div>
             <div className="text-3xl sm:text-4xl font-extrabold tracking-tight num-tabular text-white">
               {formatCurrency(summary.totalBalance)}
             </div>
@@ -166,6 +212,114 @@ export default function BerandaPage() {
           </div>
         </div>
       </GlassCard>
+
+      {/* Subscription Features Quick Action Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        {/* Feature 1: Dompet Multi-Akun */}
+        <button
+          type="button"
+          onClick={() => setIsWalletModalOpen(true)}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#4D8DBA] dark:text-[#8AD6D1] flex items-center justify-center border border-blue-200/50">
+              <Wallet className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-[#4D8DBA]">
+                  {t.nav.myWallets}
+                </h4>
+                {!hasAccess('SILVER') && (
+                  <PremiumCrownBadge plan="SILVER" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                {wallets.length} {t.nav.walletsSaved} {!hasAccess('SILVER') && t.nav.max2}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Feature 2: Manajemen Utang & Piutang (Gold Plan) */}
+        <button
+          type="button"
+          onClick={() => {
+            if (!hasAccess('GOLD')) {
+              openUpgradeModal(
+                t.modals.debt.title,
+                'GOLD',
+                t.modals.debt.subtitle
+              );
+              return;
+            }
+            setIsDebtModalOpen(true);
+          }}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-amber-400 transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200/50">
+              <HandCoins className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-amber-600">
+                  {t.nav.debtManager}
+                </h4>
+                {!hasAccess('GOLD') && (
+                  <PremiumCrownBadge plan="GOLD" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                {hasAccess('GOLD')
+                  ? `${debts.length} ${locale === 'en' ? 'active records' : 'catatan aktif'}`
+                  : (locale === 'en' ? 'Requires Gold Plan' : 'Perlu Gold Plan')}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Feature 3: Shared Workspace Tim (B2B Plan) */}
+        <button
+          type="button"
+          onClick={() => {
+            if (!hasAccess('B2B')) {
+              openUpgradeModal(
+                t.modals.workspace.title,
+                'B2B',
+                t.modals.workspace.subtitle
+              );
+              return;
+            }
+            setIsWorkspaceModalOpen(true);
+          }}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-purple-400 transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-200/50">
+              <Building2 className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-purple-600">
+                  {t.nav.teamWorkspace}
+                </h4>
+                {!hasAccess('B2B') && (
+                  <PremiumCrownBadge plan="B2B" />
+                )}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                {hasAccess('B2B')
+                  ? `${workspaceMembers.length} ${locale === 'en' ? 'active team members' : 'anggota tim aktif'}`
+                  : (locale === 'en' ? 'Requires B2B Plan' : 'Perlu B2B Plan')}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+      </div>
 
       {/* Smart Budget Warning Alert Banner */}
       {activeBudgetWarning && (() => {
@@ -311,6 +465,24 @@ export default function BerandaPage() {
       <EditAllowanceModal
         isOpen={isEditAllowanceOpen}
         onClose={() => setIsEditAllowanceOpen(false)}
+      />
+
+      {/* Wallet Manager Modal */}
+      <WalletManagerModal
+        isOpen={isWalletModalOpen}
+        onClose={() => setIsWalletModalOpen(false)}
+      />
+
+      {/* Debt Manager Modal */}
+      <DebtManagerModal
+        isOpen={isDebtModalOpen}
+        onClose={() => setIsDebtModalOpen(false)}
+      />
+
+      {/* Shared Workspace Modal */}
+      <SharedWorkspaceModal
+        isOpen={isWorkspaceModalOpen}
+        onClose={() => setIsWorkspaceModalOpen(false)}
       />
     </div>
   );
