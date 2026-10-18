@@ -44,11 +44,11 @@ export const DesktopNav: React.FC = () => {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 flex-shrink-0 glass-panel border-r border-gray-200/80 min-h-[calc(100vh-4rem)] p-4 space-y-6">
+    <aside className="hidden md:flex flex-col w-64 lg:w-72 flex-shrink-0 glass-panel border-r border-gray-200/80 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4 lg:p-5 space-y-6">
       {/* User Section */}
       <div>
         <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3">
-          Menu Pengguna
+          {t.nav.userMenu || 'User Menu'}
         </span>
         <div className="mt-2 space-y-1">
           {userItems.map((item) => {
@@ -76,7 +76,7 @@ export const DesktopNav: React.FC = () => {
       <div className="pt-4 border-t border-gray-200/70">
         <div className="flex items-center justify-between px-3">
           <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600">
-            Admin Backoffice
+            {t.nav.adminBackoffice || 'Admin Backoffice'}
           </span>
           {role === 'ADMIN' && (
             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700">

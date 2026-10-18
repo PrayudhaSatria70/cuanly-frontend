@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { Badge } from '@/components/common/Badge';
+import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
 import {
   PieChart,
   Edit2,
@@ -13,6 +14,7 @@ import {
   AlertCircle,
   CheckCircle,
   X,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -22,6 +24,7 @@ export default function BudgetPage() {
 
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
   const [editingLimit, setEditingLimit] = useState<number>(0);
+  const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState<boolean>(false);
 
   const expenseCategories = categories.filter((c) => c.type === 'EXPENSE');
 
@@ -44,15 +47,26 @@ export default function BudgetPage() {
       : 0;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Page Title */}
-      <div>
-        <h1 className="text-xl sm:text-2xl font-extrabold text-cuanly-primaryDark">
-          {t.budget.title}
-        </h1>
-        <p className="text-xs sm:text-sm text-gray-500">
-          {t.budget.subtitle}
-        </p>
+    <div className="w-full max-w-7xl mx-auto space-y-6">
+      {/* Page Title & Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-extrabold text-cuanly-primaryDark">
+            {t.budget.title}
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500">
+            {t.budget.subtitle}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setIsEditAllowanceOpen(true)}
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-cuanly-primaryDark hover:bg-black text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+        >
+          <Wallet className="w-4 h-4 text-emerald-400" />
+          <span>{t.budget.editOverallAllowance}</span>
+        </button>
       </div>
 
       {/* Total Budget Summary Hero */}
@@ -87,7 +101,7 @@ export default function BudgetPage() {
         {/* Total Progress Bar */}
         <div className="mt-4 space-y-1.5">
           <div className="flex justify-between text-xs font-bold text-gray-700">
-            <span>Pemakaian Keseluruhan</span>
+            <span>{t.budget.overallUsage}</span>
             <span className="num-tabular">{totalUsedPercent}%</span>
           </div>
           <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -253,6 +267,12 @@ export default function BudgetPage() {
           </div>
         </div>
       )}
+
+      {/* Edit Overall Allowance Modal */}
+      <EditAllowanceModal
+        isOpen={isEditAllowanceOpen}
+        onClose={() => setIsEditAllowanceOpen(false)}
+      />
     </div>
   );
 }

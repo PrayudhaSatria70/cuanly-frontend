@@ -71,7 +71,7 @@ export const BottomNav: React.FC = () => {
           <Link
             href="/transaksi/tambah"
             className="w-13 h-13 w-12 h-12 rounded-full bg-gradient-to-tr from-[#2C302E] to-[#6B7072] text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all border-4 border-white"
-            title="Tambah Pengeluaran"
+            title={t.home.addExpenseBtn}
           >
             <Plus className="w-6 h-6 stroke-[3]" />
           </Link>

@@ -3,6 +3,7 @@ export type Role = 'USER' | 'ADMIN';
 export interface User {
   id: string;
   name: string;
+  username?: string;
   email: string;
   role: Role;
   pin?: string;
@@ -30,11 +31,19 @@ export interface ReceiptData {
   confidenceScore: number;
 }
 
+export interface Currency {
+  code: string;
+  symbol: string;
+  name: string;
+}
+
 export interface Transaction {
   id: string;
   userId: string;
   type: TransactionType;
   amount: number;
+  currency?: string;
+  currencySymbol?: string;
   categoryId: string;
   categoryName: string;
   categorySlug: string;
@@ -70,6 +79,7 @@ export interface FinancialSummary {
   totalBudgetLimit: number;
   totalBudgetSpent: number;
   remainingBudget: number;
+  monthlyAllowance: number;
 }
 
 export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';

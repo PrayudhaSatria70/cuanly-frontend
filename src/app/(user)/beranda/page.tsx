@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { CashflowChart } from '@/components/charts/CashflowChart';
 import { CategoryDonutChart } from '@/components/charts/CategoryDonutChart';
+import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
 import {
   Wallet,
   ArrowUpRight,
@@ -18,13 +19,16 @@ import {
   ChevronRight,
   Receipt,
   Sparkles,
+  Edit3,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function BerandaPage() {
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, locale, formatCurrency, formatDate } = useLanguage();
   const { user } = useAuth();
   const { summary, activeBudgetWarning, dismissWarning, transactions } = useFinance();
+
+  const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
 
   const recentTransactions = transactions.slice(0, 5);
 
@@ -34,7 +38,7 @@ export default function BerandaPage() {
       : 0;
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* User Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -87,12 +91,23 @@ export default function BerandaPage() {
             <div className="text-3xl sm:text-4xl font-extrabold tracking-tight num-tabular text-white">
               {formatCurrency(summary.totalBalance)}
             </div>
-            <p className="text-xs text-gray-300 pt-1">
-              {t.home.remainingBudget}:{' '}
-              <span className="font-bold text-white num-tabular">
-                {formatCurrency(summary.remainingBudget)}
-              </span>
-            </p>
+            <div className="flex items-center gap-3 pt-1">
+              <p className="text-xs text-gray-300">
+                {t.home.remainingBudget}:{' '}
+                <span className="font-bold text-white num-tabular">
+                  {formatCurrency(summary.remainingBudget)}
+                </span>
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsEditAllowanceOpen(true)}
+                className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-300 hover:text-white underline hover:no-underline transition-colors"
+                title={t.home.editAllowance}
+              >
+                <Edit3 className="w-3 h-3" />
+                <span>{t.home.editAllowance}</span>
+              </button>
+            </div>
           </div>
 
           {/* Income vs Expense Pill Indicators */}
@@ -120,10 +135,21 @@ export default function BerandaPage() {
 
         {/* Monthly Budget Usage Progress Bar */}
         <div className="mt-6 pt-5 border-t border-white/15">
-          <div className="flex items-center justify-between text-xs text-gray-300 mb-1.5">
-            <span>Pemakaian Budget Bulanan</span>
+          <div className="flex items-center justify-between text-xs text-gray-300 mb-1.5 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-medium">{t.home.monthlyBudgetUsage}</span>
+              <button
+                type="button"
+                onClick={() => setIsEditAllowanceOpen(true)}
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[11px] font-semibold transition-all hover:scale-105 active:scale-95"
+                title={t.home.editAllowance}
+              >
+                <Edit3 className="w-3 h-3 text-emerald-300" />
+                <span>{t.home.editAllowance}</span>
+              </button>
+            </div>
             <span className="font-bold text-white num-tabular">
-              {budgetUsagePercent}% (Terpakai {formatCurrency(summary.totalBudgetSpent)} / {formatCurrency(summary.totalBudgetLimit)})
+              {budgetUsagePercent}% ({t.home.usedOf} {formatCurrency(summary.totalBudgetSpent)} / {formatCurrency(summary.totalBudgetLimit)})
             </span>
           </div>
           <div className="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
@@ -161,26 +187,33 @@ export default function BerandaPage() {
             <div>
               <h4 className="text-sm font-bold">
                 {activeBudgetWarning.isOverbudget
-                  ? `Perhatian: Kategori ${activeBudgetWarning.categoryName} Melebihi Batas!`
+                  ? (locale === 'en'
+                      ? `Warning: Category ${activeBudgetWarning.categoryName} Exceeded Limit!`
+                      : `Perhatian: Kategori ${activeBudgetWarning.categoryName} Melebihi Batas!`)
                   : t.home.budgetWarningTitle}
               </h4>
               <p className="text-xs mt-0.5 leading-relaxed text-gray-700">
-                Pengeluaran untuk kategori <strong>{activeBudgetWarning.categoryName}</strong> telah mencapai{' '}
-                <span className="font-bold">{activeBudgetWarning.percent}%</span> dari batas yang Anda tentukan.
+                {locale === 'en'
+                  ? `Your spending for category ${activeBudgetWarning.categoryName} has reached `
+                  : 'Pengeluaran untuk kategori '}
+                <strong>{activeBudgetWarning.categoryName}</strong>{' '}
+                {locale === 'en' ? 'has reached ' : 'telah mencapai '}
+                <span className="font-bold">{activeBudgetWarning.percent}%</span>{' '}
+                {locale === 'en' ? 'of your specified budget limit.' : 'dari batas yang Anda tentukan.'}
               </p>
               <div className="mt-2 flex items-center gap-3">
                 <Link
                   href={`/budget/${activeBudgetWarning.categorySlug}`}
                   className="text-xs font-bold underline hover:no-underline"
                 >
-                  Lihat Detail Budget &rarr;
+                  {locale === 'en' ? 'View Budget Details →' : 'Lihat Detail Budget →'}
                 </Link>
                 <button
                   type="button"
                   onClick={dismissWarning}
                   className="text-xs text-gray-500 hover:text-gray-800"
                 >
-                  Tutup Peringatan
+                  {locale === 'en' ? 'Dismiss Alert' : 'Tutup Peringatan'}
                 </button>
               </div>
             </div>
@@ -199,7 +232,7 @@ export default function BerandaPage() {
         </GlassCard>
       </div>
 
-      {/* Recent Transactions List with "Lihat Semua" */}
+      {/* Recent Transactions List with "See All" */}
       <GlassCard>
         <div className="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
           <div>
@@ -207,7 +240,9 @@ export default function BerandaPage() {
               <Receipt className="w-4 h-4 text-cuanly-primary" />
               {t.home.recentTransactions}
             </h3>
-            <p className="text-xs text-gray-500">5 mutasi terakhir yang dicatat</p>
+            <p className="text-xs text-gray-500">
+              {locale === 'en' ? '5 most recent transactions logged' : '5 mutasi terakhir yang dicatat'}
+            </p>
           </div>
           <Link
             href="/transaksi"
@@ -242,7 +277,7 @@ export default function BerandaPage() {
                     </h4>
                     {tx.receipt && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
-                        Struk
+                        {locale === 'en' ? 'Receipt' : 'Struk'}
                       </span>
                     )}
                   </div>
@@ -259,7 +294,7 @@ export default function BerandaPage() {
                   }`}
                 >
                   {tx.type === 'INCOME' ? '+' : '-'}
-                  {formatCurrency(tx.amount)}
+                  {formatCurrency(tx.amount, tx.currencySymbol)}
                 </div>
                 <span className="text-[10px] text-gray-400">
                   {formatDate(tx.date)}
@@ -269,6 +304,12 @@ export default function BerandaPage() {
           ))}
         </div>
       </GlassCard>
+
+      {/* Edit Allowance Modal */}
+      <EditAllowanceModal
+        isOpen={isEditAllowanceOpen}
+        onClose={() => setIsEditAllowanceOpen(false)}
+      />
     </div>
   );
 }

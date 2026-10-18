@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { GlassCard } from '@/components/common/GlassCard';
+import { Currency } from '@/types';
 import {
   ArrowLeft,
   Utensils,
@@ -19,12 +20,16 @@ import {
   TrendingUp,
   Camera,
   Check,
+  ChevronDown,
+  Plus,
+  Coins,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TambahTransaksiPage() {
   const router = useRouter();
-  const { t, formatCurrency } = useLanguage();
+  const { t, formatCurrency, currencies, activeCurrency, addCustomCurrency, setActiveCurrency } = useLanguage();
   const { categories, addTransaction } = useFinance();
   const { addNotification } = useNotification();
 
@@ -34,6 +39,15 @@ export default function TambahTransaksiPage() {
   const [date, setDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [notes, setNotes] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
+
+  // Currency selection & custom currency addition
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>(activeCurrency);
+  const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
+  const [isAddCurrencyModalOpen, setIsAddCurrencyModalOpen] = useState(false);
+  const [newCurrCode, setNewCurrCode] = useState('');
+  const [newCurrSymbol, setNewCurrSymbol] = useState('');
+  const [newCurrName, setNewCurrName] = useState('');
+  const [addCurrError, setAddCurrError] = useState('');
 
   // Available categories based on selected type
   const availableCategories = categories.filter((c) => c.type === type);
@@ -69,6 +83,40 @@ export default function TambahTransaksiPage() {
     setErrorMsg('');
   };
 
+  const handleSelectCurrency = (curr: Currency) => {
+    setSelectedCurrency(curr);
+    setActiveCurrency(curr.code);
+    setIsCurrencyDropdownOpen(false);
+  };
+
+  const handleSaveCustomCurrency = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCurrCode.trim() || !newCurrSymbol.trim()) {
+      setAddCurrError('Currency Code and Symbol are required.');
+      return;
+    }
+
+    const created = addCustomCurrency({
+      code: newCurrCode.trim().toUpperCase(),
+      symbol: newCurrSymbol.trim(),
+      name: newCurrName.trim() || newCurrCode.trim().toUpperCase(),
+    });
+
+    setSelectedCurrency(created);
+    setNewCurrCode('');
+    setNewCurrSymbol('');
+    setNewCurrName('');
+    setAddCurrError('');
+    setIsAddCurrencyModalOpen(false);
+    setIsCurrencyDropdownOpen(false);
+
+    addNotification({
+      title: t.currency.title,
+      message: `${t.currency.successMsg} (${created.code} - ${created.symbol})`,
+      type: 'SUCCESS',
+    });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const numericAmount = parseInt(amountStr, 10);
@@ -88,6 +136,8 @@ export default function TambahTransaksiPage() {
       userId: 'usr_demo_01',
       type,
       amount: numericAmount,
+      currency: selectedCurrency.code,
+      currencySymbol: selectedCurrency.symbol,
       categoryId: selectedCategory.id,
       categoryName: selectedCategory.fallbackName,
       categorySlug: selectedCategory.slug,
@@ -98,7 +148,7 @@ export default function TambahTransaksiPage() {
     // Notify user
     addNotification({
       title: type === 'EXPENSE' ? 'Pengeluaran Dicatat' : 'Pemasukan Dicatat',
-      message: `${selectedCategory.fallbackName} sebesar ${formatCurrency(numericAmount)} berhasil disimpan.`,
+      message: `${selectedCategory.fallbackName} sebesar ${formatCurrency(numericAmount, selectedCurrency.symbol)} berhasil disimpan.`,
       type: 'SUCCESS',
       link: `/transaksi/${newTx.id}`,
     });
@@ -128,7 +178,7 @@ export default function TambahTransaksiPage() {
           title="Scan Struk Belanja"
         >
           <Camera className="w-3.5 h-3.5" />
-          <span className="hidden sm:inline">Scan Struk</span>
+          <span className="hidden sm:inline">{t.receipt.scannerTitle}</span>
         </Link>
       </div>
 
@@ -167,14 +217,92 @@ export default function TambahTransaksiPage() {
             </button>
           </div>
 
-          {/* Large Nominal Input (Fitts's Law) */}
-          <div className="space-y-1 text-center py-2">
-            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider block">
-              {t.common.amount} ({type === 'EXPENSE' ? 'Pengeluaran' : 'Pemasukan'})
-            </label>
-            <div className="relative inline-flex items-center justify-center w-full">
+          {/* Currency Selector & Nominal Input */}
+          <div className="space-y-2 text-center py-2">
+            <div className="flex items-center justify-center gap-2">
+              <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                {t.common.amount} ({type === 'EXPENSE' ? t.transactions.typeExpense : t.transactions.typeIncome})
+              </label>
+
+              {/* Currency Dropdown Selector */}
+              <div className="relative inline-block text-left">
+                <button
+                  type="button"
+                  onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-gray-100 hover:bg-gray-200 text-cuanly-primaryDark border border-gray-200/80 transition-all shadow-2xs"
+                  title={t.currency.selectCurrency}
+                >
+                  <Coins className="w-3.5 h-3.5 text-emerald-600" />
+                  <span>{selectedCurrency.code} ({selectedCurrency.symbol})</span>
+                  <ChevronDown className="w-3 h-3 text-gray-500" />
+                </button>
+
+                {isCurrencyDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-20"
+                      onClick={() => setIsCurrencyDropdownOpen(false)}
+                    />
+                    <div className="absolute left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 mt-1.5 w-60 rounded-2xl bg-white shadow-xl border border-gray-100 py-2 z-30 animate-in fade-in zoom-in-95 duration-150">
+                      <div className="px-3 py-1.5 border-b border-gray-100 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
+                        {t.currency.selectCurrency}
+                      </div>
+
+                      <div className="max-h-52 overflow-y-auto py-1">
+                        {currencies.map((curr) => {
+                          const isSelected = selectedCurrency.code === curr.code;
+                          return (
+                            <button
+                              key={curr.code}
+                              type="button"
+                              onClick={() => handleSelectCurrency(curr)}
+                              className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left transition-colors ${
+                                isSelected
+                                  ? 'bg-emerald-50 text-emerald-800 font-bold'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold w-8 text-center text-gray-900 bg-gray-100 rounded px-1 py-0.5">
+                                  {curr.symbol}
+                                </span>
+                                <div>
+                                  <span className="block">{curr.code}</span>
+                                  <span className="text-[10px] text-gray-400 block truncate max-w-[120px]">
+                                    {curr.name}
+                                  </span>
+                                </div>
+                              </div>
+                              {isSelected && <Check className="w-3.5 h-3.5 text-emerald-600" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Add Custom Currency CTA Button */}
+                      <div className="p-1.5 border-t border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCurrencyDropdownOpen(false);
+                            setIsAddCurrencyModalOpen(true);
+                          }}
+                          className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>{t.currency.addCustom}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Big Amount Input */}
+            <div className="relative inline-flex items-center justify-center w-full pt-1">
               <span className="text-2xl sm:text-3xl font-extrabold text-gray-400 mr-2">
-                Rp
+                {selectedCurrency.symbol}
               </span>
               <input
                 type="text"
@@ -270,6 +398,102 @@ export default function TambahTransaksiPage() {
           </div>
         </form>
       </GlassCard>
+
+      {/* Add Custom Currency Modal */}
+      {isAddCurrencyModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in zoom-in-95 duration-200"
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="px-6 py-5 bg-gradient-to-r from-cuanly-primaryDark to-[#383D3A] text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
+                  <Coins className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold">{t.currency.addModalTitle}</h3>
+                  <p className="text-xs text-gray-300">{t.currency.addModalSubtitle}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCurrencyModalOpen(false)}
+                className="p-1.5 text-gray-400 hover:text-white rounded-xl hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCustomCurrency} className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">
+                  {t.currency.codeLabel}
+                </label>
+                <input
+                  type="text"
+                  value={newCurrCode}
+                  onChange={(e) => setNewCurrCode(e.target.value.toUpperCase())}
+                  placeholder={t.currency.codePlaceholder}
+                  maxLength={5}
+                  required
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 uppercase font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">
+                  {t.currency.symbolLabel}
+                </label>
+                <input
+                  type="text"
+                  value={newCurrSymbol}
+                  onChange={(e) => setNewCurrSymbol(e.target.value)}
+                  placeholder={t.currency.symbolPlaceholder}
+                  maxLength={6}
+                  required
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-gray-600 block mb-1">
+                  {t.currency.nameLabel}
+                </label>
+                <input
+                  type="text"
+                  value={newCurrName}
+                  onChange={(e) => setNewCurrName(e.target.value)}
+                  placeholder={t.currency.namePlaceholder}
+                  className="w-full px-3.5 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {addCurrError && (
+                <p className="text-xs text-rose-600 font-semibold">{addCurrError}</p>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCurrencyModalOpen(false)}
+                  className="px-4 py-2.5 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-100 text-xs sm:text-sm font-semibold"
+                >
+                  {t.common.cancel}
+                </button>
+                <button
+                  type="submit"
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-cuanly-primaryDark hover:bg-black text-white text-xs sm:text-sm font-bold shadow-md"
+                >
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>{t.currency.saveBtn}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

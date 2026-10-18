@@ -15,6 +15,8 @@ interface FinanceContextType {
   transactions: Transaction[];
   categories: Category[];
   budgets: BudgetLimit[];
+  monthlyAllowance: number;
+  setMonthlyAllowance: (newAllowance: number) => void;
   summary: FinancialSummary;
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt'>) => Transaction;
   updateTransaction: (id: string, updates: Partial<Transaction>) => void;
@@ -32,6 +34,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [budgets, setBudgets] = useState<BudgetLimit[]>(INITIAL_BUDGETS);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
+  const [monthlyAllowance, setMonthlyAllowanceState] = useState<number>(6700000);
   const [isWarningDismissed, setIsWarningDismissed] = useState(false);
 
   // Load from localStorage on mount
@@ -45,6 +48,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       const storedCategories = localStorage.getItem('cuanly_categories');
       if (storedCategories) setCategories(JSON.parse(storedCategories));
+
+      const storedAllowance = localStorage.getItem('cuanly_monthly_allowance');
+      if (storedAllowance) {
+        const parsed = Number(storedAllowance);
+        if (!isNaN(parsed) && parsed > 0) setMonthlyAllowanceState(parsed);
+      }
     } catch {
       // fallback to initial
     }
@@ -64,6 +73,15 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setBudgets(newBudgets);
     try {
       localStorage.setItem('cuanly_budgets', JSON.stringify(newBudgets));
+    } catch {
+      // ignore
+    }
+  };
+
+  const setMonthlyAllowance = (amount: number) => {
+    setMonthlyAllowanceState(amount);
+    try {
+      localStorage.setItem('cuanly_monthly_allowance', amount.toString());
     } catch {
       // ignore
     }
@@ -116,7 +134,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       if (tx.type === 'EXPENSE') totalExpense += tx.amount;
     });
 
-    const totalBudgetLimit = budgets.reduce((acc, b) => acc + b.limitAmount, 0);
+    const totalBudgetLimit = monthlyAllowance > 0 ? monthlyAllowance : budgets.reduce((acc, b) => acc + b.limitAmount, 0);
     const totalBudgetSpent = categories
       .filter((c) => c.type === 'EXPENSE')
       .reduce((acc, c) => acc + getCategorySpent(c.id), 0);
@@ -131,8 +149,9 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       totalBudgetLimit,
       totalBudgetSpent,
       remainingBudget,
+      monthlyAllowance: totalBudgetLimit,
     };
-  }, [transactions, budgets, categories, getCategorySpent]);
+  }, [transactions, budgets, categories, getCategorySpent, monthlyAllowance]);
 
   // Active budget warning detection (find first category >= 80%)
   const activeBudgetWarning = useMemo(() => {
@@ -157,6 +176,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const newTx: Transaction = {
       ...data,
       id: `tx_${Date.now()}`,
+      currency: data.currency || 'IDR',
+      currencySymbol: data.currencySymbol || 'Rp',
       categoryName: targetCat ? targetCat.fallbackName : data.categoryName,
       categorySlug: targetCat ? targetCat.slug : data.categorySlug,
       createdAt: new Date().toISOString(),
@@ -214,6 +235,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         transactions,
         categories,
         budgets,
+        monthlyAllowance,
+        setMonthlyAllowance,
         summary,
         addTransaction,
         updateTransaction,

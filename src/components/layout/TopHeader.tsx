@@ -2,50 +2,43 @@
 
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { Bell, Camera, Shield, User as UserIcon, Wallet } from 'lucide-react';
+import { CuanlyLogo } from '@/components/common/CuanlyLogo';
+import { Bell, Camera, Shield, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export const TopHeader: React.FC = () => {
   const { user, role, switchRole } = useAuth();
+  const { t } = useLanguage();
   const { unreadCount, openDrawer } = useNotification();
   const pathname = usePathname();
 
   // Determine current section title based on route
   const getPageTitle = () => {
-    if (pathname.includes('/transaksi/scan')) return 'Scan Struk';
-    if (pathname.includes('/transaksi/tambah')) return 'Tambah Transaksi';
-    if (pathname.includes('/transaksi')) return 'Riwayat Transaksi';
-    if (pathname.includes('/budget')) return 'Atur Budget';
-    if (pathname.includes('/profil')) return 'Profil Pengguna';
-    if (pathname.includes('/admin')) return 'Admin Backoffice';
-    return 'Cuanly';
+    if (pathname.includes('/transaksi/scan')) return t.receipt.scannerTitle;
+    if (pathname.includes('/transaksi/tambah')) return t.transactions.addTitle;
+    if (pathname.includes('/transaksi')) return t.transactions.title;
+    if (pathname.includes('/budget')) return t.budget.title;
+    if (pathname.includes('/profil')) return t.profile.title;
+    if (pathname.includes('/admin')) return t.nav.adminBackoffice || 'Admin Backoffice';
+    return t.appName;
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full glass-header">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
-        {/* Left: Brand or Page Title */}
+    <header className="sticky top-0 z-40 w-full glass-header border-b border-gray-200/80">
+      <div className="w-full px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        {/* Left: Brand Logo using user's official logo design */}
         <div className="flex items-center gap-3">
-          <Link href="/beranda" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#2C302E] to-[#6B7072] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
-              <Wallet className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-extrabold text-lg tracking-tight text-cuanly-primaryDark">
-                Cuan<span className="text-emerald-600">ly</span>
-              </span>
-              <span className="block text-[10px] text-gray-500 font-medium -mt-1">
-                Smart Financial
-              </span>
-            </div>
+          <Link href="/beranda" className="flex items-center gap-2 group hover:opacity-90 transition-opacity">
+            <CuanlyLogo size="md" variant="full" />
           </Link>
 
           {/* Current Page Breadcrumb / Title on Mobile */}
           <div className="sm:hidden pl-2 border-l border-gray-200">
-            <h1 className="text-sm font-bold text-cuanly-primaryDark truncate max-w-[140px]">
+            <h1 className="text-xs font-bold text-gray-500 uppercase tracking-wider truncate max-w-[120px]">
               {getPageTitle()}
             </h1>
           </div>
@@ -57,10 +50,10 @@ export const TopHeader: React.FC = () => {
           <Link
             href="/transaksi/scan"
             className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100/80 text-emerald-700 border border-emerald-200/80 rounded-xl text-xs font-semibold transition-all shadow-xs"
-            title="Scan Struk Belanja"
+            title={t.receipt.scannerTitle}
           >
             <Camera className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Scan Struk</span>
+            <span className="hidden sm:inline">{t.receipt.scannerTitle}</span>
           </Link>
 
           {/* Language Switcher */}
@@ -75,7 +68,7 @@ export const TopHeader: React.FC = () => {
                 ? 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
                 : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200'
             }`}
-            title={`Saat ini: ${role}. Klik untuk beralih.`}
+            title={`Role: ${role}. Click to switch.`}
           >
             {role === 'ADMIN' ? (
               <>

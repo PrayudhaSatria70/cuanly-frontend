@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
+import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
 import {
   User,
   Shield,
@@ -16,16 +17,18 @@ import {
   LogOut,
   Info,
   Check,
+  Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProfilPage() {
-  const { t, locale } = useLanguage();
+  const { t, locale, activeCurrency, formatCurrency } = useLanguage();
   const { user, role, switchRole, logout } = useAuth();
-  const { transactions } = useFinance();
+  const { transactions, summary } = useFinance();
 
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+  const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
 
   const handleExportData = () => {
     // Generate CSV
@@ -54,7 +57,9 @@ export default function ProfilPage() {
           {t.profile.title}
         </h1>
         <p className="text-xs sm:text-sm text-gray-500">
-          Kelola profil akun, preferensi bahasa, dan pengaturan Cuanly
+          {locale === 'en'
+            ? 'Manage your account profile, language preferences, and Cuanly settings'
+            : 'Kelola profil akun, preferensi bahasa, dan pengaturan Cuanly'}
         </p>
       </div>
 
@@ -165,13 +170,35 @@ export default function ProfilPage() {
                 {t.profile.currency}
               </span>
               <span className="text-[10px] text-gray-400">
-                Rupiah Indonesia (Rp / IDR)
+                {activeCurrency.name} ({activeCurrency.symbol})
               </span>
             </div>
           </div>
-          <span className="text-xs font-bold px-2 py-1 bg-gray-100 rounded-lg text-gray-700">
-            IDR (Rp)
+          <span className="text-xs font-bold px-2.5 py-1 bg-gray-100 rounded-lg text-gray-700">
+            {activeCurrency.code} ({activeCurrency.symbol})
           </span>
+        </div>
+
+        {/* Monthly Allowance Limit */}
+        <div className="flex items-center justify-between py-2 border-b border-gray-100">
+          <div className="flex items-center gap-2.5">
+            <Wallet className="w-4 h-4 text-gray-500" />
+            <div>
+              <span className="text-xs sm:text-sm font-semibold text-gray-700 block">
+                {t.home.monthlyBudgetUsage}
+              </span>
+              <span className="text-[10px] text-gray-400">
+                {formatCurrency(summary.totalBudgetLimit)}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsEditAllowanceOpen(true)}
+            className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-colors"
+          >
+            {t.common.edit}
+          </button>
         </div>
 
         {/* Notifications Toggle */}
@@ -250,6 +277,12 @@ export default function ProfilPage() {
           <span>{t.common.logout}</span>
         </button>
       </div>
+
+      {/* Edit Allowance Modal */}
+      <EditAllowanceModal
+        isOpen={isEditAllowanceOpen}
+        onClose={() => setIsEditAllowanceOpen(false)}
+      />
     </div>
   );
 }

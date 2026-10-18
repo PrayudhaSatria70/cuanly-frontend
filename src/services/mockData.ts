@@ -89,6 +89,7 @@ export const INITIAL_CATEGORIES: Category[] = [
 export const DEMO_USER: User = {
   id: 'usr_demo_01',
   name: 'Budi Santoso',
+  username: 'user',
   email: 'user@cuanly.com',
   role: 'USER',
   pin: '123456',
@@ -100,6 +101,7 @@ export const DEMO_USER: User = {
 export const DEMO_ADMIN: User = {
   id: 'usr_admin_01',
   name: 'Siti Rahmawati (Admin)',
+  username: 'admin',
   email: 'admin@cuanly.com',
   role: 'ADMIN',
   pin: '999999',

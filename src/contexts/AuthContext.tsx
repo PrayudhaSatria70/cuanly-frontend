@@ -8,9 +8,9 @@ interface AuthContextType {
   user: User | null;
   role: Role;
   isAuthenticated: boolean;
-  login: (email: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+  login: (identifier: string, pin: string) => Promise<{ success: boolean; error?: string }>;
   loginAsDemo: (role: Role) => void;
-  register: (name: string, email: string, pin: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, pin: string, username?: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   switchRole: () => void;
 }
@@ -27,35 +27,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (stored) {
         setUser(JSON.parse(stored));
       } else {
-        // Default to Demo User on first run for instant wow factor & testing
-        setUser(DEMO_USER);
-        localStorage.setItem('cuanly_auth_user', JSON.stringify(DEMO_USER));
+        // Require explicit login by default
+        setUser(null);
       }
     } catch {
-      setUser(DEMO_USER);
+      setUser(null);
     } finally {
       setIsInitialized(true);
     }
   }, []);
 
-  const login = async (email: string, pin: string): Promise<{ success: boolean; error?: string }> => {
-    // Quick credential matching
-    if (email === DEMO_ADMIN.email && pin === DEMO_ADMIN.pin) {
+  const login = async (identifier: string, pin: string): Promise<{ success: boolean; error?: string }> => {
+    const cleanId = identifier.trim().toLowerCase();
+    const cleanPin = pin.trim();
+
+    if (!cleanId || !cleanPin) {
+      return { success: false, error: 'Username atau Email serta PIN wajib diisi.' };
+    }
+
+    // 1. Check Demo Admin (Username 'admin' or email 'admin@cuanly.com')
+    const isAdminMatch =
+      cleanId === DEMO_ADMIN.email.toLowerCase() ||
+      cleanId === DEMO_ADMIN.username?.toLowerCase() ||
+      cleanId === 'admin';
+    if (isAdminMatch && cleanPin === DEMO_ADMIN.pin) {
       setUser(DEMO_ADMIN);
       localStorage.setItem('cuanly_auth_user', JSON.stringify(DEMO_ADMIN));
       return { success: true };
     }
 
-    if (email === DEMO_USER.email && pin === DEMO_USER.pin) {
+    // 2. Check Demo User (Username 'user' or email 'user@cuanly.com')
+    const isUserMatch =
+      cleanId === DEMO_USER.email.toLowerCase() ||
+      cleanId === DEMO_USER.username?.toLowerCase() ||
+      cleanId === 'user';
+    if (isUserMatch && cleanPin === DEMO_USER.pin) {
       setUser(DEMO_USER);
       localStorage.setItem('cuanly_auth_user', JSON.stringify(DEMO_USER));
       return { success: true };
     }
 
-    // Check custom registered users from localStorage
+    // 3. Check custom registered users from localStorage
     try {
       const registeredUsers = JSON.parse(localStorage.getItem('cuanly_registered_users') || '[]');
-      const found = registeredUsers.find((u: User) => u.email === email && u.pin === pin);
+      const found = registeredUsers.find((u: User) => {
+        const matchesEmail = u.email && u.email.toLowerCase() === cleanId;
+        const matchesUsername = u.username && u.username.toLowerCase() === cleanId;
+        return (matchesEmail || matchesUsername) && u.pin === cleanPin;
+      });
       if (found) {
         setUser(found);
         localStorage.setItem('cuanly_auth_user', JSON.stringify(found));
@@ -65,14 +84,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // ignore
     }
 
-    // Allow flexible test login if valid format
-    if (email.includes('@') && pin.length >= 4) {
+    // 4. Flexible test login if identifier has at least 3 chars and pin >= 4 digits
+    if (cleanId.length >= 3 && cleanPin.length >= 4) {
+      const isEmail = cleanId.includes('@');
+      const role: Role = cleanId.includes('admin') ? 'ADMIN' : 'USER';
+      const username = isEmail ? cleanId.split('@')[0] : cleanId;
+      const email = isEmail ? cleanId : `${cleanId}@cuanly.com`;
+
       const newUser: User = {
         id: `usr_${Date.now()}`,
-        name: email.split('@')[0],
+        name: username.charAt(0).toUpperCase() + username.slice(1),
+        username,
         email,
-        role: 'USER',
-        pin,
+        role,
+        pin: cleanPin,
         createdAt: new Date().toISOString(),
       };
       setUser(newUser);
@@ -80,7 +105,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
     }
 
-    return { success: false, error: 'Email atau PIN salah. Gunakan akun demo atau daftar.' };
+    return {
+      success: false,
+      error: 'Kredensial tidak sesuai. Gunakan akun demo (Username: user / 123456 atau admin / 999999).',
+    };
   };
 
   const loginAsDemo = (targetRole: Role) => {
@@ -93,17 +121,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const register = async (name: string, email: string, pin: string): Promise<{ success: boolean; error?: string }> => {
+  const register = async (
+    name: string,
+    email: string,
+    pin: string,
+    username?: string,
+    phone?: string
+  ): Promise<{ success: boolean; error?: string }> => {
     if (!name || !email || !pin) {
       return { success: false, error: 'Semua kolom wajib diisi.' };
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+    const resolvedUsername = username
+      ? username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
+      : cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '');
+
     const newUser: User = {
       id: `usr_${Date.now()}`,
-      name,
-      email,
+      name: name.trim(),
+      username: resolvedUsername,
+      email: cleanEmail,
+      phone: phone?.trim(),
       role: 'USER',
-      pin,
+      pin: pin.trim(),
       createdAt: new Date().toISOString(),
     };
 

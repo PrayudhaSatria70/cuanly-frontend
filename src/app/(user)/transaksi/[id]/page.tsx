@@ -24,7 +24,7 @@ export default function TransaksiDetailPage() {
   const router = useRouter();
   const txId = params.id as string;
 
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, locale, formatCurrency, formatDate } = useLanguage();
   const { transactions, deleteTransaction, updateTransaction } = useFinance();
 
   const [isEditing, setIsEditing] = useState(false);
@@ -36,14 +36,16 @@ export default function TransaksiDetailPage() {
   if (!tx) {
     return (
       <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <h2 className="text-lg font-bold text-gray-700">Transaksi Tidak Ditemukan</h2>
-        <p className="text-xs text-gray-500">ID transaksi: {txId}</p>
+        <h2 className="text-lg font-bold text-gray-700">
+          {locale === 'en' ? 'Transaction Not Found' : 'Transaksi Tidak Ditemukan'}
+        </h2>
+        <p className="text-xs text-gray-500">ID: {txId}</p>
         <Link
           href="/transaksi"
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-cuanly-primaryDark text-white text-xs font-semibold rounded-xl"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Riwayat</span>
+          <span>{t.common.back}</span>
         </Link>
       </div>
     );
@@ -126,7 +128,7 @@ export default function TransaksiDetailPage() {
             }`}
           >
             {tx.type === 'INCOME' ? '+' : '-'}
-            {formatCurrency(tx.amount)}
+            {formatCurrency(tx.amount, tx.currencySymbol)}
           </div>
           <p className="text-xs text-gray-500">{formatDate(tx.date)}</p>
         </div>
@@ -155,7 +157,7 @@ export default function TransaksiDetailPage() {
               {t.common.notes}
             </span>
             <span className="font-medium text-gray-800 text-right max-w-xs">
-              {tx.notes || 'Tanpa catatan tambahan'}
+              {tx.notes || (locale === 'en' ? 'No additional notes' : 'Tanpa catatan tambahan')}
             </span>
           </div>
 

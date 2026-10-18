@@ -5,15 +5,20 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { FinanceProvider } from '@/contexts/FinanceContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { AdminProvider } from '@/contexts/AdminContext';
-import { TopHeader } from '@/components/layout/TopHeader';
-import { BottomNav } from '@/components/layout/BottomNav';
-import { DesktopNav } from '@/components/layout/DesktopNav';
-import { NotificationDrawer } from '@/components/layout/NotificationDrawer';
+import { AppShell } from '@/components/layout/AppShell';
 
 export const metadata: Metadata = {
   title: 'Cuanly — Modern Money-Tracking & Budgeting App',
   description:
     'Aplikasi pencatat keuangan modern untuk memantau pemasukan dan pengeluaran, mengatur budget, serta menghindari overspending.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -23,28 +28,17 @@ export default function RootLayout({
 }) {
   return (
     <html lang="id">
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/favicon.svg" />
+      </head>
       <body className="bg-cuanly-canvas text-cuanly-primaryDark antialiased min-h-screen flex flex-col">
         <LanguageProvider>
           <AuthProvider>
             <FinanceProvider>
               <NotificationProvider>
                 <AdminProvider>
-                  {/* Top Navigation Header */}
-                  <TopHeader />
-
-                  {/* Notification Drawer Slide-over */}
-                  <NotificationDrawer />
-
-                  {/* Main App Container with Desktop Sidebar & Content */}
-                  <div className="flex-1 flex w-full max-w-7xl mx-auto">
-                    <DesktopNav />
-                    <main className="flex-1 w-full p-4 sm:p-6 md:p-8 pb-24 md:pb-12 overflow-x-hidden">
-                      {children}
-                    </main>
-                  </div>
-
-                  {/* Mobile Bottom Navigation */}
-                  <BottomNav />
+                  <AppShell>{children}</AppShell>
                 </AdminProvider>
               </NotificationProvider>
             </FinanceProvider>

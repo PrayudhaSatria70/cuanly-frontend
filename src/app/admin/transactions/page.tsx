@@ -25,7 +25,7 @@ export default function AdminTransactionsPage() {
   const totalVolume = transactions.reduce((acc, tx) => acc + tx.amount, 0);
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto">
+    <div className="w-full max-w-7xl mx-auto space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-xl sm:text-2xl font-extrabold text-cuanly-primaryDark">
