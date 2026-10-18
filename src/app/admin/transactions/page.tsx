@@ -8,7 +8,7 @@ import { Activity, Search, ShieldCheck, ArrowUpRight, ArrowDownRight } from 'luc
 
 export default function AdminTransactionsPage() {
   const { transactions } = useFinance();
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, formatCurrency, formatDate, locale } = useLanguage();
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -32,7 +32,9 @@ export default function AdminTransactionsPage() {
           {t.admin.transactionsMonitoring}
         </h1>
         <p className="text-xs sm:text-sm text-gray-500">
-          Audit log dan pemantauan arus mutasi keuangan platform Cuanly secara real-time
+          {locale === 'en'
+            ? 'Audit logs and real-time monitoring of Cuanly platform financial transactions'
+            : 'Audit log dan pemantauan arus mutasi keuangan platform Cuanly secara real-time'}
         </p>
       </div>
 
@@ -40,7 +42,7 @@ export default function AdminTransactionsPage() {
       <GlassCard className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider block">
-            Total Perputaran Transaksi Tercatat
+            {locale === 'en' ? 'Total Recorded Transaction Turnover' : 'Total Perputaran Transaksi Tercatat'}
           </span>
           <div className="text-2xl font-extrabold text-cuanly-primaryDark num-tabular mt-0.5">
             {formatCurrency(totalVolume)}
@@ -63,7 +65,11 @@ export default function AdminTransactionsPage() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari berdasarkan ID transaksi, kategori, atau catatan..."
+            placeholder={
+              locale === 'en'
+                ? 'Search by transaction ID, category, or notes...'
+                : 'Cari berdasarkan ID transaksi, kategori, atau catatan...'
+            }
             className="w-full pl-9 pr-3 py-2 text-xs sm:text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
           />
         </div>
@@ -95,22 +101,22 @@ export default function AdminTransactionsPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs sm:text-sm font-bold text-cuanly-primaryDark truncate">
-                      {tx.categoryName}
+                      {(t.categories as Record<string, string>)[tx.categoryId] || tx.categoryName}
                     </span>
                     <span className="text-[10px] font-mono text-gray-400">
                       [{tx.id}]
                     </span>
                     {tx.receipt && (
                       <span className="px-1.5 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-bold rounded">
-                        Struk: {tx.receipt.merchant}
+                        {locale === 'en' ? 'Receipt' : 'Struk'}: {tx.receipt.merchant}
                       </span>
                     )}
                   </div>
                   <p className="text-xs text-gray-500 truncate mt-0.5">
-                    {tx.notes || 'Tanpa catatan'}
+                    {tx.notes || (locale === 'en' ? 'No notes' : 'Tanpa catatan')}
                   </p>
                   <span className="text-[10px] text-gray-400">
-                    Waktu: {formatDate(tx.date)}
+                    {locale === 'en' ? 'Time' : 'Waktu'}: {formatDate(tx.date)}
                   </span>
                 </div>
               </div>
@@ -125,7 +131,7 @@ export default function AdminTransactionsPage() {
                   {formatCurrency(tx.amount)}
                 </div>
                 <span className="text-[10px] text-emerald-600 font-semibold block">
-                  Sukses
+                  {locale === 'en' ? 'Success' : 'Sukses'}
                 </span>
               </div>
             </div>

@@ -455,9 +455,18 @@ Dashboard Loaded (`/beranda`)
 ```
 Receipt Scan Initiated (`/transaksi/scan`)
   │
-  ├─► User Input Option:
-  │     ├── Option A: Drag & drop / upload JPG, PNG, WebP image (max 5MB)
-  │     └── Option B: Tap 1-Click Sample (Superindo Market, Starbucks, Pertamina Gas)
+  ├─► User Input Trigger:
+  │     ├── User clicks "Open Camera / Choose File" button or dashed dropzone
+  │     └── Triggers Action Choice Popup Modal: "Choose What You Want to Do"
+  │           ├── Answer Button 1: "Open Device Camera" (Live in-browser viewfinder)
+  │           │     ├── Streams HTML5 video via `navigator.mediaDevices.getUserMedia`
+  │           │     ├── Renders receipt frame alignment overlay
+  │           │     ├── Circular shutter snap button captures photo into canvas/blob
+  │           │     ├── Preview review screen allows "Use This Photo & Run OCR" or "Retake Photo"
+  │           │     └── Fallback button triggers native camera if browser permissions blocked
+  │           ├── Answer Button 2: "Choose File from Device" (System file picker)
+  │           │     └── Opens device storage/gallery dialog for JPG, PNG, WebP
+  │           └── Drag & Drop: Dragging receipt files directly onto dropzone immediately processes
   │
   ├─► AI OCR Simulation (`simulateOcrExtraction` in `src/lib/ocr-simulator.ts`):
   │     ├── Simulates 1,200ms neural inference latency
@@ -474,7 +483,7 @@ Receipt Scan Initiated (`/transaksi/scan`)
   └─► Save Transaction:
         ├── Appends new Transaction with attached `receipt` payload
         ├── Automatically deducts from category budget and overall allowance
-        └── Redirects to `/transaksi` with instant state update
+        └── Redirects to `/transaksi/[id]` with instant state update
 ```
 
 ### 4.6 Multi-Currency & Reactive History Synchronization Flow
@@ -580,7 +589,7 @@ User navigates to Settings (DesktopNav: directly below Profile, or via TopHeader
   │     ├── Security & Session: Inactivity timeout selector (1m, 3m default, 5m, 10m), PIN update form
   │     ├── Notifications: Spending warning alert toggle, sound toggle, clear all notifications button
   │     ├── Backup & Data: Export full state backup to JSON, export ledger to CSV, restore JSON backup file, factory reset
-  │     └── Profile & Account: Edit full name, username, email, phone; interactive profile picture editor (local image upload with Base64 preview, 6 curated presets, direct image URL, remove photo); role indicator (USER / ADMIN), demo switcher, logout
+  │     └── Profile & Account: Dual-mode View/Edit interface. View Mode presents read-only fields with locked badges and "Edit Profile" CTAs; Edit Mode enables form inputs, avatar upload/presets, "Cancel" revert, and "Save Profile Changes" persistence; role indicator (USER / ADMIN), demo switcher, logout
   │
   └─► Cross-Feature Synchronization:
         └── All setting changes immediately broadcast through their respective Context providers and persist in LocalStorage.
@@ -596,7 +605,7 @@ User clicks Profile Avatar Icon in TopHeader
   │
   ├─► Modal Content & Interactive Shortcuts:
   │     ├── 1. User Identity Header: Displays user avatar photo, full name, email address, and role badge
-  │     ├── 2. Shortcut: Edit Profile (`/settings?tab=account`): Opens Profile & Avatar Editor directly in settings; closes modal on click
+  │     ├── 2. Shortcut: Edit Profile (`/settings?tab=account&edit=true`): Opens Profile Editor directly in active Edit Mode; closes modal on click
   │     ├── 3. Shortcut: Settings (`/settings`): Direct link with subtitle description; closes modal on click
   │     ├── 4. Shortcut: Bahasa (Language Switcher): Inline 2-column switcher (English vs Indonesia)
   │     │       ├── Real-time locale toggle via LanguageContext (`setLocale('en' | 'id')`)
@@ -606,6 +615,67 @@ User clicks Profile Avatar Icon in TopHeader
   └─► Responsive Glassmorphic Aesthetic:
         └── Uses semi-transparent glass panel with backdrop blur (`backdrop-blur-xl`), dark mode support, and smooth zoom-in transition.
 ```
+
+### 4.12 Profile View & Edit Dual-Mode Workflow (`/settings?tab=account`)
+```
+User accesses Profile/Account Settings (or navigates from /profil or TopHeader via `?tab=account&edit=true`)
+  │
+  ├─► 1. Locked View Mode (Default State):
+  │     ├── All profile fields (Full Name, Username, Email, Phone Number) are set to `disabled={true}`
+  │     ├── Visual "Read-only" tags accompany field labels with clean non-editable styling
+  │     ├── Avatar upload triggers, image URL inputs, and preset avatar carousels are hidden
+  │     ├── Mode indicator banner displays "Mode Lihat (Terkunci)" with subtle lock indicator
+  │     └── Primary CTA: "Edit Profile" ("Edit Profil") with Edit3 icon rendered in header and bottom row
+  │
+  ├─► 2. Activation of Edit Mode:
+  │     ├── User clicks "Edit Profile" button (or arrives with `?edit=true`)
+  │     ├── `isEditingProfile` state set to `true`
+  │     ├── Mode status banner animates with pulse: "Mode Edit (Aktif)" with Sparkles icon
+  │     ├── Form inputs unlock (`disabled={false}`) with focus ring highlights and required indicators
+  │     ├── Avatar tools become interactive: "Upload Photo", "Photo URL", "Remove Photo", and 6 Preset Avatars
+  │     └── Action buttons update to "Cancel" ("Batal") and "Save Profile Changes" ("Simpan Perubahan Profil")
+  │
+  ├─► 3. Cancel Action ("Batal"):
+  │     ├── Discards any uncommitted changes
+  │     ├── Reverts inputs and avatar URL back to the saved `user` state from AuthContext
+  │     ├── Restores `isEditingProfile` to `false` (returns to View Mode)
+  │     └── Displays feedback toast confirming cancellation
+  │
+  └─► 4. Save Action ("Simpan Perubahan Profil"):
+        ├── Client validation checks: Non-empty Full Name, valid RFC email format
+        ├── Invokes `updateUserProfile({ name, username, email, phone, avatarUrl })`
+        ├── AuthContext persists changes to `cuanly_auth_user` and `cuanly_registered_users`
+        ├── Success notification and feedback toast displayed
+        └── Automatically resets `isEditingProfile` to `false`, returning smoothly to locked View Mode with updated data
+```
+
+### 4.13 Complete Bilingual Localization & Notification Architecture (`en` / `id`)
+```
+Multi-Locale System Architecture:
+  │
+  ├─► 1. Strict Dictionary Parity:
+  │     ├── Base dictionary defined in `src/i18n/id.ts`
+  │     ├── English translations mirrored in `src/i18n/en.ts`
+  │     ├── Strict TypeScript typing (`TranslationDictionary = typeof id`) enforces 100% key parity at build time
+  │     └── Includes localized namespaces: `common`, `auth`, `nav`, `home`, `transactions`, `receipt`, `budget`,
+  │         `allowance`, `currency`, `profile`, `settings`, `notifications`, `categories`, and `admin`
+  │
+  ├─► 2. Dynamic Category Mapping:
+  │     ├── All category labels resolve dynamically via `(t.categories as Record<string, string>)[cat.id] || cat.fallbackName`
+  │     └── Ensures instant language switching without state migration across Home, Transactions, Budget, Charts, and Admin portals
+  │
+  ├─► 3. Notifications & Popups Localization:
+  │     ├── Notifications store dual-language metadata (`title` & `titleEn`, `message` & `messageEn`)
+  │     ├── Notification Drawer dynamically displays the appropriate title/message based on current active locale
+  │     ├── Toast feedback alerts throughout the app render in the active language (`en` or `id`)
+  │     └── All interactive dialog modals (Camera/File Choice, Live Viewfinder, Monthly Allowance,
+  │         Add Custom Currency, and Reset Data Confirmation) utilize localized dictionary strings
+  │
+  └─► 4. Formatter Localization:
+        ├── Currency formatter automatically respects currency precision and locale rules
+        └── Date formatter formats timestamps cleanly according to active locale (`id-ID` vs `en-US`)
+```
+
 
 ---
 
@@ -767,9 +837,12 @@ export interface NotificationItem {
    - In [src/components/layout/DesktopNav.tsx](file:///c:/Users/muhas/Desktop/WORK%20Projects/cuanly-frontend/src/components/layout/DesktopNav.tsx), the entire **Admin Backoffice** navigation block is conditionally rendered strictly when `role === 'ADMIN'`. When logging in with Demo User (`USER` role), the Admin Backoffice is completely hidden.
    - In [src/components/layout/TopHeader.tsx](file:///c:/Users/muhas/Desktop/WORK%20Projects/cuanly-frontend/src/components/layout/TopHeader.tsx), admin indicators/badges appear only for `ADMIN` role.
    - Any non-admin attempting to navigate to `/admin/*` via URL is automatically intercepted and redirected to `/beranda`.
-4. **Input Sanitization & Validation**:
+4. **Input Sanitization & Password Security**:
    - All monetary amounts are validated strictly as positive numbers.
-   - PINs require minimum length (4–6 numeric digits) before submission.
+   - Login passwords enforce a minimum length of 6 characters with confirmation match validation.
+   - Password fields feature interactive visibility toggles (`Eye` / `EyeOff`) without exposing plain text in HTML source.
+   - Updated login passwords in `/settings?tab=security` synchronize immediately with `cuanly_credentials_override`, updating `cuanly_auth_user` and user directories so subsequent logins on `/login` require the new password.
+   - Existing PIN references are preserved via backwards-compatible aliasing (`updateUserPin` calls `updateUserPassword`).
 5. **No Secret Exposure**:
    - Client code contains zero hardcoded API secrets, private encryption keys, or private backend tokens.
 

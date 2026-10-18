@@ -20,7 +20,7 @@ import {
 import Link from 'next/link';
 
 export default function AdminDashboardPage() {
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, formatCurrency, formatDate, locale } = useLanguage();
   const { stats, mitraList, complaints } = useAdmin();
   const { transactions } = useFinance();
 
@@ -57,11 +57,11 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="text-2xl font-extrabold text-cuanly-primaryDark num-tabular">
-            {stats.totalUsers.toLocaleString('id-ID')}
+            {stats.totalUsers.toLocaleString(locale === 'en' ? 'en-US' : 'id-ID')}
           </div>
           <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-0.5">
             <ArrowUpRight className="w-3.5 h-3.5" />
-            +12% bulan ini
+            +12% {locale === 'en' ? 'this month' : 'bulan ini'}
           </p>
         </GlassCard>
 
@@ -78,7 +78,9 @@ export default function AdminDashboardPage() {
           <div className="text-xl sm:text-2xl font-extrabold text-cuanly-primaryDark num-tabular truncate">
             {formatCurrency(stats.totalVolume)}
           </div>
-          <p className="text-[11px] text-gray-400">Total mutasi sistem</p>
+          <p className="text-[11px] text-gray-400">
+            {locale === 'en' ? 'Total system turnover' : 'Total mutasi sistem'}
+          </p>
         </GlassCard>
 
         {/* Active & Pending Mitra */}
@@ -92,10 +94,10 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="text-2xl font-extrabold text-cuanly-primaryDark num-tabular">
-            {stats.activeMitraCount} Mitra
+            {stats.activeMitraCount} {locale === 'en' ? 'Partners' : 'Mitra'}
           </div>
           <div className="text-[11px] text-amber-600 font-semibold">
-            {stats.pendingVerificationsCount} menunggu verifikasi
+            {stats.pendingVerificationsCount} {locale === 'en' ? 'pending verification' : 'menunggu verifikasi'}
           </div>
         </GlassCard>
 
@@ -110,9 +112,11 @@ export default function AdminDashboardPage() {
             </div>
           </div>
           <div className="text-2xl font-extrabold text-rose-600 num-tabular">
-            {stats.openComplaintsCount} Tiket
+            {stats.openComplaintsCount} {locale === 'en' ? 'Tickets' : 'Tiket'}
           </div>
-          <p className="text-[11px] text-gray-400">Memerlukan tindak lanjut</p>
+          <p className="text-[11px] text-gray-400">
+            {locale === 'en' ? 'Requires follow-up' : 'Memerlukan tindak lanjut'}
+          </p>
         </GlassCard>
       </div>
 
@@ -124,7 +128,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-purple-600" />
               <h3 className="text-sm sm:text-base font-bold text-cuanly-primaryDark">
-                Antrean Verifikasi Mitra
+                {locale === 'en' ? 'Partner Verification Queue' : 'Antrean Verifikasi Mitra'}
               </h3>
             </div>
             <Link
@@ -138,7 +142,9 @@ export default function AdminDashboardPage() {
 
           {pendingMitra.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-6">
-              Tidak ada mitra menunggu verifikasi saat ini.
+              {locale === 'en'
+                ? 'No partners awaiting verification at this time.'
+                : 'Tidak ada mitra menunggu verifikasi saat ini.'}
             </p>
           ) : (
             <div className="space-y-3">
@@ -152,10 +158,10 @@ export default function AdminDashboardPage() {
                       {m.businessName}
                     </h4>
                     <p className="text-[11px] text-gray-500">
-                      Pemilik: {m.ownerName} • {m.category}
+                      {locale === 'en' ? 'Owner' : 'Pemilik'}: {m.ownerName} • {m.category}
                     </p>
                     <span className="text-[10px] text-gray-400">
-                      Dokumen: {m.documentType} ({m.documentNumber})
+                      {locale === 'en' ? 'Document' : 'Dokumen'}: {m.documentType} ({m.documentNumber})
                     </span>
                   </div>
 
@@ -163,7 +169,7 @@ export default function AdminDashboardPage() {
                     href={`/admin/verification/${m.id}`}
                     className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs flex-shrink-0"
                   >
-                    Tinjau
+                    {locale === 'en' ? 'Review' : 'Tinjau'}
                   </Link>
                 </div>
               ))}
@@ -177,7 +183,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center gap-2">
               <MessageSquareWarning className="w-4 h-4 text-rose-600" />
               <h3 className="text-sm sm:text-base font-bold text-cuanly-primaryDark">
-                Keluhan & Laporan Pengguna
+                {locale === 'en' ? 'User Complaints & Reports' : 'Keluhan & Laporan Pengguna'}
               </h3>
             </div>
             <Link
@@ -191,7 +197,9 @@ export default function AdminDashboardPage() {
 
           {openComplaints.length === 0 ? (
             <p className="text-xs text-gray-400 text-center py-6">
-              Semua laporan dan keluhan sudah tertangani.
+              {locale === 'en'
+                ? 'All tickets and reports have been resolved.'
+                : 'Semua laporan dan keluhan sudah tertangani.'}
             </p>
           ) : (
             <div className="space-y-3">
@@ -216,7 +224,7 @@ export default function AdminDashboardPage() {
                       {c.description}
                     </p>
                     <span className="text-[10px] text-gray-400">
-                      Oleh {c.userName} ({c.userEmail})
+                      {locale === 'en' ? 'By' : 'Oleh'} {c.userName} ({c.userEmail})
                     </span>
                   </div>
 
@@ -224,7 +232,7 @@ export default function AdminDashboardPage() {
                     href={`/admin/complaints/${c.id}`}
                     className="px-3 py-1.5 bg-gray-900 hover:bg-black text-white rounded-lg text-xs font-bold transition-all shadow-xs flex-shrink-0 mt-1"
                   >
-                    Respon
+                    {locale === 'en' ? 'Respond' : 'Respon'}
                   </Link>
                 </div>
               ))}
@@ -241,7 +249,7 @@ export default function AdminDashboardPage() {
         >
           <Users className="w-5 h-5 mx-auto text-purple-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
-            Kelola User & Mitra
+            {t.nav.users}
           </span>
         </Link>
         <Link
@@ -250,7 +258,7 @@ export default function AdminDashboardPage() {
         >
           <ShieldCheck className="w-5 h-5 mx-auto text-emerald-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
-            Verifikasi Mitra
+            {t.nav.verification}
           </span>
         </Link>
         <Link
@@ -259,7 +267,7 @@ export default function AdminDashboardPage() {
         >
           <Activity className="w-5 h-5 mx-auto text-blue-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
-            Pantau Transaksi
+            {t.nav.allTransactions}
           </span>
         </Link>
         <Link
@@ -268,7 +276,7 @@ export default function AdminDashboardPage() {
         >
           <Layers className="w-5 h-5 mx-auto text-amber-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
-            Kelola Kategori
+            {t.nav.categories}
           </span>
         </Link>
       </div>

@@ -12,7 +12,7 @@ interface EditAllowanceModalProps {
 }
 
 export const EditAllowanceModal: React.FC<EditAllowanceModalProps> = ({ isOpen, onClose }) => {
-  const { t, formatCurrency } = useLanguage();
+  const { t, formatCurrency, activeCurrency } = useLanguage();
   const { summary, monthlyAllowance, setMonthlyAllowance } = useFinance();
   const { addNotification } = useNotification();
 
@@ -63,7 +63,9 @@ export const EditAllowanceModal: React.FC<EditAllowanceModalProps> = ({ isOpen, 
 
     addNotification({
       title: t.allowance.modalTitle,
+      titleEn: 'Monthly Allowance',
       message: `${t.allowance.successMsg} (${formatCurrency(currentNumeric)})`,
+      messageEn: `Monthly allowance successfully updated! (${formatCurrency(currentNumeric)})`,
       type: 'SUCCESS',
     });
 
@@ -110,7 +112,7 @@ export const EditAllowanceModal: React.FC<EditAllowanceModalProps> = ({ isOpen, 
             </label>
             <div className="relative flex items-center justify-center">
               <span className="text-2xl sm:text-3xl font-extrabold text-gray-400 mr-2">
-                Rp
+                {activeCurrency.symbol}
               </span>
               <input
                 type="text"
@@ -141,35 +143,35 @@ export const EditAllowanceModal: React.FC<EditAllowanceModalProps> = ({ isOpen, 
                 onClick={() => handleSetPreset(5000000)}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#AEC4D4]/20 hover:bg-[#AEC4D4]/35 dark:bg-[#4D8DBA]/20 dark:hover:bg-[#4D8DBA]/30 text-[#1C4A6B] dark:text-slate-200 border border-[#AEC4D4]/40 dark:border-[#4D8DBA]/40 transition-colors"
               >
-                Rp 5.000.000
+                {activeCurrency.symbol} 5.000.000
               </button>
               <button
                 type="button"
                 onClick={() => handleSetPreset(7500000)}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#AEC4D4]/20 hover:bg-[#AEC4D4]/35 dark:bg-[#4D8DBA]/20 dark:hover:bg-[#4D8DBA]/30 text-[#1C4A6B] dark:text-slate-200 border border-[#AEC4D4]/40 dark:border-[#4D8DBA]/40 transition-colors"
               >
-                Rp 7.500.000
+                {activeCurrency.symbol} 7.500.000
               </button>
               <button
                 type="button"
                 onClick={() => handleSetPreset(10000000)}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#AEC4D4]/20 hover:bg-[#AEC4D4]/35 dark:bg-[#4D8DBA]/20 dark:hover:bg-[#4D8DBA]/30 text-[#1C4A6B] dark:text-slate-200 border border-[#AEC4D4]/40 dark:border-[#4D8DBA]/40 transition-colors"
               >
-                Rp 10.000.000
+                {activeCurrency.symbol} 10.000.000
               </button>
               <button
                 type="button"
                 onClick={() => handleAddDelta(500000)}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#8AD6D1]/20 hover:bg-[#8AD6D1]/30 dark:bg-[#8AD6D1]/15 dark:hover:bg-[#8AD6D1]/25 text-[#1C4A6B] dark:text-[#8AD6D1] border border-[#8AD6D1]/50 dark:border-[#8AD6D1]/40 transition-colors"
               >
-                +500rb
+                {t.allowance.quickAdd500k}
               </button>
               <button
                 type="button"
                 onClick={() => handleAddDelta(1000000)}
                 className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-[#8AD6D1]/20 hover:bg-[#8AD6D1]/30 dark:bg-[#8AD6D1]/15 dark:hover:bg-[#8AD6D1]/25 text-[#1C4A6B] dark:text-[#8AD6D1] border border-[#8AD6D1]/50 dark:border-[#8AD6D1]/40 transition-colors"
               >
-                +1 Juta
+                {t.allowance.quickAdd1m}
               </button>
             </div>
           </div>
@@ -192,7 +194,7 @@ export const EditAllowanceModal: React.FC<EditAllowanceModalProps> = ({ isOpen, 
             {/* Progress bar preview */}
             <div className="col-span-2 pt-2 border-t border-gray-200/70 dark:border-[#4D8DBA]/20">
               <div className="flex items-center justify-between text-[11px] text-gray-500 dark:text-slate-400 mb-1">
-                <span>Estimasi Pemakaian:</span>
+                <span>{t.allowance.estimatedUsage}</span>
                 <span className="font-bold text-[#1C4A6B] dark:text-slate-100">{projectedPercent}%</span>
               </div>
               <div className="w-full bg-gray-200 dark:bg-[#112233] h-2 rounded-full overflow-hidden">

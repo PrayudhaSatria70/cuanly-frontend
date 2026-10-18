@@ -18,11 +18,30 @@ interface AuthContextType {
   switchRole: () => void;
   sessionTimeoutMs: number;
   setSessionTimeoutDuration: (ms: number) => void;
+  updateUserPassword: (oldPassword: string, newPassword: string) => { success: boolean; error?: string };
   updateUserPin: (oldPin: string, newPin: string) => { success: boolean; error?: string };
   updateUserProfile: (updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>) => { success: boolean; error?: string };
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+const getCredentialsOverrides = (): Record<string, string> => {
+  if (typeof window === 'undefined') return {};
+  try {
+    return JSON.parse(localStorage.getItem('cuanly_credentials_override') || '{}');
+  } catch {
+    return {};
+  }
+};
+
+const getAuthLocale = (): 'en' | 'id' => {
+  if (typeof window === 'undefined') return 'en';
+  try {
+    return (localStorage.getItem('cuanly_locale') as 'en' | 'id') || 'en';
+  } catch {
+    return 'en';
+  }
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -148,17 +167,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cleanPin = pin.trim();
 
     if (!cleanId || !cleanPin) {
-      return { success: false, error: 'Username atau Email serta PIN wajib diisi.' };
+      return {
+        success: false,
+        error:
+          getAuthLocale() === 'en'
+            ? 'Username or Email and Password are required.'
+            : 'Username atau Email serta Password wajib diisi.',
+      };
     }
+
+    const overrides = getCredentialsOverrides();
 
     // 1. Check Demo Admin (Username 'admin' or email 'admin@cuanly.com')
     const isAdminMatch =
       cleanId === DEMO_ADMIN.email.toLowerCase() ||
       cleanId === DEMO_ADMIN.username?.toLowerCase() ||
       cleanId === 'admin';
-    if (isAdminMatch && cleanPin === DEMO_ADMIN.pin) {
-      persistSession(DEMO_ADMIN);
-      return { success: true };
+    if (isAdminMatch) {
+      const expectedAdminPassword =
+        overrides['usr_admin_01'] ||
+        overrides['admin'] ||
+        overrides['admin@cuanly.com'];
+
+      const isMatch = expectedAdminPassword
+        ? cleanPin === expectedAdminPassword
+        : cleanPin === DEMO_ADMIN.pin || cleanPin === (DEMO_ADMIN.password || 'admin123') || cleanPin === '999999';
+
+      if (isMatch) {
+        const effectiveCred = expectedAdminPassword || DEMO_ADMIN.password || DEMO_ADMIN.pin || '999999';
+        persistSession({ ...DEMO_ADMIN, password: effectiveCred, pin: effectiveCred });
+        return { success: true };
+      }
+      return {
+        success: false,
+        error:
+          getAuthLocale() === 'en'
+            ? 'Incorrect Admin account Password or PIN.'
+            : 'Password atau PIN akun Admin salah.',
+      };
     }
 
     // 2. Check Demo User (Username 'user' or email 'user@cuanly.com')
@@ -166,9 +212,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cleanId === DEMO_USER.email.toLowerCase() ||
       cleanId === DEMO_USER.username?.toLowerCase() ||
       cleanId === 'user';
-    if (isUserMatch && cleanPin === DEMO_USER.pin) {
-      persistSession(DEMO_USER);
-      return { success: true };
+    if (isUserMatch) {
+      const expectedUserPassword =
+        overrides['usr_demo_01'] ||
+        overrides['user'] ||
+        overrides['user@cuanly.com'];
+
+      const isMatch = expectedUserPassword
+        ? cleanPin === expectedUserPassword
+        : cleanPin === DEMO_USER.pin || cleanPin === (DEMO_USER.password || 'user123') || cleanPin === '123456';
+
+      if (isMatch) {
+        const effectiveCred = expectedUserPassword || DEMO_USER.password || DEMO_USER.pin || '123456';
+        persistSession({ ...DEMO_USER, password: effectiveCred, pin: effectiveCred });
+        return { success: true };
+      }
+      return {
+        success: false,
+        error:
+          getAuthLocale() === 'en'
+            ? 'Incorrect User account Password or PIN.'
+            : 'Password atau PIN akun Pengguna salah.',
+      };
     }
 
     // 3. Check custom registered users from localStorage
@@ -177,17 +242,67 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const found = registeredUsers.find((u: User) => {
         const matchesEmail = u.email && u.email.toLowerCase() === cleanId;
         const matchesUsername = u.username && u.username.toLowerCase() === cleanId;
-        return (matchesEmail || matchesUsername) && u.pin === cleanPin;
+        return matchesEmail || matchesUsername;
       });
       if (found) {
-        persistSession(found);
-        return { success: true };
+        const expectedPassword =
+          overrides[found.id] ||
+          (found.username ? overrides[found.username.toLowerCase()] : undefined) ||
+          overrides[found.email.toLowerCase()] ||
+          found.password ||
+          found.pin;
+
+        if (cleanPin === expectedPassword) {
+          persistSession({ ...found, password: expectedPassword, pin: expectedPassword });
+          return { success: true };
+        } else {
+          return {
+            success: false,
+            error:
+              getAuthLocale() === 'en'
+                ? 'Incorrect account password.'
+                : 'Password akun tidak sesuai.',
+          };
+        }
       }
     } catch {
       // ignore
     }
 
-    // 4. Flexible test login if identifier has at least 3 chars and pin >= 4 digits
+    // 4. Check admin portal custom users from cuanly_admin_users
+    try {
+      const adminUsers = JSON.parse(localStorage.getItem('cuanly_admin_users') || '[]');
+      const foundAdmin = adminUsers.find((u: User) => {
+        const matchesEmail = u.email && u.email.toLowerCase() === cleanId;
+        const matchesUsername = u.username && u.username.toLowerCase() === cleanId;
+        return matchesEmail || matchesUsername;
+      });
+      if (foundAdmin) {
+        const expectedPassword =
+          overrides[foundAdmin.id] ||
+          (foundAdmin.username ? overrides[foundAdmin.username.toLowerCase()] : undefined) ||
+          overrides[foundAdmin.email.toLowerCase()] ||
+          foundAdmin.password ||
+          foundAdmin.pin;
+
+        if (cleanPin === expectedPassword) {
+          persistSession({ ...foundAdmin, password: expectedPassword, pin: expectedPassword });
+          return { success: true };
+        } else {
+          return {
+            success: false,
+            error:
+              getAuthLocale() === 'en'
+                ? 'Incorrect admin account password.'
+                : 'Password akun admin tidak sesuai.',
+          };
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // 5. Flexible test login if identifier has at least 3 chars and pin >= 4 digits
     if (cleanId.length >= 3 && cleanPin.length >= 4) {
       const isEmail = cleanId.includes('@');
       const role: Role = cleanId.includes('admin') ? 'ADMIN' : 'USER';
@@ -200,6 +315,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         username,
         email,
         role,
+        password: cleanPin,
         pin: cleanPin,
         createdAt: new Date().toISOString(),
       };
@@ -209,13 +325,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     return {
       success: false,
-      error: 'Kredensial tidak sesuai. Gunakan akun demo (Username: user / 123456 atau admin / 999999).',
+      error:
+        getAuthLocale() === 'en'
+          ? 'Invalid credentials. Please use demo accounts (Username: user / 123456 or admin / 999999).'
+          : 'Kredensial tidak sesuai. Gunakan akun demo (Username: user / 123456 atau admin / 999999).',
     };
   };
 
   const loginAsDemo = (targetRole: Role) => {
     const selected = targetRole === 'ADMIN' ? DEMO_ADMIN : DEMO_USER;
-    persistSession(selected);
+    const overrides = getCredentialsOverrides();
+    const effectiveCred =
+      overrides[selected.id] ||
+      (selected.username ? overrides[selected.username.toLowerCase()] : undefined) ||
+      (selected.email ? overrides[selected.email.toLowerCase()] : undefined) ||
+      selected.password ||
+      selected.pin;
+    persistSession({ ...selected, password: effectiveCred, pin: effectiveCred });
   };
 
   const register = async (
@@ -226,7 +352,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone?: string
   ): Promise<{ success: boolean; error?: string }> => {
     if (!name || !email || !pin) {
-      return { success: false, error: 'Semua kolom wajib diisi.' };
+      return {
+        success: false,
+        error:
+          getAuthLocale() === 'en' ? 'All fields are required.' : 'Semua kolom wajib diisi.',
+      };
     }
 
     const cleanEmail = email.trim().toLowerCase();
@@ -241,6 +371,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email: cleanEmail,
       phone: phone?.trim(),
       role: 'USER',
+      password: pin.trim(),
       pin: pin.trim(),
       createdAt: new Date().toISOString(),
     };
@@ -286,38 +417,125 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateUserPin = (oldPin: string, newPin: string): { success: boolean; error?: string } => {
-    if (!user) return { success: false, error: 'User tidak ditemukan.' };
-    if (user.pin && user.pin !== oldPin.trim()) {
-      return { success: false, error: 'PIN saat ini tidak cocok.' };
+  const updateUserPassword = (
+    oldPassword: string,
+    newPassword: string
+  ): { success: boolean; error?: string } => {
+    const isEn = getAuthLocale() === 'en';
+    if (!user) return { success: false, error: isEn ? 'User not found.' : 'User tidak ditemukan.' };
+
+    const cleanOld = oldPassword.trim();
+    const cleanNew = newPassword.trim();
+
+    if (!cleanOld) {
+      return { success: false, error: isEn ? 'Current password is required.' : 'Password saat ini wajib diisi.' };
     }
-    if (newPin.trim().length < 4 || newPin.trim().length > 6) {
-      return { success: false, error: 'PIN baru harus terdiri dari 4-6 digit angka.' };
+
+    const overrides = getCredentialsOverrides();
+    const currentExpected =
+      overrides[user.id] ||
+      (user.username ? overrides[user.username.toLowerCase()] : undefined) ||
+      (user.email ? overrides[user.email.toLowerCase()] : undefined) ||
+      user.password ||
+      user.pin ||
+      (user.role === 'ADMIN' ? '999999' : '123456');
+
+    // Also accept default pins or passwords if unchanged
+    const isValidOld =
+      cleanOld === currentExpected ||
+      cleanOld === user.password ||
+      cleanOld === user.pin ||
+      (user.role === 'ADMIN' && (cleanOld === '999999' || cleanOld === 'admin123')) ||
+      (user.role === 'USER' && (cleanOld === '123456' || cleanOld === 'user123'));
+
+    if (!isValidOld) {
+      return { success: false, error: isEn ? 'Current password does not match.' : 'Password saat ini tidak cocok.' };
     }
-    const updatedUser = { ...user, pin: newPin.trim() };
+
+    if (cleanNew.length < 6) {
+      return { success: false, error: isEn ? 'New password must be at least 6 characters.' : 'Password baru minimal harus 6 karakter.' };
+    }
+
+    if (cleanNew === cleanOld) {
+      return { success: false, error: isEn ? 'New password cannot be the same as current password.' : 'Password baru tidak boleh sama dengan password saat ini.' };
+    }
+
+    const updatedUser: User = {
+      ...user,
+      password: cleanNew,
+      pin: cleanNew,
+    };
     setUser(updatedUser);
+
     try {
       localStorage.setItem('cuanly_auth_user', JSON.stringify(updatedUser));
+
+      // Persist credentials override
+      const newOverrides = { ...overrides };
+      if (user.id) newOverrides[user.id] = cleanNew;
+      if (user.email) newOverrides[user.email.toLowerCase()] = cleanNew;
+      if (user.username) newOverrides[user.username.toLowerCase()] = cleanNew;
+      if (user.role === 'ADMIN' && (user.id === DEMO_ADMIN.id || user.username === 'admin')) {
+        newOverrides['admin'] = cleanNew;
+        newOverrides['admin@cuanly.com'] = cleanNew;
+      }
+      if (user.role === 'USER' && (user.id === DEMO_USER.id || user.username === 'user')) {
+        newOverrides['user'] = cleanNew;
+        newOverrides['user@cuanly.com'] = cleanNew;
+      }
+      localStorage.setItem('cuanly_credentials_override', JSON.stringify(newOverrides));
+
+      // Update in cuanly_registered_users if present
+      const storedUsers = localStorage.getItem('cuanly_registered_users');
+      if (storedUsers) {
+        const parsed = JSON.parse(storedUsers);
+        if (Array.isArray(parsed)) {
+          const index = parsed.findIndex((u: User) => u.id === user.id || (u.email && u.email.toLowerCase() === user.email.toLowerCase()));
+          if (index !== -1) {
+            parsed[index] = { ...parsed[index], password: cleanNew, pin: cleanNew };
+            localStorage.setItem('cuanly_registered_users', JSON.stringify(parsed));
+          }
+        }
+      }
+
+      // Update in cuanly_admin_users if present
+      const storedAdminUsers = localStorage.getItem('cuanly_admin_users');
+      if (storedAdminUsers) {
+        const parsedAdmin = JSON.parse(storedAdminUsers);
+        if (Array.isArray(parsedAdmin)) {
+          const idx = parsedAdmin.findIndex((u: User) => u.id === user.id || (u.email && u.email.toLowerCase() === user.email.toLowerCase()));
+          if (idx !== -1) {
+            parsedAdmin[idx] = { ...parsedAdmin[idx], password: cleanNew, pin: cleanNew };
+            localStorage.setItem('cuanly_admin_users', JSON.stringify(parsedAdmin));
+          }
+        }
+      }
     } catch {
       // ignore
     }
+
     return { success: true };
+  };
+
+  const updateUserPin = (oldPin: string, newPin: string): { success: boolean; error?: string } => {
+    return updateUserPassword(oldPin, newPin);
   };
 
   const updateUserProfile = (
     updates: Partial<Omit<User, 'id' | 'role' | 'createdAt'>>
   ): { success: boolean; error?: string } => {
-    if (!user) return { success: false, error: 'User tidak ditemukan.' };
+    const isEn = getAuthLocale() === 'en';
+    if (!user) return { success: false, error: isEn ? 'User not found.' : 'User tidak ditemukan.' };
 
     if (updates.email !== undefined) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(updates.email.trim())) {
-        return { success: false, error: 'Format email tidak valid.' };
+        return { success: false, error: isEn ? 'Invalid email format.' : 'Format email tidak valid.' };
       }
     }
 
     if (updates.name !== undefined && !updates.name.trim()) {
-      return { success: false, error: 'Nama lengkap tidak boleh kosong.' };
+      return { success: false, error: isEn ? 'Full name cannot be empty.' : 'Nama lengkap tidak boleh kosong.' };
     }
 
     const updatedUser: User = {
@@ -378,6 +596,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         switchRole,
         sessionTimeoutMs,
         setSessionTimeoutDuration,
+        updateUserPassword,
         updateUserPin,
         updateUserProfile,
       }}

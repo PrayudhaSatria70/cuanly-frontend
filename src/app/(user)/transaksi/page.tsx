@@ -146,7 +146,7 @@ export default function TransaksiPage() {
               <option value="ALL">{t.common.allCategories}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.fallbackName}
+                  {(t.categories as Record<string, string>)[c.id] || c.fallbackName}
                 </option>
               ))}
             </select>
@@ -201,7 +201,7 @@ export default function TransaksiPage() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h4 className="text-sm font-semibold text-cuanly-primaryDark group-hover:text-emerald-700 transition-colors">
-                        {tx.categoryName}
+                        {(t.categories as Record<string, string>)[tx.categoryId] || tx.categoryName}
                       </h4>
                       {tx.receipt && (
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200 flex items-center gap-1">

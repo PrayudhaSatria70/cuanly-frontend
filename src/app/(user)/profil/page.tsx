@@ -22,6 +22,7 @@ import {
   Sun,
   Moon,
   Settings,
+  Edit3,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -103,17 +104,17 @@ export default function ProfilPage() {
           </div>
           <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">
-            {t.profile.joined} 15 Januari 2026
+            {t.profile.joined} {locale === 'en' ? 'January 15, 2026' : '15 Januari 2026'}
           </p>
         </div>
 
         <Link
-          href="/settings"
+          href="/settings?tab=account&edit=true"
           className="px-3.5 py-2 rounded-xl bg-[#4D8DBA]/10 hover:bg-[#4D8DBA]/20 text-[#4D8DBA] dark:text-[#8AD6D1] border border-[#4D8DBA]/30 text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 cursor-pointer shadow-2xs"
           title={locale === 'en' ? 'Edit Profile & Avatar in Settings' : 'Edit Profil & Foto di Pengaturan'}
         >
-          <Settings className="w-3.5 h-3.5" />
-          <span>{locale === 'en' ? 'Edit Profile' : 'Edit Profil'}</span>
+          <Edit3 className="w-3.5 h-3.5" />
+          <span>{t.profile.editProfileBtn}</span>
         </Link>
       </GlassCard>
 
@@ -123,16 +124,18 @@ export default function ProfilPage() {
           <div className="flex items-center gap-2">
             <Shield className="w-4 h-4 text-purple-600" />
             <h3 className="text-sm font-bold text-cuanly-primaryDark">
-              Mode Akses & Akun Demo
+              {locale === 'en' ? 'Access Mode & Demo Account' : 'Mode Akses & Akun Demo'}
             </h3>
           </div>
           <span className="text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-            Aktif: {role}
+            {locale === 'en' ? 'Active:' : 'Aktif:'} {role}
           </span>
         </div>
 
         <p className="text-xs text-gray-600 leading-relaxed">
-          Ganti peran secara instan untuk menguji fitur <strong>User</strong> (pencatatan keuangan personal) atau fitur <strong>Admin</strong> (kelola user, mitra, verifikasi, dan keluhan).
+          {locale === 'en'
+            ? 'Instantly switch roles to test User features (personal financial ledger) or Admin features (user & partner management, verification, and complaints).'
+            : 'Ganti peran secara instan untuk menguji fitur User (pencatatan keuangan personal) atau fitur Admin (kelola user, mitra, verifikasi, dan keluhan).'}
         </p>
 
         <div className="pt-1 flex gap-2">
@@ -141,14 +144,16 @@ export default function ProfilPage() {
             onClick={switchRole}
             className="flex-1 py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all text-center"
           >
-            Beralih ke {role === 'ADMIN' ? 'Demo User' : 'Demo Admin'}
+            {locale === 'en'
+              ? `Switch to ${role === 'ADMIN' ? 'Demo User' : 'Demo Admin'}`
+              : `Beralih ke ${role === 'ADMIN' ? 'Demo User' : 'Demo Admin'}`}
           </button>
           {role === 'ADMIN' && (
             <Link
               href="/admin/dashboard"
               className="py-2 px-3 bg-purple-700 hover:bg-purple-800 text-white rounded-xl text-xs font-bold transition-all"
             >
-              Buka Backoffice &rarr;
+              {locale === 'en' ? 'Open Backoffice →' : 'Buka Backoffice →'}
             </Link>
           )}
         </div>
@@ -192,7 +197,7 @@ export default function ProfilPage() {
                 {t.profile.language}
               </span>
               <span className="text-[10px] text-gray-400 dark:text-slate-400">
-                Bahasa antarmuka ({locale === 'id' ? 'Indonesia' : 'English'})
+                {locale === 'en' ? 'Interface Language (English)' : 'Bahasa antarmuka (Indonesia)'}
               </span>
             </div>
           </div>
@@ -289,7 +294,7 @@ export default function ProfilPage() {
                 {t.profile.notifications}
               </span>
               <span className="text-[10px] text-gray-400">
-                Peringatan jika pengeluaran &gt; 80% batas
+                {locale === 'en' ? 'Alert when category spending exceeds 80% limit' : 'Peringatan jika pengeluaran > 80% batas'}
               </span>
             </div>
           </div>
@@ -313,7 +318,7 @@ export default function ProfilPage() {
                 {t.profile.exportData}
               </span>
               <span className="text-[10px] text-gray-400">
-                Unduh seluruh data mutasi ke file CSV
+                {locale === 'en' ? 'Download all ledger transactions as a CSV file' : 'Unduh seluruh data mutasi ke file CSV'}
               </span>
             </div>
           </div>
@@ -325,10 +330,10 @@ export default function ProfilPage() {
             {downloadSuccess ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Tersimpan</span>
+                <span className="text-emerald-700">{locale === 'en' ? 'Saved' : 'Tersimpan'}</span>
               </>
             ) : (
-              <span>Unduh CSV</span>
+              <span>{locale === 'en' ? 'Download CSV' : 'Unduh CSV'}</span>
             )}
           </button>
         </div>
@@ -341,7 +346,7 @@ export default function ProfilPage() {
           <span>{t.profile.aboutCuanly}</span>
         </div>
         <p className="leading-relaxed text-[11px] text-gray-500">
-          {t.profile.aboutDesc} Dirancang menggunakan Next.js App Router, Tailwind CSS, dan Lucide React.
+          {t.profile.aboutDesc} {locale === 'en' ? 'Engineered using Next.js App Router, Tailwind CSS, and Lucide React.' : 'Dirancang menggunakan Next.js App Router, Tailwind CSS, dan Lucide React.'}
         </p>
       </GlassCard>
 

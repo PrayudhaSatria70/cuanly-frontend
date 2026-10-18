@@ -24,7 +24,7 @@ interface FinanceContextType {
   updateBudget: (categoryId: string, limitAmount: number) => void;
   getCategorySpent: (categoryIdOrSlug: string) => number;
   getCategoryBudgetInfo: (categoryIdOrSlug: string) => CategoryBudgetInfo;
-  activeBudgetWarning: { categoryName: string; categorySlug: string; percent: number; isOverbudget: boolean } | null;
+  activeBudgetWarning: { categoryId: string; categoryName: string; categorySlug: string; percent: number; isOverbudget: boolean } | null;
   dismissWarning: () => void;
   resetToDefaultData: () => void;
   importFinancialData: (data: { transactions?: Transaction[]; budgets?: BudgetLimit[]; monthlyAllowance?: number; categories?: Category[] }) => void;
@@ -203,6 +203,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const info = getCategoryBudgetInfo(cat.id);
       if (info.percent >= 80) {
         return {
+          categoryId: cat.id,
           categoryName: cat.fallbackName,
           categorySlug: cat.slug,
           percent: info.percent,

@@ -6,6 +6,7 @@ export interface User {
   username?: string;
   email: string;
   role: Role;
+  password?: string;
   pin?: string;
   avatarUrl?: string;
   phone?: string;
@@ -130,6 +131,8 @@ export interface NotificationItem {
   id: string;
   title: string;
   message: string;
+  titleEn?: string;
+  messageEn?: string;
   type: 'WARNING' | 'ALERT' | 'INFO' | 'SUCCESS';
   timestamp: string;
   isRead: boolean;

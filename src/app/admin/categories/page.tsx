@@ -10,7 +10,7 @@ import { Category } from '@/types';
 
 export default function AdminCategoriesPage() {
   const { categories, getCategorySpent } = useFinance();
-  const { t, formatCurrency } = useLanguage();
+  const { t, formatCurrency, locale } = useLanguage();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [name, setName] = useState('');
@@ -46,7 +46,9 @@ export default function AdminCategoriesPage() {
             {t.admin.categoryManagement}
           </h1>
           <p className="text-xs sm:text-sm text-gray-500">
-            Kelola kategori pengeluaran dan layanan platform untuk mempermudah klasifikasi
+            {locale === 'en'
+              ? 'Manage expense categories and platform services for clear classification'
+              : 'Kelola kategori pengeluaran dan layanan platform untuk mempermudah klasifikasi'}
           </p>
         </div>
 
@@ -74,7 +76,7 @@ export default function AdminCategoriesPage() {
                   />
                   <div>
                     <h3 className="text-sm font-bold text-cuanly-primaryDark">
-                      {cat.fallbackName}
+                      {(t.categories as Record<string, string>)[cat.id] || cat.fallbackName}
                     </h3>
                     <span className="text-[10px] text-gray-400 font-mono">
                       slug: {cat.slug}
@@ -88,7 +90,7 @@ export default function AdminCategoriesPage() {
               </div>
 
               <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
-                <span>Penggunaan:</span>
+                <span>{locale === 'en' ? 'Usage:' : 'Penggunaan:'}</span>
                 <span className="font-bold text-cuanly-primaryDark num-tabular">
                   {formatCurrency(spent)}
                 </span>
@@ -104,7 +106,7 @@ export default function AdminCategoriesPage() {
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b">
               <h3 className="text-base font-bold text-cuanly-primaryDark">
-                Tambah Kategori Baru
+                {locale === 'en' ? 'Add New Category' : 'Tambah Kategori Baru'}
               </h3>
               <button
                 type="button"
@@ -118,13 +120,17 @@ export default function AdminCategoriesPage() {
             <form onSubmit={handleCreateCategory} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  Nama Kategori
+                  {locale === 'en' ? 'Category Name' : 'Nama Kategori'}
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Contoh: Langganan SaaS, Hewan Peliharaan"
+                  placeholder={
+                    locale === 'en'
+                      ? 'E.g., SaaS Subscription, Pet Care'
+                      : 'Contoh: Langganan SaaS, Hewan Peliharaan'
+                  }
                   required
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-xl"
                 />
@@ -132,21 +138,25 @@ export default function AdminCategoriesPage() {
 
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  Tipe Kategori
+                  {locale === 'en' ? 'Category Type' : 'Tipe Kategori'}
                 </label>
                 <select
                   value={type}
                   onChange={(e) => setType(e.target.value as 'EXPENSE' | 'INCOME')}
                   className="w-full px-3 py-2 text-xs sm:text-sm border border-gray-200 rounded-xl"
                 >
-                  <option value="EXPENSE">Pengeluaran (Expense)</option>
-                  <option value="INCOME">Pemasukan (Income)</option>
+                  <option value="EXPENSE">
+                    {locale === 'en' ? 'Expense' : 'Pengeluaran (Expense)'}
+                  </option>
+                  <option value="INCOME">
+                    {locale === 'en' ? 'Income' : 'Pemasukan (Income)'}
+                  </option>
                 </select>
               </div>
 
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  Warna Indikator
+                  {locale === 'en' ? 'Indicator Color' : 'Warna Indikator'}
                 </label>
                 <input
                   type="color"
@@ -162,13 +172,13 @@ export default function AdminCategoriesPage() {
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-2 text-xs font-bold text-gray-600 bg-gray-100 rounded-xl"
                 >
-                  Batal
+                  {t.common.cancel}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-2 text-xs font-bold text-white bg-purple-700 rounded-xl"
                 >
-                  Simpan Kategori
+                  {locale === 'en' ? 'Save Category' : 'Simpan Kategori'}
                 </button>
               </div>
             </form>

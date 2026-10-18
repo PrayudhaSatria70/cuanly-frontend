@@ -49,6 +49,7 @@ Canonical architectural and operational specification for **Cuanly** Financial W
 | Key | Storage Engine | Type | Description |
 |---|---|---|---|
 | `cuanly_auth_user` | `localStorage` | `User` | Authenticated user payload |
+| `cuanly_credentials_override` | `localStorage` | `Record<string, string>` | Password overrides for users/admin across logins |
 | `cuanly_last_activity` | `localStorage` | `number` | Unix timestamp of latest interaction |
 | `cuanly_session_timed_out` | `sessionStorage` | `string` | Transient timeout alert flag |
 | `cuanly_transactions` | `localStorage` | `Transaction[]` | Stored transaction records |
@@ -82,13 +83,29 @@ The login screen features simplified, direct action buttons for both demo person
 
 ### 2.1 Authentication Endpoints
 - **`POST /api/v1/auth/login`**
-  - Request Body: `{ "identifier": "user" | "user@cuanly.com", "pin": "123456" }`
+  - Request Body: `{ "identifier": "user" | "admin" | "...", "password": "..." }`
   - Headers: `Content-Type: application/json`
   - Response (200 OK): `{ "token": "jwt_...", "user": { "id": "usr_demo_01", "name": "Budi Santoso", "username": "user", "email": "user@cuanly.com", "role": "USER" } }`
   - Response (401 Unauthorized): `{ "statusCode": 401, "message": "Invalid credentials." }`
 
+- **`PUT /api/v1/auth/password` (Settings -> Security & Timeout)**
+  - Request Body: `{ "oldPassword": "...", "newPassword": "...", "confirmPassword": "..." }`
+  - Headers: `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - Validation: `newPassword.length >= 6`, `newPassword === confirmPassword`, `newPassword !== oldPassword`
+  - Response (200 OK): `{ "success": true, "message": "Login password updated successfully." }`
+  - Response (400 Bad Request): `{ "statusCode": 400, "message": "New password confirmation does not match or length < 6." }`
+  - Response (401 Unauthorized): `{ "statusCode": 401, "message": "Current password incorrect." }`
+
+- **`PUT /api/v1/auth/profile` (Settings -> Account & Profile)**
+  - Request Body: `{ "name": "...", "username": "...", "email": "...", "phone": "...", "avatarUrl": "..." }`
+  - Headers: `Authorization: Bearer <token>`, `Content-Type: application/json`
+  - Validation: `name.trim().length > 0`, email format regex `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+  - Response (200 OK): `{ "success": true, "user": { ... } }`
+  - Response (400 Bad Request): `{ "statusCode": 400, "message": "Full Name is required or invalid email format." }`
+  - Response (401 Unauthorized): `{ "statusCode": 401, "message": "Unauthorized" }`
+
 - **`POST /api/v1/auth/register`**
-  - Request Body: `{ "name": "...", "email": "...", "username": "...", "phone": "...", "pin": "..." }`
+  - Request Body: `{ "name": "...", "email": "...", "username": "...", "phone": "...", "password": "..." }`
   - Response (201 Created): `{ "token": "jwt_...", "user": { ... } }`
 
 - **`POST /api/v1/auth/logout`**
@@ -212,9 +229,17 @@ Route Navigation Triggered
 - Floating quick-action buttons for Add Expense and Scan Receipt.
 
 ### 3.5 AI Receipt Scanner Flow (`/transaksi/scan`)
-- Input via camera, file drag & drop, or preset samples (Superindo, Starbucks, Pertamina).
-- 1.2s OCR inference latency simulation extracts merchant, date, total, item breakdown, and category.
-- Review screen enables verification before one-click saving to transaction ledger.
+- **Action Selection Modal**:
+  - Clicking "Open Camera / Choose File" or the dashed receipt dropzone opens an interactive Action Modal asking *"Choose What You Want to Do / Pilih Tindakan yang Ingin Dilakukan"*.
+  - **Option 1 ("Open Device Camera / Buka Kamera Perangkat")**:
+    - Launches a live in-browser Camera Viewfinder Modal utilizing `navigator.mediaDevices.getUserMedia`.
+    - Features a receipt alignment guideline overlay, camera switcher (front/back), live circular shutter button, instant photo preview review (*Use This Photo* vs. *Retake Photo*), and graceful error fallback for blocked/unsupported camera hardware.
+    - Captured photos are encoded as Blobs and processed directly through the OCR engine.
+  - **Option 2 ("Choose File from Device / Pilih File dari Perangkat")**:
+    - Opens the system native file dialog for JPG, PNG, and WebP images.
+- **Drag & Drop**: Direct drag-and-drop of receipt images onto the dropzone immediately initiates processing.
+- **OCR Engine & Latency**: 1.2s OCR inference latency simulation extracts merchant name, date, total amount, itemized line items, and smart category assignment with confidence scoring.
+- **Review Screen**: Allows inline editing of merchant, total, date, category, and notes before one-click confirmation into the user's expense ledger.
 
 ### 3.6 Multi-Currency & Allowance Editing Flows
 - **Currency-Specific Decimal Precision & Separator Conventions**:
@@ -250,10 +275,10 @@ User navigates to Settings (DesktopNav: directly below Profile, or via Shortcut 
   → Multi-Currency: Active currency selection, currency catalog, integrated "Add Custom Currency" modal
   → Budget & Warning: Monthly allowance editor (setMonthlyAllowance), spending warning red banner threshold slider (70% - 90%)
   → Smart OCR: Latency speed selection (Fast 0.6s / Standard 1.2s / Thorough 2.0s), auto-categorization toggle, review before saving toggle
-  → Security & Sesi: Inactivity timeout duration selector (1m, 3m, 5m, 10m) via setSessionTimeoutDuration, transaction PIN update form
+  → Security & Sesi: Inactivity timeout duration selector (1m, 3m, 5m, 10m) via setSessionTimeoutDuration; Account Login Password update form (Current Password, New Password min. 6 chars, Confirm Password, eye visibility toggles, and immediate credential override synchronization)
   → Notifications: Spending warning banner toggle, critical overbudget alert toggle, sound toggle, clear all notifications button
   → Backup & Data: Export full state backup to JSON, export ledger to CSV, restore JSON backup file, factory reset demo data modal
-  → Account & Profile: Edit full name, username, email, phone number; profile picture editor (custom local file upload with Base64 preview, 6 curated avatar presets, direct image URL, remove photo option); role indicator (USER / ADMIN), demo role switcher, Backoffice link (ADMIN), logout
+  → Account & Profile: Dual-mode View/Edit interface. View Mode presents read-only fields with locked badges and "Edit Profile" CTAs; Edit Mode enables form inputs, avatar upload/presets, "Cancel" revert, and "Save Profile Changes" persistence; role indicator (USER / ADMIN), demo role switcher, Backoffice link (ADMIN), logout
 ```
 
 ### 3.9 Profile Shortcut Modal Flow (`TopHeader` Avatar Popover)
@@ -261,7 +286,7 @@ User navigates to Settings (DesktopNav: directly below Profile, or via Shortcut 
 User clicks Profile Avatar Icon in TopHeader
   → Popover modal toggles directly beneath the icon (absolute right-0 top-full mt-2.5 z-50)
   → Identity Header: Renders user avatar photo, display name, user email, and role badge (USER / ADMIN)
-  → Shortcut 1 (Edit Profile): Links to `/settings?tab=account` to directly open interactive profile and avatar editor; closes popover on click
+  → Shortcut 1 (Edit Profile): Links to `/settings?tab=account&edit=true` to directly open interactive profile in Edit Mode; closes popover on click
   → Shortcut 2 (Settings): Links to `/settings` with preferences subtitle; closes popover on click
   → Shortcut 3 (Bahasa / Language Switcher): Inline 2-column switcher (English vs Indonesia)
        - Immediate reactive language change via `setLocale('en' | 'id')`
@@ -272,12 +297,77 @@ User clicks Profile Avatar Icon in TopHeader
        - Pressing `Escape` key closes the modal
 ```
 
+### 3.10 Profile View & Edit Dual-Mode Workflow (`/settings?tab=account`)
+```
+User opens Account Tab in Settings (or arrives from /profil or TopHeader with `?tab=account&edit=true`)
+  │
+  ├── 1. Default State: VIEW MODE (Locked / Read-Only)
+  │     ├── Form inputs (Full Name, Username, Email, Phone) have `disabled={true}` with Read-only tags
+  │     ├── Profile picture is locked in display mode; file upload trigger, URL input, and presets are hidden
+  │     ├── Mode indicator banner: "Mode Lihat (Terkunci)" with lock icon
+  │     └── Primary action displayed: "Edit Profile" ("Edit Profil") with Edit3 icon in header & bottom row
+  │
+  ├── 2. User Clicks "Edit Profile" Button
+  │     ├── `isEditingProfile` state transitions to `true`
+  │     ├── Mode indicator banner switches to active pulse: "Mode Edit (Aktif)" with Sparkles icon
+  │     ├── All form inputs unlock (`disabled={false}`) with focus ring highlights and required indicators
+  │     ├── Avatar management tools appear: "Upload Photo", "Photo URL", "Remove Photo", and 6 Preset Avatars
+  │     └── Action buttons update to:
+  │           - "Cancel" ("Batal"): Discards changes, reverts fields to saved user data, returns to View Mode
+  │           - "Save Profile Changes" ("Simpan Perubahan Profil"): Primary submit button with Check icon
+  │
+  ├── 3. User Clicks "Cancel" ("Batal")
+  │     ├── Form fields revert to existing `user` snapshot in AuthContext
+  │     ├── `isEditingProfile` transitions to `false` (returns to View Mode)
+  │     └── Cancellation feedback toast displayed
+  │
+  └── 4. User Clicks "Save Profile Changes" ("Simpan Perubahan Profil")
+        ├── Client-side validation: Name required, valid email regex pattern
+        ├── Calls `updateUserProfile({ name, username, email, phone, avatarUrl })`
+        ├── AuthContext synchronizes:
+        │     - `user` state updated
+        │     - `localStorage.setItem('cuanly_auth_user', ...)`
+        │     - `localStorage.setItem('cuanly_registered_users', ...)`
+        ├── System notification dispatched: "Profil dan foto profil berhasil diperbarui!"
+        ├── Feedback toast displayed
+        └── `isEditingProfile` transitions to `false` (smoothly returns to locked View Mode with updated data)
+```
+
+### 3.11 Complete Bilingual Localization & Notification Flow (`en` / `id`)
+```
+User changes Language (via LanguageSwitcher in TopHeader, Login, Settings, or Profile Shortcut)
+  │
+  ├── 1. Context Update & State Persistence:
+  │     ├── `setLocale('en' | 'id')` triggers in LanguageContext
+  │     ├── Local storage key `cuanly_locale` is immediately updated
+  │     └── Translation dictionary `t` dynamically shifts between `src/i18n/id.ts` and `src/i18n/en.ts`
+  │
+  ├── 2. Core Translation Dictionary Parity:
+  │     ├── 100% key parity enforced via TypeScript `TranslationDictionary = typeof id`
+  │     ├── Strict compiler validation guarantees zero missing keys in English or Indonesian
+  │     └── Includes: Common, Auth, Navigation, Home, Transactions, Receipt/Scanner, Budget,
+  │         Allowance, Currency, Profile, Settings, Notifications, Categories, and Admin
+  │
+  ├── 3. Dynamic Category Localization:
+  │     ├── Default categories use stable identifiers (`cat_food`, `cat_transport`, `cat_shopping`, etc.)
+  │     ├── All components and views render `(t.categories as Record<string, string>)[cat.id] || cat.fallbackName`
+  │     └── Guarantees instantaneous title updates across Budget cards, Transaction ledger, Donut Charts, and Category Management without database migrations
+  │
+  ├── 4. Notifications & Popups Bilingual Handling:
+  │     ├── Notification items support dual-language schemas (`title` + `titleEn`, `message` + `messageEn`)
+  │     ├── Drawer rendering evaluates `locale === 'en' && item.titleEn ? item.titleEn : item.title`
+  │     ├── Toast feedback banners evaluate current active locale for real-time messages
+  │     ├── Camera / Choice / Allowance / Custom Currency / Reset Data modals utilize localized dictionary keys
+  │     └── Date and currency formatters automatically switch formats (`id-ID` with Rupiah vs `en-US` with USD/EUR/GBP/etc.)
+```
+
+
 ---
 
 ## 4. Data
 
 - **Primary Source:** Browser `localStorage` and `sessionStorage`.
-- **Validation:** Strict typing via TypeScript interfaces, positive numeric constraints on monetary values, 4–6 digit transaction PIN rules.
+- **Validation:** Strict typing via TypeScript interfaces, positive numeric constraints on monetary values, minimum 6 characters for login passwords with confirmation match validation.
 - **Persistence Lifecycle:** Reactive state subscriptions persist changes immediately upon dispatch.
 
 ---
@@ -286,6 +376,11 @@ User clicks Profile Avatar Icon in TopHeader
 
 - **Inactivity Protection:** Dynamic inactivity timer (1m, 3m default, 5m, 10m) cleanses session keys and redirects to `/login`.
 - **Root Entrypoint Lockdown:** Directing to domain root `/` always invalidates session and forces re-login.
+- **Password & Credential Security:**
+  - Login passwords enforce a minimum length of 6 characters.
+  - Interactive password visibility toggles (Eye/EyeOff) allow verification without exposing plain text in HTML source.
+  - Credential updates in `/settings?tab=security` synchronize immediately with `cuanly_credentials_override`, updating `cuanly_auth_user` and user registries so subsequent logins require the new password.
+  - Backwards-compatible PIN aliasing ensures existing PIN workflows gracefully resolve to the updated password.
 - **Role Isolation & Strict RBAC Navigation Visibility:**
   - When logged in with Demo User (`USER` role), the Admin Backoffice navigation section in `DesktopNav` is completely hidden from the sidebar, and no admin indicators appear in `TopHeader`.
   - When logged in with Demo Admin (`ADMIN` role), the Admin Backoffice navigation section appears in `DesktopNav` with full access to Dashboard, Users, Verification, All Transactions, Categories, and Complaints.

@@ -6,7 +6,7 @@ import { useFinance } from '@/contexts/FinanceContext';
 import { TrendingUp, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 export const CashflowChart: React.FC = () => {
-  const { t, formatCurrency } = useLanguage();
+  const { t, formatCurrency, locale } = useLanguage();
   const { summary } = useFinance();
   const [activeMonth, setActiveMonth] = useState('Oct');
 
@@ -81,7 +81,7 @@ export const CashflowChart: React.FC = () => {
               {savingsRate}%
             </span>
             <span className="text-[10px] text-gray-400 font-normal">
-              {savingsRate >= 20 ? '(Optimal)' : '(Perketat)'}
+              {savingsRate >= 20 ? '(Optimal)' : (locale === 'en' ? '(Tighten)' : '(Perketat)')}
             </span>
           </p>
         </div>

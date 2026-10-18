@@ -19,7 +19,7 @@ import {
 import Link from 'next/link';
 
 export default function BudgetPage() {
-  const { t, formatCurrency } = useLanguage();
+  const { t, formatCurrency, activeCurrency } = useLanguage();
   const { categories, summary, getCategoryBudgetInfo, updateBudget } = useFinance();
 
   const [editingCatId, setEditingCatId] = useState<string | null>(null);
@@ -139,7 +139,7 @@ export default function BudgetPage() {
                       style={{ backgroundColor: cat.color }}
                     />
                     <h3 className="text-sm sm:text-base font-bold text-cuanly-primaryDark">
-                      {cat.fallbackName}
+                      {(t.categories as Record<string, string>)[cat.id] || cat.fallbackName}
                     </h3>
                   </div>
 
@@ -175,13 +175,13 @@ export default function BudgetPage() {
                 {/* Amounts & Percentage */}
                 <div className="flex items-baseline justify-between text-xs sm:text-sm mb-2">
                   <span className="text-gray-500">
-                    Terpakai:{' '}
+                    {t.budget.spent}:{' '}
                     <strong className="text-cuanly-primaryDark num-tabular font-bold">
                       {formatCurrency(info.spent)}
                     </strong>
                   </span>
                   <span className="text-gray-500">
-                    Batas:{' '}
+                    {t.budget.limit}:{' '}
                     <strong className="text-cuanly-primaryDark num-tabular font-bold">
                       {formatCurrency(info.limit)}
                     </strong>
@@ -202,7 +202,7 @@ export default function BudgetPage() {
               {/* Card Footer linking to Dynamic Route */}
               <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
                 <span className="text-gray-400 font-semibold num-tabular">
-                  {info.percent}% Terpakai
+                  {info.percent}% {t.budget.used}
                 </span>
                 <Link
                   href={`/budget/${cat.slug}`}
@@ -237,7 +237,7 @@ export default function BudgetPage() {
             <form onSubmit={handleSaveBudget} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  {t.budget.limitAmount} (Rp)
+                  {t.budget.limitAmount} ({activeCurrency.symbol || 'Rp'})
                 </label>
                 <input
                   type="number"

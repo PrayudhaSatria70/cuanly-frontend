@@ -21,10 +21,13 @@ export default function CategoryBudgetDetailPage() {
   const params = useParams();
   const slug = params.slug as string;
 
-  const { t, formatCurrency, formatDate } = useLanguage();
+  const { t, formatCurrency, formatDate, locale, activeCurrency } = useLanguage();
   const { categories, transactions, getCategoryBudgetInfo, updateBudget } = useFinance();
 
   const currentCat = categories.find((c) => c.slug === slug);
+  const categoryName = currentCat
+    ? (t.categories as Record<string, string>)[currentCat.id] || currentCat.fallbackName
+    : '';
   const info = currentCat ? getCategoryBudgetInfo(currentCat.id) : null;
 
   const [newLimit, setNewLimit] = useState(info?.limit || 1000000);
@@ -33,14 +36,16 @@ export default function CategoryBudgetDetailPage() {
   if (!currentCat || !info) {
     return (
       <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <h2 className="text-lg font-bold text-gray-700">Kategori Tidak Ditemukan</h2>
+        <h2 className="text-lg font-bold text-gray-700">
+          {locale === 'en' ? 'Category Not Found' : 'Kategori Tidak Ditemukan'}
+        </h2>
         <p className="text-xs text-gray-500">Slug: {slug}</p>
         <Link
           href="/budget"
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-cuanly-primaryDark text-white text-xs font-semibold rounded-xl"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Budget</span>
+          <span>{locale === 'en' ? 'Back to Budget' : 'Kembali ke Budget'}</span>
         </Link>
       </div>
     );
@@ -72,7 +77,7 @@ export default function CategoryBudgetDetailPage() {
           className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-cuanly-primaryDark px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali</span>
+          <span>{t.common.back}</span>
         </Link>
 
         <h1 className="text-base sm:text-lg font-bold text-cuanly-primaryDark flex items-center gap-2">
@@ -80,7 +85,7 @@ export default function CategoryBudgetDetailPage() {
             className="w-3 h-3 rounded-full"
             style={{ backgroundColor: currentCat.color }}
           />
-          {currentCat.fallbackName}
+          {categoryName}
         </h1>
 
         <div className="w-12"></div>
@@ -91,13 +96,15 @@ export default function CategoryBudgetDetailPage() {
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div>
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider block">
-              Penggunaan Bulan Ini
+              {locale === 'en' ? 'Spent This Month' : 'Penggunaan Bulan Ini'}
             </span>
             <div className="text-2xl sm:text-3xl font-extrabold text-cuanly-primaryDark num-tabular mt-0.5">
               {formatCurrency(info.spent)}
             </div>
             <p className="text-xs text-gray-500 mt-0.5">
-              dari batas {formatCurrency(info.limit)} ({info.percent}%)
+              {locale === 'en'
+                ? `of limit ${formatCurrency(info.limit)} (${info.percent}%)`
+                : `dari batas ${formatCurrency(info.limit)} (${info.percent}%)`}
             </p>
           </div>
 
@@ -105,17 +112,17 @@ export default function CategoryBudgetDetailPage() {
             {isOver ? (
               <Badge variant="danger">
                 <AlertCircle className="w-3.5 h-3.5 mr-1" />
-                Overbudget ({info.percent}%)
+                {t.common.overbudget} ({info.percent}%)
               </Badge>
             ) : isWarning ? (
               <Badge variant="warning">
                 <AlertTriangle className="w-3.5 h-3.5 mr-1" />
-                Mendekati Batas ({info.percent}%)
+                {t.common.caution} ({info.percent}%)
               </Badge>
             ) : (
               <Badge variant="success">
                 <CheckCircle className="w-3.5 h-3.5 mr-1" />
-                Aman ({info.percent}%)
+                {t.common.safe} ({info.percent}%)
               </Badge>
             )}
           </div>
@@ -134,12 +141,12 @@ export default function CategoryBudgetDetailPage() {
         {/* Update Limit Form */}
         <form onSubmit={handleUpdate} className="pt-4 border-t border-gray-100 space-y-3">
           <label className="text-xs font-bold text-cuanly-primaryDark block">
-            Sesuaikan Batas Budget ({currentCat.fallbackName})
+            {t.budget.adjustLimit} ({categoryName})
           </label>
           <div className="flex gap-2">
             <div className="relative flex-1">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gray-400">
-                Rp
+                {activeCurrency.symbol || 'Rp'}
               </span>
               <input
                 type="number"
@@ -153,12 +160,12 @@ export default function CategoryBudgetDetailPage() {
               type="submit"
               className="px-4 py-2 bg-cuanly-primaryDark hover:bg-black text-white text-xs font-bold rounded-xl transition-all"
             >
-              Simpan Limit
+              {t.budget.saveLimit}
             </button>
           </div>
           {isSaved && (
             <p className="text-xs text-emerald-600 font-bold">
-              ✓ Batas budget berhasil diperbarui!
+              ✓ {t.budget.savedSuccess}
             </p>
           )}
         </form>
@@ -169,22 +176,22 @@ export default function CategoryBudgetDetailPage() {
         <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
           <h3 className="text-sm sm:text-base font-bold text-cuanly-primaryDark flex items-center gap-1.5">
             <Receipt className="w-4 h-4 text-cuanly-primary" />
-            <span>Riwayat Pengeluaran ({currentCat.fallbackName})</span>
+            <span>{t.budget.expenseHistory} ({categoryName})</span>
           </h3>
           <span className="text-xs text-gray-400">
-            {categoryTransactions.length} transaksi
+            {categoryTransactions.length} {locale === 'en' ? 'transactions' : 'transaksi'}
           </span>
         </div>
 
         {categoryTransactions.length === 0 ? (
           <div className="text-center py-8 text-xs text-gray-400 space-y-2">
-            <p>Belum ada transaksi di kategori ini bulan ini.</p>
+            <p>{t.budget.noTransactions}</p>
             <Link
               href="/transaksi/tambah"
               className="inline-flex items-center gap-1 text-xs font-bold text-cuanly-primaryDark underline"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Pengeluaran</span>
+              <span>{t.budget.addExpense}</span>
             </Link>
           </div>
         ) : (

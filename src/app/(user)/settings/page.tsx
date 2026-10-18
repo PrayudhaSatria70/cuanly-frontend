@@ -36,12 +36,15 @@ import {
   FileSpreadsheet,
   FileJson,
   X,
+  Eye,
+  EyeOff,
+  Edit3,
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {
   const { locale, setLocale, t, currencies, activeCurrency, setActiveCurrency, addCustomCurrency, formatCurrency } = useLanguage();
-  const { user, role, switchRole, logout, sessionTimeoutMs, setSessionTimeoutDuration, updateUserPin, updateUserProfile } = useAuth();
+  const { user, role, switchRole, logout, sessionTimeoutMs, setSessionTimeoutDuration, updateUserPassword, updateUserPin, updateUserProfile } = useAuth();
   const { monthlyAllowance, setMonthlyAllowance, transactions, budgets, categories, resetToDefaultData, importFinancialData } = useFinance();
   const { isDark, toggleTheme } = useTheme();
   const { addNotification, clearAllNotifications, notifications } = useNotification();
@@ -50,17 +53,6 @@ export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<
     'appearance' | 'localization' | 'budget' | 'ocr' | 'security' | 'notifications' | 'data' | 'account'
   >('appearance');
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const tabParam = params.get('tab');
-      const validTabs = ['appearance', 'localization', 'budget', 'ocr', 'security', 'notifications', 'data', 'account'];
-      if (tabParam && validTabs.includes(tabParam)) {
-        setActiveTab(tabParam as typeof activeTab);
-      }
-    }
-  }, []);
 
   // Success / Feedback Toast
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -77,9 +69,25 @@ export default function SettingsPage() {
   const [profilePhone, setProfilePhone] = useState(user?.phone || '');
   const [profileAvatarUrl, setProfileAvatarUrl] = useState(user?.avatarUrl || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [avatarUrlInput, setAvatarUrlInput] = useState('');
   const [showUrlInput, setShowUrlInput] = useState(false);
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      const editParam = params.get('edit');
+      const validTabs = ['appearance', 'localization', 'budget', 'ocr', 'security', 'notifications', 'data', 'account'];
+      if (tabParam && validTabs.includes(tabParam)) {
+        setActiveTab(tabParam as typeof activeTab);
+      }
+      if (editParam === 'true' || editParam === '1') {
+        setIsEditingProfile(true);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -158,6 +166,7 @@ export default function SettingsPage() {
           type: 'SUCCESS',
         });
         showFeedback(t.profile.saveProfileSuccess);
+        setIsEditingProfile(false);
       } else {
         showFeedback(res.error || 'Failed to update profile', 'error');
       }
@@ -166,15 +175,22 @@ export default function SettingsPage() {
     }
   };
 
-  const handleResetProfileForm = () => {
+  const handleCancelEditProfile = () => {
     if (user) {
       setProfileName(user.name || '');
       setProfileUsername(user.username || '');
       setProfileEmail(user.email || '');
       setProfilePhone(user.phone || '');
       setProfileAvatarUrl(user.avatarUrl || '');
-      showFeedback(locale === 'en' ? 'Form reset to saved profile.' : 'Form dikembalikan ke profil tersimpan.');
     }
+    setShowUrlInput(false);
+    setIsEditingProfile(false);
+    showFeedback(
+      t.profile.editCancelled ||
+        (locale === 'en'
+          ? 'Changes cancelled. Form reverted to saved profile.'
+          : 'Perubahan dibatalkan. Data form dikembalikan ke profil tersimpan.')
+    );
   };
 
   // 1. Monthly Allowance state
@@ -281,34 +297,73 @@ export default function SettingsPage() {
     );
   };
 
-  // 5. Change PIN State
-  const [oldPin, setOldPin] = useState('');
-  const [newPin, setNewPin] = useState('');
-  const [confirmPin, setConfirmPin] = useState('');
-  const [pinError, setPinError] = useState('');
+  // 5. Change Password State
+  const [oldPassword, setOldPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleUpdatePin = (e: React.FormEvent) => {
+  const handleUpdatePassword = (e: React.FormEvent) => {
     e.preventDefault();
-    setPinError('');
+    setPasswordError('');
+    setPasswordSuccess('');
 
-    if (newPin !== confirmPin) {
-      setPinError(locale === 'en' ? 'New PIN confirmation does not match.' : 'Konfirmasi PIN baru tidak sesuai.');
+    if (!oldPassword.trim()) {
+      setPasswordError(
+        locale === 'en'
+          ? 'Current password is required.'
+          : 'Password saat ini wajib diisi.'
+      );
       return;
     }
 
-    if (newPin.length < 4 || newPin.length > 6) {
-      setPinError(locale === 'en' ? 'PIN must be 4 to 6 numeric digits.' : 'PIN harus 4 sampai 6 digit.');
+    if (newPassword.trim().length < 6) {
+      setPasswordError(
+        locale === 'en'
+          ? 'New password must be at least 6 characters.'
+          : 'Password baru minimal harus 6 karakter.'
+      );
       return;
     }
 
-    const res = updateUserPin(oldPin, newPin);
+    if (newPassword !== confirmPassword) {
+      setPasswordError(
+        locale === 'en'
+          ? 'New password confirmation does not match.'
+          : 'Konfirmasi password baru tidak cocok.'
+      );
+      return;
+    }
+
+    if (newPassword.trim() === oldPassword.trim()) {
+      setPasswordError(
+        locale === 'en'
+          ? 'New password cannot be the same as current password.'
+          : 'Password baru tidak boleh sama dengan password saat ini.'
+      );
+      return;
+    }
+
+    const res = updateUserPassword(oldPassword, newPassword);
     if (res.success) {
-      setOldPin('');
-      setNewPin('');
-      setConfirmPin('');
-      showFeedback(locale === 'en' ? 'PIN updated successfully!' : 'PIN akun berhasil diperbarui!');
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      const successMsg =
+        t.settings.passwordSuccess ||
+        (locale === 'en'
+          ? 'Login password updated successfully! Use your new password on next login.'
+          : 'Password login berhasil diperbarui! Gunakan password baru ini untuk login berikutnya.');
+      setPasswordSuccess(successMsg);
+      showFeedback(successMsg);
     } else {
-      setPinError(res.error || 'Failed to update PIN.');
+      setPasswordError(
+        res.error || (locale === 'en' ? 'Failed to update login password.' : 'Gagal memperbarui password login.')
+      );
     }
   };
 
@@ -1109,75 +1164,145 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Update Transaction PIN */}
-            <div className="pt-4 border-t border-gray-100 dark:border-[#4D8DBA]/20 space-y-4">
-              <div>
-                <h4 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-[#4D8DBA]" />
-                  {t.settings.pinTitle}
-                </h4>
-                <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
-                  {t.settings.pinDesc}
-                </p>
+            {/* Update Login Password */}
+            <div className="pt-5 border-t border-gray-100 dark:border-[#4D8DBA]/20 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                    <KeyRound className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1]" />
+                    {t.settings.passwordTitle}
+                  </h4>
+                  <p className="text-xs text-gray-500 dark:text-slate-400 mt-0.5">
+                    {t.settings.passwordDesc}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1.5 self-start sm:self-auto">
+                  <span className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-gradient-to-r from-[#4D8DBA]/10 to-[#8AD6D1]/15 text-[#1C4A6B] dark:text-[#8AD6D1] border border-[#4D8DBA]/25">
+                    Min. 6 {locale === 'en' ? 'Chars' : 'Karakter'}
+                  </span>
+                </div>
               </div>
 
-              {pinError && (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>{pinError}</span>
+              {passwordError && (
+                <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl flex items-center gap-2 shadow-2xs">
+                  <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                  <span>{passwordError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleUpdatePin} className="space-y-3 max-w-md">
+              {passwordSuccess && (
+                <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-xl flex items-center gap-2 shadow-2xs">
+                  <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <span>{passwordSuccess}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleUpdatePassword} className="space-y-4 max-w-lg">
+                {/* Current Password Field */}
                 <div>
-                  <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 block mb-1">
-                    Current PIN
-                  </label>
-                  <input
-                    type="password"
-                    maxLength={6}
-                    value={oldPin}
-                    onChange={(e) => setOldPin(e.target.value)}
-                    placeholder="Enter current PIN"
-                    className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 font-mono"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 block mb-1">
-                      New PIN (4-6 digits)
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300">
+                      {t.settings.currentPassword}
                     </label>
-                    <input
-                      type="password"
-                      maxLength={6}
-                      value={newPin}
-                      onChange={(e) => setNewPin(e.target.value)}
-                      placeholder="e.g. 123456"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 font-mono"
-                    />
+                    <span className="text-[10px] text-gray-400 dark:text-slate-400">
+                      {role === 'ADMIN' ? 'Demo Admin: 999999 / admin123' : 'Demo User: 123456 / user123'}
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold text-gray-600 dark:text-slate-400 block mb-1">
-                      Confirm New PIN
-                    </label>
+                  <div className="relative group">
+                    <Lock className="w-4 h-4 text-gray-400 group-focus-within:text-[#4D8DBA] dark:group-focus-within:text-[#8AD6D1] absolute left-3 top-1/2 -translate-y-1/2 transition-colors" />
                     <input
-                      type="password"
-                      maxLength={6}
-                      value={confirmPin}
-                      onChange={(e) => setConfirmPin(e.target.value)}
-                      placeholder="Confirm PIN"
-                      className="w-full px-3.5 py-2 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 font-mono"
+                      type={showOldPassword ? 'text' : 'password'}
+                      value={oldPassword}
+                      onChange={(e) => {
+                        setOldPassword(e.target.value);
+                        if (passwordError) setPasswordError('');
+                      }}
+                      placeholder={t.settings.currentPasswordPlaceholder}
+                      required
+                      className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 focus:border-[#4D8DBA] text-gray-900 dark:text-white transition-all shadow-2xs font-mono"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowOldPassword(!showOldPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors"
+                      title={showOldPassword ? 'Hide password' : 'Show password'}
+                    >
+                      {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-                >
-                  Update Security PIN
-                </button>
+                {/* New Password & Confirm Password in 2 Columns */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">
+                      {t.settings.newPassword}
+                    </label>
+                    <div className="relative group">
+                      <Lock className="w-4 h-4 text-gray-400 group-focus-within:text-[#4D8DBA] dark:group-focus-within:text-[#8AD6D1] absolute left-3 top-1/2 -translate-y-1/2 transition-colors" />
+                      <input
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => {
+                          setNewPassword(e.target.value);
+                          if (passwordError) setPasswordError('');
+                        }}
+                        placeholder={t.settings.newPasswordPlaceholder}
+                        required
+                        minLength={6}
+                        className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 focus:border-[#4D8DBA] text-gray-900 dark:text-white transition-all shadow-2xs font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors"
+                        title={showNewPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-slate-300 block mb-1">
+                      {t.settings.confirmPassword}
+                    </label>
+                    <div className="relative group">
+                      <Lock className="w-4 h-4 text-gray-400 group-focus-within:text-[#4D8DBA] dark:group-focus-within:text-[#8AD6D1] absolute left-3 top-1/2 -translate-y-1/2 transition-colors" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => {
+                          setConfirmPassword(e.target.value);
+                          if (passwordError) setPasswordError('');
+                        }}
+                        placeholder={t.settings.confirmPasswordPlaceholder}
+                        required
+                        minLength={6}
+                        className="w-full pl-9 pr-10 py-2.5 text-xs sm:text-sm bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 focus:border-[#4D8DBA] text-gray-900 dark:text-white transition-all shadow-2xs font-mono"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 p-1 cursor-pointer transition-colors"
+                        title={showConfirmPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Action Button */}
+                <div className="pt-1">
+                  <button
+                    type="submit"
+                    className="px-5 py-2.5 bg-gradient-to-r from-[#4D8DBA] via-[#3B7B9E] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md shadow-[#4D8DBA]/25 active:scale-[0.99] cursor-pointer flex items-center gap-2 border border-white/20"
+                  >
+                    <KeyRound className="w-4 h-4 text-[#8AD6D1]" />
+                    <span>{t.settings.updatePasswordBtn}</span>
+                  </button>
+                </div>
               </form>
             </div>
           </GlassCard>
@@ -1396,7 +1521,7 @@ export default function SettingsPage() {
       {activeTab === 'account' && (
         <div className="space-y-6 animate-in fade-in duration-300">
           <GlassCard className="p-6 space-y-6">
-            <div className="flex items-center justify-between border-b border-gray-100 dark:border-[#4D8DBA]/20 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 dark:border-[#4D8DBA]/20 pb-4">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-[#4D8DBA]/15 text-[#4D8DBA] dark:text-[#8AD6D1]">
                   <User className="w-5 h-5" />
@@ -1410,22 +1535,75 @@ export default function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold border ${
-                  role === 'ADMIN'
-                    ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
-                    : 'bg-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1] border-[#8AD6D1]/40'
-                }`}
-              >
-                {role === 'ADMIN' ? 'Admin Role' : 'User Role'}
-              </span>
+              <div className="flex items-center gap-2.5">
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-bold border ${
+                    role === 'ADMIN'
+                      ? 'bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                      : 'bg-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1] border-[#8AD6D1]/40'
+                  }`}
+                >
+                  {role === 'ADMIN' ? 'Admin Role' : 'User Role'}
+                </span>
+
+                {!isEditingProfile ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingProfile(true)}
+                    className="px-3.5 py-1.5 bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-md shadow-[#4D8DBA]/25 active:scale-95"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>{t.profile.editProfileBtn}</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleCancelEditProfile}
+                    className="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                    <span>{t.profile.cancelEditBtn}</span>
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* Mode Indicator Banner */}
+            {!isEditingProfile ? (
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-gray-50/80 dark:bg-[#071018]/60 border border-gray-200 dark:border-[#4D8DBA]/20 text-xs">
+                <div className="flex items-center gap-2 text-gray-600 dark:text-slate-300">
+                  <Lock className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1] flex-shrink-0" />
+                  <span>{t.profile.viewModeHint}</span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-slate-300 flex-shrink-0">
+                  {t.profile.viewModeBadge}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-3.5 rounded-xl bg-gradient-to-r from-[#4D8DBA]/10 to-[#8AD6D1]/15 border border-[#4D8DBA]/35 text-xs animate-in fade-in">
+                <div className="flex items-center gap-2 text-[#1C4A6B] dark:text-[#8AD6D1]">
+                  <Sparkles className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1] flex-shrink-0" />
+                  <span>{t.profile.editModeHint}</span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#4D8DBA] text-white flex-shrink-0 animate-pulse">
+                  {t.profile.editModeBadge}
+                </span>
+              </div>
+            )}
 
             {/* Profile Avatar Section */}
             <div className="p-5 rounded-2xl bg-gradient-to-br from-white/80 via-[#EDF5FA]/40 to-white/70 dark:from-[#0B1520]/80 dark:via-[#071018]/60 dark:to-[#0B1520]/80 border border-[#AEC4D4]/40 dark:border-[#4D8DBA]/25 space-y-4">
-              <span className="text-xs font-bold text-gray-700 dark:text-slate-300 block uppercase tracking-wider">
-                {t.profile.avatarLabel}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-gray-700 dark:text-slate-300 block uppercase tracking-wider">
+                  {t.profile.avatarLabel}
+                </span>
+                {!isEditingProfile && (
+                  <span className="text-[11px] text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                    <Lock className="w-3 h-3" />
+                    <span>{locale === 'en' ? 'Locked in view mode' : 'Terkunci dalam mode lihat'}</span>
+                  </span>
+                )}
+              </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center gap-5">
                 {/* Large Preview */}
@@ -1444,130 +1622,153 @@ export default function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 p-2 rounded-full bg-[#4D8DBA] text-white hover:bg-[#2E678E] shadow-md border-2 border-white dark:border-[#0B1520] transition-all cursor-pointer"
-                    title={t.profile.uploadPhotoBtn}
-                  >
-                    <Camera className="w-4 h-4" />
-                  </button>
+                  {isEditingProfile && (
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-0 right-0 p-2 rounded-full bg-[#4D8DBA] text-white hover:bg-[#2E678E] shadow-md border-2 border-white dark:border-[#0B1520] transition-all cursor-pointer animate-in zoom-in"
+                      title={t.profile.uploadPhotoBtn}
+                    >
+                      <Camera className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Avatar Actions & Presets */}
                 <div className="space-y-3 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleAvatarFileUpload}
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      className="hidden"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="px-3.5 py-2 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>{t.profile.uploadPhotoBtn}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setShowUrlInput(!showUrlInput)}
-                      className="px-3.5 py-2 bg-white dark:bg-[#071018] hover:bg-gray-50 dark:hover:bg-[#112233] text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                    >
-                      {showUrlInput ? (locale === 'en' ? 'Close URL' : 'Tutup URL') : t.profile.photoUrlLabel}
-                    </button>
-
-                    {profileAvatarUrl && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setProfileAvatarUrl('');
-                          showFeedback(
-                            locale === 'en'
-                              ? 'Avatar removed. Save to apply.'
-                              : 'Foto profil dihapus. Klik simpan untuk menerapkan.'
-                          );
-                        }}
-                        className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>{t.profile.removePhotoBtn}</span>
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Optional Image URL Input */}
-                  {showUrlInput && (
-                    <div className="flex items-center gap-2 pt-1 animate-in fade-in">
-                      <input
-                        type="url"
-                        value={avatarUrlInput}
-                        onChange={(e) => setAvatarUrlInput(e.target.value)}
-                        placeholder="https://example.com/avatar.jpg"
-                        className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 text-gray-900 dark:text-white"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (avatarUrlInput.trim()) {
-                            setProfileAvatarUrl(avatarUrlInput.trim());
-                            setAvatarUrlInput('');
-                            setShowUrlInput(false);
-                            showFeedback(
-                              locale === 'en'
-                                ? 'Avatar URL applied! Click Save to apply.'
-                                : 'URL Avatar diterapkan! Klik Simpan untuk menerapkan.'
-                            );
-                          }
-                        }}
-                        className="px-3 py-1.5 bg-[#4D8DBA] text-white rounded-xl text-xs font-bold hover:bg-[#2E678E]"
-                      >
-                        {locale === 'en' ? 'Apply' : 'Terapkan'}
-                      </button>
+                  {!isEditingProfile ? (
+                    <div className="space-y-1.5 py-1">
+                      <h4 className="text-sm font-bold text-gray-800 dark:text-white">
+                        {user?.name || profileName || 'User Cuanly'}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-slate-400 font-mono">
+                        @{user?.username || profileUsername || 'username'} • {user?.email || profileEmail}
+                      </p>
+                      <p className="text-[11px] text-gray-500 dark:text-slate-400 pt-1 flex items-center gap-1.5">
+                        <Lock className="w-3.5 h-3.5 text-[#4D8DBA] dark:text-[#8AD6D1]" />
+                        <span>
+                          {locale === 'en'
+                            ? 'Press "Edit Profile" below or in the header to change photo and details.'
+                            : 'Tekan tombol "Edit Profil" di bawah atau di header untuk mengubah foto dan data akun.'}
+                        </span>
+                      </p>
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleAvatarFileUpload}
+                          accept="image/png,image/jpeg,image/webp,image/gif"
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
+                          className="px-3.5 py-2 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95"
+                        >
+                          <Upload className="w-3.5 h-3.5" />
+                          <span>{t.profile.uploadPhotoBtn}</span>
+                        </button>
 
-                  {/* Preset Avatars Carousel */}
-                  <div className="pt-2">
-                    <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 block mb-2">
-                      {t.profile.presetAvatarsTitle}:
-                    </span>
-                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                      {PRESET_AVATARS.map((presetUrl, idx) => {
-                        const isSelected = profileAvatarUrl === presetUrl;
-                        return (
+                        <button
+                          type="button"
+                          onClick={() => setShowUrlInput(!showUrlInput)}
+                          className="px-3.5 py-2 bg-white dark:bg-[#071018] hover:bg-gray-50 dark:hover:bg-[#112233] text-gray-700 dark:text-slate-200 border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                        >
+                          {showUrlInput ? (locale === 'en' ? 'Close URL' : 'Tutup URL') : t.profile.photoUrlLabel}
+                        </button>
+
+                        {profileAvatarUrl && (
                           <button
-                            key={idx}
                             type="button"
                             onClick={() => {
-                              setProfileAvatarUrl(presetUrl);
+                              setProfileAvatarUrl('');
                               showFeedback(
                                 locale === 'en'
-                                  ? 'Preset avatar selected! Click Save to apply.'
-                                  : 'Avatar preset dipilih! Klik Simpan untuk menerapkan.'
+                                  ? 'Avatar removed. Click "Save Profile Changes" to apply.'
+                                  : 'Foto profil dihapus. Klik "Simpan Perubahan Profil" untuk menerapkan.'
                               );
                             }}
-                            className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
-                              isSelected
-                                ? 'border-[#4D8DBA] ring-2 ring-[#4D8DBA]/40 scale-105'
-                                : 'border-gray-200 dark:border-gray-700 hover:border-[#4D8DBA] opacity-75 hover:opacity-100'
-                            }`}
+                            className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                           >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={presetUrl}
-                              alt={`Preset avatar ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>{t.profile.removePhotoBtn}</span>
                           </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                        )}
+                      </div>
+
+                      {/* Optional Image URL Input */}
+                      {showUrlInput && (
+                        <div className="flex items-center gap-2 pt-1 animate-in fade-in">
+                          <input
+                            type="url"
+                            value={avatarUrlInput}
+                            onChange={(e) => setAvatarUrlInput(e.target.value)}
+                            placeholder="https://example.com/avatar.jpg"
+                            className="flex-1 px-3 py-1.5 text-xs bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/30 text-gray-900 dark:text-white"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (avatarUrlInput.trim()) {
+                                setProfileAvatarUrl(avatarUrlInput.trim());
+                                setAvatarUrlInput('');
+                                setShowUrlInput(false);
+                                showFeedback(
+                                  locale === 'en'
+                                    ? 'Avatar URL applied! Click "Save Profile Changes" to apply.'
+                                    : 'URL Avatar diterapkan! Klik "Simpan Perubahan Profil" untuk menerapkan.'
+                                );
+                              }
+                            }}
+                            className="px-3 py-1.5 bg-[#4D8DBA] text-white rounded-xl text-xs font-bold hover:bg-[#2E678E]"
+                          >
+                            {locale === 'en' ? 'Apply' : 'Terapkan'}
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Preset Avatars Carousel */}
+                      <div className="pt-2">
+                        <span className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 block mb-2">
+                          {t.profile.presetAvatarsTitle}:
+                        </span>
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                          {PRESET_AVATARS.map((presetUrl, idx) => {
+                            const isSelected = profileAvatarUrl === presetUrl;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                onClick={() => {
+                                  setProfileAvatarUrl(presetUrl);
+                                  showFeedback(
+                                    locale === 'en'
+                                      ? 'Preset avatar selected! Click "Save Profile Changes" to apply.'
+                                      : 'Avatar preset dipilih! Klik "Simpan Perubahan Profil" untuk menerapkan.'
+                                  );
+                                }}
+                                className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all flex-shrink-0 cursor-pointer ${
+                                  isSelected
+                                    ? 'border-[#4D8DBA] ring-2 ring-[#4D8DBA]/40 scale-105'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-[#4D8DBA] opacity-75 hover:opacity-100'
+                                }`}
+                              >
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={presetUrl}
+                                  alt={`Preset avatar ${idx + 1}`}
+                                  className="w-full h-full object-cover"
+                                />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -1577,81 +1778,154 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Full Name */}
                 <div>
-                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
-                    {t.profile.fullNameLabel} <span className="text-rose-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {t.profile.fullNameLabel} {isEditingProfile && <span className="text-rose-500">*</span>}
+                    </label>
+                    {!isEditingProfile && (
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Read-only
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     placeholder="e.g. Budi Santoso"
-                    required
-                    className="w-full px-3.5 py-2.5 text-xs font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                    required={isEditingProfile}
+                    disabled={!isEditingProfile}
+                    className={`w-full px-3.5 py-2.5 text-xs font-semibold rounded-xl transition-all ${
+                      !isEditingProfile
+                        ? 'bg-gray-50/90 dark:bg-[#071018]/50 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-slate-200 cursor-not-allowed select-text'
+                        : 'bg-white dark:bg-[#071018] border border-[#4D8DBA]/50 dark:border-[#4D8DBA]/60 focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white shadow-xs'
+                    }`}
                   />
                 </div>
 
                 {/* Username */}
                 <div>
-                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
-                    {t.profile.usernameLabel}
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {t.profile.usernameLabel}
+                    </label>
+                    {!isEditingProfile && (
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Read-only
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={profileUsername}
                     onChange={(e) => setProfileUsername(e.target.value)}
                     placeholder="e.g. budisantoso"
-                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                    disabled={!isEditingProfile}
+                    className={`w-full px-3.5 py-2.5 text-xs font-mono font-semibold rounded-xl transition-all ${
+                      !isEditingProfile
+                        ? 'bg-gray-50/90 dark:bg-[#071018]/50 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-slate-200 cursor-not-allowed select-text'
+                        : 'bg-white dark:bg-[#071018] border border-[#4D8DBA]/50 dark:border-[#4D8DBA]/60 focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white shadow-xs'
+                    }`}
                   />
                 </div>
 
                 {/* Email Address */}
                 <div>
-                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
-                    {t.profile.emailLabel} <span className="text-rose-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {t.profile.emailLabel} {isEditingProfile && <span className="text-rose-500">*</span>}
+                    </label>
+                    {!isEditingProfile && (
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Read-only
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="email"
                     value={profileEmail}
                     onChange={(e) => setProfileEmail(e.target.value)}
                     placeholder="e.g. user@cuanly.com"
-                    required
-                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                    required={isEditingProfile}
+                    disabled={!isEditingProfile}
+                    className={`w-full px-3.5 py-2.5 text-xs font-mono font-semibold rounded-xl transition-all ${
+                      !isEditingProfile
+                        ? 'bg-gray-50/90 dark:bg-[#071018]/50 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-slate-200 cursor-not-allowed select-text'
+                        : 'bg-white dark:bg-[#071018] border border-[#4D8DBA]/50 dark:border-[#4D8DBA]/60 focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white shadow-xs'
+                    }`}
                   />
                 </div>
 
                 {/* Phone Number */}
                 <div>
-                  <label className="text-xs font-bold text-gray-700 dark:text-slate-300 block mb-1">
-                    {t.profile.phoneLabel}
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-bold text-gray-700 dark:text-slate-300">
+                      {t.profile.phoneLabel}
+                    </label>
+                    {!isEditingProfile && (
+                      <span className="text-[10px] text-gray-400 dark:text-slate-500 flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> Read-only
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="tel"
                     value={profilePhone}
                     onChange={(e) => setProfilePhone(e.target.value)}
                     placeholder="e.g. 0812-3456-7890"
-                    className="w-full px-3.5 py-2.5 text-xs font-mono font-semibold bg-white dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white"
+                    disabled={!isEditingProfile}
+                    className={`w-full px-3.5 py-2.5 text-xs font-mono font-semibold rounded-xl transition-all ${
+                      !isEditingProfile
+                        ? 'bg-gray-50/90 dark:bg-[#071018]/50 border border-gray-200 dark:border-gray-800 text-gray-800 dark:text-slate-200 cursor-not-allowed select-text'
+                        : 'bg-white dark:bg-[#071018] border border-[#4D8DBA]/50 dark:border-[#4D8DBA]/60 focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 text-gray-900 dark:text-white shadow-xs'
+                    }`}
                   />
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-gray-100 dark:border-[#4D8DBA]/20">
-                <button
-                  type="button"
-                  onClick={handleResetProfileForm}
-                  className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                >
-                  {locale === 'en' ? 'Reset to Saved' : 'Batal / Reset'}
-                </button>
+                {!isEditingProfile ? (
+                  <>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-slate-400">
+                      <Lock className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1]" />
+                      <span>
+                        {locale === 'en'
+                          ? 'Click "Edit Profile" to modify your personal details.'
+                          : 'Tekan tombol "Edit Profil" untuk mengubah data pribadi Anda.'}
+                      </span>
+                    </div>
 
-                <button
-                  type="submit"
-                  disabled={isSavingProfile}
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-[#4D8DBA]/30 active:scale-95 disabled:opacity-50"
-                >
-                  <Check className="w-4 h-4 stroke-[3]" />
-                  <span>{isSavingProfile ? (locale === 'en' ? 'Saving...' : 'Menyimpan...') : t.profile.saveProfileBtn}</span>
-                </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingProfile(true)}
+                      className="px-6 py-2.5 bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-[#4D8DBA]/30 active:scale-95"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                      <span>{t.profile.editProfileBtn}</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleCancelEditProfile}
+                      className="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>{t.profile.cancelEditBtn}</span>
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isSavingProfile}
+                      className="px-6 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer shadow-md shadow-emerald-500/25 active:scale-95 disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4 stroke-[3]" />
+                      <span>{isSavingProfile ? (locale === 'en' ? 'Saving...' : 'Menyimpan...') : t.profile.saveProfileChangesBtn}</span>
+                    </button>
+                  </>
+                )}
               </div>
             </form>
 
@@ -1858,7 +2132,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 rounded-xl text-[11px] text-rose-800 dark:text-rose-200 leading-relaxed">
-              This action will restore default mock transactions, category limits, and reset your allowance to Rp 6.700.000.
+              {t.settings.resetWarning}
             </div>
 
             <div className="flex gap-2 pt-2">
@@ -1874,7 +2148,7 @@ export default function SettingsPage() {
                 onClick={handleConfirmReset}
                 className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm"
               >
-                Yes, Reset All Data
+                {t.settings.resetConfirmBtn}
               </button>
             </div>
           </div>

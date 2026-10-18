@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function AdminVerificationQueuePage() {
   const { mitraList } = useAdmin();
-  const { t, formatDate } = useLanguage();
+  const { t, formatDate, locale } = useLanguage();
 
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'VERIFIED' | 'REJECTED'>('ALL');
 
@@ -43,7 +43,7 @@ export default function AdminVerificationQueuePage() {
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            Semua ({mitraList.length})
+            {locale === 'en' ? 'All' : 'Semua'} ({mitraList.length})
           </button>
           <button
             type="button"
@@ -54,7 +54,7 @@ export default function AdminVerificationQueuePage() {
                 : 'text-gray-500 hover:text-amber-700'
             }`}
           >
-            Menunggu Verifikasi ({mitraList.filter((m) => m.verificationStatus === 'PENDING').length})
+            {locale === 'en' ? 'Pending' : 'Menunggu Verifikasi'} ({mitraList.filter((m) => m.verificationStatus === 'PENDING').length})
           </button>
           <button
             type="button"
@@ -65,7 +65,7 @@ export default function AdminVerificationQueuePage() {
                 : 'text-gray-500 hover:text-emerald-700'
             }`}
           >
-            Terverifikasi ({mitraList.filter((m) => m.verificationStatus === 'VERIFIED').length})
+            {locale === 'en' ? 'Verified' : 'Terverifikasi'} ({mitraList.filter((m) => m.verificationStatus === 'VERIFIED').length})
           </button>
           <button
             type="button"
@@ -76,7 +76,7 @@ export default function AdminVerificationQueuePage() {
                 : 'text-gray-500 hover:text-rose-700'
             }`}
           >
-            Ditolak ({mitraList.filter((m) => m.verificationStatus === 'REJECTED').length})
+            {locale === 'en' ? 'Rejected' : 'Ditolak'} ({mitraList.filter((m) => m.verificationStatus === 'REJECTED').length})
           </button>
         </div>
       </GlassCard>
@@ -112,13 +112,13 @@ export default function AdminVerificationQueuePage() {
                     </Badge>
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    Pemilik: {m.ownerName} | Bidang: {m.category}
+                    {locale === 'en' ? 'Owner' : 'Pemilik'}: {m.ownerName} | {locale === 'en' ? 'Sector' : 'Bidang'}: {m.category}
                   </p>
                   <p className="text-[11px] text-gray-400 mt-0.5">
-                    Dokumen: <span className="font-semibold">{m.documentType}</span> (No: {m.documentNumber})
+                    {locale === 'en' ? 'Document' : 'Dokumen'}: <span className="font-semibold">{m.documentType}</span> (No: {m.documentNumber})
                   </p>
                   <span className="text-[10px] text-gray-400">
-                    Diajukan pada: {formatDate(m.submissionDate)}
+                    {locale === 'en' ? 'Submitted on' : 'Diajukan pada'}: {formatDate(m.submissionDate)}
                   </span>
                 </div>
               </div>
@@ -128,7 +128,7 @@ export default function AdminVerificationQueuePage() {
                   href={`/admin/verification/${m.id}`}
                   className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1"
                 >
-                  <span>Tinjau Berkas</span>
+                  <span>{locale === 'en' ? 'Review Application' : 'Tinjau Berkas'}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>

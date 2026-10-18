@@ -140,7 +140,9 @@ export default function TransaksiDetailPage() {
               <Layers className="w-4 h-4 text-gray-400" />
               {t.common.category}
             </span>
-            <span className="font-bold text-cuanly-primaryDark">{tx.categoryName}</span>
+            <span className="font-bold text-cuanly-primaryDark">
+              {(t.categories as Record<string, string>)[tx.categoryId] || tx.categoryName}
+            </span>
           </div>
 
           <div className="flex items-center justify-between py-2 border-b border-gray-100">
@@ -162,7 +164,7 @@ export default function TransaksiDetailPage() {
           </div>
 
           <div className="flex items-center justify-between py-2 border-b border-gray-100 text-[11px] text-gray-400">
-            <span>ID Transaksi</span>
+            <span>{t.transactions.txId}</span>
             <span className="font-mono">{tx.id}</span>
           </div>
         </div>
@@ -239,7 +241,7 @@ export default function TransaksiDetailPage() {
             <form onSubmit={handleSaveEdit} className="space-y-4">
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  Nominal (Rp)
+                  {t.common.amount} ({tx.currencySymbol || 'Rp'})
                 </label>
                 <input
                   type="number"
@@ -251,7 +253,7 @@ export default function TransaksiDetailPage() {
 
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  Catatan
+                  {t.common.notes}
                 </label>
                 <input
                   type="text"

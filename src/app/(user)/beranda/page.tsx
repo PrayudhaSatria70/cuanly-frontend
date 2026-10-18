@@ -168,54 +168,60 @@ export default function BerandaPage() {
       </GlassCard>
 
       {/* Smart Budget Warning Alert Banner */}
-      {activeBudgetWarning && (
-        <div
-          className="p-4 rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 flex items-start justify-between gap-3 shadow-sm transition-all"
-        >
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-white dark:bg-[#112233] shadow-xs mt-0.5">
-              {activeBudgetWarning.isOverbudget ? (
-                <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-              ) : (
-                <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
-              )}
-            </div>
-            <div>
-              <h4 className="text-sm font-bold text-rose-950 dark:text-rose-100">
-                {activeBudgetWarning.isOverbudget
-                  ? (locale === 'en'
-                      ? `Warning: Category ${activeBudgetWarning.categoryName} Exceeded Limit!`
-                      : `Perhatian: Kategori ${activeBudgetWarning.categoryName} Melebihi Batas!`)
-                  : t.home.budgetWarningTitle}
-              </h4>
-              <p className="text-xs mt-0.5 leading-relaxed text-rose-800 dark:text-rose-200/90">
-                {locale === 'en'
-                  ? `Your spending for category ${activeBudgetWarning.categoryName} has reached `
-                  : 'Pengeluaran untuk kategori '}
-                <strong>{activeBudgetWarning.categoryName}</strong>{' '}
-                {locale === 'en' ? 'has reached ' : 'telah mencapai '}
-                <span className="font-bold">{activeBudgetWarning.percent}%</span>{' '}
-                {locale === 'en' ? 'of your specified budget limit.' : 'dari batas yang Anda tentukan.'}
-              </p>
-              <div className="mt-2 flex items-center gap-3">
-                <Link
-                  href={`/budget/${activeBudgetWarning.categorySlug}`}
-                  className="text-xs font-bold text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 underline hover:no-underline"
-                >
-                  {locale === 'en' ? 'View Budget Details →' : 'Lihat Detail Budget →'}
-                </Link>
-                <button
-                  type="button"
-                  onClick={dismissWarning}
-                  className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 cursor-pointer"
-                >
-                  {locale === 'en' ? 'Dismiss Alert' : 'Tutup Peringatan'}
-                </button>
+      {activeBudgetWarning && (() => {
+        const warningCatName =
+          (activeBudgetWarning.categoryId && (t.categories as Record<string, string>)[activeBudgetWarning.categoryId]) ||
+          activeBudgetWarning.categoryName;
+
+        return (
+          <div
+            className="p-4 rounded-2xl border border-rose-200 dark:border-rose-800/60 bg-rose-50 dark:bg-rose-950/40 text-rose-900 dark:text-rose-200 flex items-start justify-between gap-3 shadow-sm transition-all"
+          >
+            <div className="flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-white dark:bg-[#112233] shadow-xs mt-0.5">
+                {activeBudgetWarning.isOverbudget ? (
+                  <AlertCircle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400" />
+                )}
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-rose-950 dark:text-rose-100">
+                  {activeBudgetWarning.isOverbudget
+                    ? (locale === 'en'
+                        ? `Warning: Category ${warningCatName} Exceeded Limit!`
+                        : `Perhatian: Kategori ${warningCatName} Melebihi Batas!`)
+                    : t.home.budgetWarningTitle}
+                </h4>
+                <p className="text-xs mt-0.5 leading-relaxed text-rose-800 dark:text-rose-200/90">
+                  {locale === 'en'
+                    ? `Your spending for category ${warningCatName} has reached `
+                    : 'Pengeluaran untuk kategori '}
+                  <strong>{warningCatName}</strong>{' '}
+                  {locale === 'en' ? 'has reached ' : 'telah mencapai '}
+                  <span className="font-bold">{activeBudgetWarning.percent}%</span>{' '}
+                  {locale === 'en' ? 'of your specified budget limit.' : 'dari batas yang Anda tentukan.'}
+                </p>
+                <div className="mt-2 flex items-center gap-3">
+                  <Link
+                    href={`/budget/${activeBudgetWarning.categorySlug}`}
+                    className="text-xs font-bold text-rose-700 dark:text-rose-300 hover:text-rose-900 dark:hover:text-rose-100 underline hover:no-underline"
+                  >
+                    {locale === 'en' ? 'View Budget Details →' : 'Lihat Detail Budget →'}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={dismissWarning}
+                    className="text-xs text-rose-600 dark:text-rose-400 hover:text-rose-800 dark:hover:text-rose-200 cursor-pointer"
+                  >
+                    {locale === 'en' ? 'Dismiss Alert' : 'Tutup Peringatan'}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* 2-Column Analytics Section: Cashflow Trend & Category Donut */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -269,7 +275,7 @@ export default function BerandaPage() {
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <h4 className="text-sm font-semibold text-cuanly-primaryDark truncate group-hover:text-emerald-700 transition-colors">
-                      {tx.categoryName}
+                      {(t.categories as Record<string, string>)[tx.categoryId] || tx.categoryName}
                     </h4>
                     {tx.receipt && (
                       <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">

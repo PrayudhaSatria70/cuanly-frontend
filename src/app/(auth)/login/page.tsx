@@ -188,7 +188,7 @@ export default function LoginPage() {
               <input
                 type={showPin ? 'text' : 'password'}
                 value={pin}
-                maxLength={6}
+                maxLength={64}
                 onChange={(e) => setPin(e.target.value)}
                 placeholder={t.auth.pinInputPlaceholder}
                 required

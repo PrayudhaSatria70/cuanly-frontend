@@ -24,7 +24,7 @@ export default function AdminComplaintDetailPage() {
   const complaintId = params.id as string;
 
   const { complaints, updateComplaint } = useAdmin();
-  const { formatDate } = useLanguage();
+  const { formatDate, locale, t } = useLanguage();
 
   const ticket = complaints.find((c) => c.id === complaintId);
 
@@ -35,13 +35,15 @@ export default function AdminComplaintDetailPage() {
   if (!ticket) {
     return (
       <div className="max-w-xl mx-auto py-16 text-center space-y-4">
-        <h2 className="text-lg font-bold text-gray-700">Tiket Keluhan Tidak Ditemukan</h2>
+        <h2 className="text-lg font-bold text-gray-700">
+          {locale === 'en' ? 'Complaint Ticket Not Found' : 'Tiket Keluhan Tidak Ditemukan'}
+        </h2>
         <Link
           href="/admin/complaints"
           className="inline-flex items-center gap-1.5 px-4 py-2 bg-cuanly-primaryDark text-white text-xs font-semibold rounded-xl"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali ke Daftar Keluhan</span>
+          <span>{locale === 'en' ? 'Back to Complaints List' : 'Kembali ke Daftar Keluhan'}</span>
         </Link>
       </div>
     );
@@ -50,7 +52,7 @@ export default function AdminComplaintDetailPage() {
   const handleSaveResolution = (e: React.FormEvent) => {
     e.preventDefault();
     updateComplaint(ticket.id, status, resolutionNote);
-    setSuccessMsg('Status tiket berhasil diperbarui!');
+    setSuccessMsg(locale === 'en' ? 'Ticket status updated successfully!' : 'Status tiket berhasil diperbarui!');
     setTimeout(() => {
       router.push('/admin/complaints');
     }, 1200);
@@ -65,10 +67,10 @@ export default function AdminComplaintDetailPage() {
           className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-gray-600 hover:text-cuanly-primaryDark px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Kembali</span>
+          <span>{t.common.back}</span>
         </Link>
         <h1 className="text-base sm:text-lg font-bold text-cuanly-primaryDark">
-          Penanganan Tiket Keluhan
+          {locale === 'en' ? 'Complaint Ticket Management' : 'Penanganan Tiket Keluhan'}
         </h1>
         <div className="w-12"></div>
       </div>
@@ -97,7 +99,7 @@ export default function AdminComplaintDetailPage() {
                     : 'neutral'
                 }
               >
-                Prioritas: {ticket.priority}
+                {locale === 'en' ? 'Priority' : 'Prioritas'}: {ticket.priority}
               </Badge>
             </div>
             <h2 className="text-lg font-bold text-cuanly-primaryDark">
@@ -123,28 +125,36 @@ export default function AdminComplaintDetailPage() {
           <div className="flex items-center gap-2">
             <User className="w-4 h-4 text-gray-400" />
             <div>
-              <span className="text-gray-400 block text-[10px]">Pelapor</span>
+              <span className="text-gray-400 block text-[10px]">
+                {locale === 'en' ? 'Reporter' : 'Pelapor'}
+              </span>
               <span className="font-bold text-gray-800">{ticket.userName}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Mail className="w-4 h-4 text-gray-400" />
             <div>
-              <span className="text-gray-400 block text-[10px]">Email</span>
+              <span className="text-gray-400 block text-[10px]">
+                {locale === 'en' ? 'Email' : 'Email'}
+              </span>
               <span className="font-semibold text-gray-800">{ticket.userEmail}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="w-4 h-4 text-gray-400" />
             <div>
-              <span className="text-gray-400 block text-[10px]">Tanggal Laporan</span>
+              <span className="text-gray-400 block text-[10px]">
+                {locale === 'en' ? 'Report Date' : 'Tanggal Laporan'}
+              </span>
               <span className="font-medium text-gray-800">{formatDate(ticket.createdAt)}</span>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-gray-400" />
             <div>
-              <span className="text-gray-400 block text-[10px]">ID Pengguna</span>
+              <span className="text-gray-400 block text-[10px]">
+                {locale === 'en' ? 'User ID' : 'ID Pengguna'}
+              </span>
               <span className="font-mono text-gray-800">{ticket.userId}</span>
             </div>
           </div>
@@ -153,7 +163,7 @@ export default function AdminComplaintDetailPage() {
         {/* Description */}
         <div className="space-y-1">
           <label className="text-xs font-bold text-gray-600 uppercase tracking-wider block">
-            Rincian Keluhan / Masalah:
+            {locale === 'en' ? 'Complaint / Issue Details:' : 'Rincian Keluhan / Masalah:'}
           </label>
           <div className="p-3.5 bg-white border border-gray-200 rounded-xl text-xs sm:text-sm text-gray-700 leading-relaxed">
             {ticket.description}
@@ -164,28 +174,38 @@ export default function AdminComplaintDetailPage() {
         <form onSubmit={handleSaveResolution} className="space-y-4 pt-2 border-t border-gray-100">
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-1">
-              Perbarui Status Tiket
+              {locale === 'en' ? 'Update Ticket Status' : 'Perbarui Status Tiket'}
             </label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value as ComplaintStatus)}
               className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 font-bold"
             >
-              <option value="OPEN">OPEN (Menunggu Penanganan)</option>
-              <option value="IN_PROGRESS">IN_PROGRESS (Sedang Dikerjakan Tim)</option>
-              <option value="RESOLVED">RESOLVED (Keluhan Terselesaikan)</option>
+              <option value="OPEN">
+                OPEN ({locale === 'en' ? 'Awaiting Action' : 'Menunggu Penanganan'})
+              </option>
+              <option value="IN_PROGRESS">
+                IN_PROGRESS ({locale === 'en' ? 'Under Review / Working' : 'Sedang Dikerjakan Tim'})
+              </option>
+              <option value="RESOLVED">
+                RESOLVED ({locale === 'en' ? 'Complaint Resolved' : 'Keluhan Terselesaikan'})
+              </option>
             </select>
           </div>
 
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-1">
-              Catatan Resolusi / Tanggapan Admin
+              {locale === 'en' ? 'Resolution Notes / Admin Response' : 'Catatan Resolusi / Tanggapan Admin'}
             </label>
             <textarea
               rows={3}
               value={resolutionNote}
               onChange={(e) => setResolutionNote(e.target.value)}
-              placeholder="Tuliskan tindakan atau jawaban yang telah diberikan kepada pengguna..."
+              placeholder={
+                locale === 'en'
+                  ? 'Enter resolution action or response given to the user...'
+                  : 'Tuliskan tindakan atau jawaban yang telah diberikan kepada pengguna...'
+              }
               className="w-full px-3 py-2 text-xs sm:text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300"
             />
           </div>
@@ -195,7 +215,7 @@ export default function AdminComplaintDetailPage() {
               type="submit"
               className="w-full py-3 bg-cuanly-primaryDark hover:bg-black text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-[0.99]"
             >
-              Simpan Tindak Lanjut Tiket
+              {locale === 'en' ? 'Save Ticket Resolution' : 'Simpan Tindak Lanjut Tiket'}
             </button>
           </div>
         </form>

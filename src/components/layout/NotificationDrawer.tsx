@@ -8,7 +8,7 @@ import Link from 'next/link';
 
 export const NotificationDrawer: React.FC = () => {
   const { isDrawerOpen, closeDrawer, notifications, markAllAsRead, markAsRead } = useNotification();
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
 
   if (!isDrawerOpen) return null;
 
@@ -46,7 +46,7 @@ export const NotificationDrawer: React.FC = () => {
                   {t.nav.notifications}
                 </h2>
                 <p className="text-xs text-gray-500 dark:text-slate-400">
-                  {notifications.filter((n) => !n.isRead).length} belum dibaca
+                  {notifications.filter((n) => !n.isRead).length} {t.notifications.unreadCount}
                 </p>
               </div>
             </div>
@@ -57,10 +57,10 @@ export const NotificationDrawer: React.FC = () => {
                   type="button"
                   onClick={markAllAsRead}
                   className="text-xs text-[#4D8DBA] dark:text-[#8AD6D1] hover:text-[#2E678E] font-medium flex items-center gap-1 px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-[#112233]"
-                  title="Tandai semua dibaca"
+                  title={t.notifications.markAllRead}
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>Baca Semua</span>
+                  <span>{t.notifications.markAllReadBtn}</span>
                 </button>
               )}
               <button
@@ -77,7 +77,7 @@ export const NotificationDrawer: React.FC = () => {
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {notifications.length === 0 ? (
               <div className="text-center py-12 text-gray-400 text-sm">
-                Belum ada notifikasi baru
+                {t.notifications.empty}
               </div>
             ) : (
               notifications.map((item) => (
@@ -95,14 +95,14 @@ export const NotificationDrawer: React.FC = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between gap-1">
                         <h4 className="text-xs sm:text-sm font-semibold text-cuanly-primaryDark dark:text-slate-100 truncate">
-                          {item.title}
+                          {locale === 'en' && item.titleEn ? item.titleEn : item.title}
                         </h4>
                         {!item.isRead && (
                           <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0"></span>
                         )}
                       </div>
                       <p className="text-xs text-gray-600 dark:text-slate-300 mt-1 leading-relaxed">
-                        {item.message}
+                        {locale === 'en' && item.messageEn ? item.messageEn : item.message}
                       </p>
                       {item.link && (
                         <Link
@@ -110,7 +110,7 @@ export const NotificationDrawer: React.FC = () => {
                           onClick={closeDrawer}
                           className="inline-block mt-2 text-xs font-semibold text-[#4D8DBA] dark:text-[#8AD6D1] hover:underline"
                         >
-                          Lihat Detail &rarr;
+                          {t.notifications.viewDetail} &rarr;
                         </Link>
                       )}
                     </div>

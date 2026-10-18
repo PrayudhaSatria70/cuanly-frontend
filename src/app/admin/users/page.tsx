@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function AdminUsersPage() {
   const { allUsers, mitraList, toggleUserStatus } = useAdmin();
-  const { t, formatDate } = useLanguage();
+  const { t, formatDate, locale } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'USERS' | 'MITRA'>('USERS');
   const [searchQuery, setSearchQuery] = useState('');
@@ -36,7 +36,9 @@ export default function AdminUsersPage() {
           {t.admin.usersManagement}
         </h1>
         <p className="text-xs sm:text-sm text-gray-500">
-          Kelola data pengguna terdaftar dan mitra bisnis dalam ekosistem Cuanly
+          {locale === 'en'
+            ? 'Manage registered users and business partner accounts in the Cuanly ecosystem'
+            : 'Kelola data pengguna terdaftar dan mitra bisnis dalam ekosistem Cuanly'}
         </p>
       </div>
 
@@ -76,7 +78,7 @@ export default function AdminUsersPage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama atau email..."
+              placeholder={locale === 'en' ? 'Search by name or email...' : 'Cari nama atau email...'}
               className="w-full pl-9 pr-3 py-1.5 text-xs sm:text-sm bg-white border border-gray-200 rounded-xl"
             />
           </div>
@@ -107,7 +109,7 @@ export default function AdminUsersPage() {
                     </div>
                     <p className="text-xs text-gray-500 truncate">{u.email}</p>
                     <span className="text-[10px] text-gray-400">
-                      Bergabung: {formatDate(u.createdAt)}
+                      {locale === 'en' ? 'Joined' : 'Bergabung'}: {formatDate(u.createdAt)}
                     </span>
                   </div>
                 </div>
@@ -118,12 +120,12 @@ export default function AdminUsersPage() {
                     onClick={() => toggleUserStatus(u.id)}
                     className="px-2.5 py-1 text-xs font-semibold rounded-lg border border-gray-200 hover:bg-gray-100 text-gray-600"
                   >
-                    Status
+                    {locale === 'en' ? 'Status' : 'Status'}
                   </button>
                   <Link
                     href={`/admin/users/${u.id}`}
                     className="p-1.5 text-gray-400 hover:text-cuanly-primaryDark rounded-lg hover:bg-gray-100"
-                    title="Lihat Detail"
+                    title={locale === 'en' ? 'View Details' : 'Lihat Detail'}
                   >
                     <ChevronRight className="w-4 h-4" />
                   </Link>
@@ -166,10 +168,10 @@ export default function AdminUsersPage() {
                       </Badge>
                     </div>
                     <p className="text-xs text-gray-500">
-                      Pemilik: {m.ownerName} • {m.category}
+                      {locale === 'en' ? 'Owner' : 'Pemilik'}: {m.ownerName} • {m.category}
                     </p>
                     <span className="text-[10px] text-gray-400">
-                      Email: {m.email} | Kontak: {m.phone}
+                      Email: {m.email} | {locale === 'en' ? 'Contact' : 'Kontak'}: {m.phone}
                     </span>
                   </div>
                 </div>
@@ -179,7 +181,7 @@ export default function AdminUsersPage() {
                     href={`/admin/verification/${m.id}`}
                     className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-bold transition-all shadow-xs"
                   >
-                    Verifikasi
+                    {locale === 'en' ? 'Verify' : 'Verifikasi'}
                   </Link>
                 </div>
               </div>

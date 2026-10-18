@@ -126,7 +126,7 @@ export const TopHeader: React.FC = () => {
               type="button"
               onClick={switchRole}
               className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs font-semibold border bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-800 transition-all shadow-2xs cursor-pointer"
-              title="Role: ADMIN. Klik untuk beralih ke User."
+              title={locale === 'en' ? 'Role: ADMIN. Click to switch to User.' : 'Role: ADMIN. Klik untuk beralih ke User.'}
             >
               <Shield className="w-3.5 h-3.5 text-purple-600 dark:text-purple-400" />
               <span className="hidden md:inline">Admin Mode</span>
@@ -139,7 +139,7 @@ export const TopHeader: React.FC = () => {
             type="button"
             onClick={openDrawer}
             className="relative p-2 text-gray-600 dark:text-slate-200 hover:text-[#4D8DBA] dark:hover:text-[#8AD6D1] rounded-xl hover:bg-[#AEC4D4]/20 transition-colors"
-            aria-label="Buka Notifikasi"
+            aria-label={locale === 'en' ? 'Open Notifications' : 'Buka Notifikasi'}
           >
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
@@ -159,7 +159,7 @@ export const TopHeader: React.FC = () => {
                   ? 'border-[#4D8DBA] ring-2 ring-[#4D8DBA]/35 shadow-sm'
                   : 'border-gray-300 dark:border-[#4D8DBA]/50 hover:ring-2 hover:ring-[#4D8DBA]/30'
               }`}
-              title="Profile & Quick Menu"
+              title={locale === 'en' ? 'Profile & Quick Menu' : 'Profil & Menu Cepat'}
               aria-expanded={isProfileMenuOpen}
               aria-haspopup="true"
             >
@@ -217,7 +217,7 @@ export const TopHeader: React.FC = () => {
                 <div className="space-y-1">
                   {/* Shortcut A: Edit Profile */}
                   <Link
-                    href="/settings?tab=account"
+                    href="/settings?tab=account&edit=true"
                     onClick={() => setIsProfileMenuOpen(false)}
                     className="flex items-center justify-between p-2.5 rounded-xl text-xs font-semibold text-gray-700 dark:text-slate-200 hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 hover:text-[#4D8DBA] dark:hover:text-[#8AD6D1] transition-all group"
                   >

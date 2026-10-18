@@ -115,7 +115,9 @@ export const CategoryDonutChart: React.FC = () => {
           {/* Center Text inside Donut */}
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-2 pointer-events-none">
             <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider truncate max-w-[90px]">
-              {activeCategory ? activeCategory.fallbackName : 'Total'}
+              {activeCategory
+                ? ((t.categories as Record<string, string>)[activeCategory.id] || activeCategory.fallbackName)
+                : t.common.total}
             </span>
             <span className="text-sm font-bold text-cuanly-primaryDark num-tabular">
               {activeCategory ? `${activeCategory.percent}%` : '100%'}
@@ -149,7 +151,7 @@ export const CategoryDonutChart: React.FC = () => {
                       style={{ backgroundColor: slice.color }}
                     />
                     <span className="text-xs font-medium text-gray-700 truncate">
-                      {slice.fallbackName}
+                      {(t.categories as Record<string, string>)[slice.id] || slice.fallbackName}
                     </span>
                   </div>
                   <span className="text-[11px] font-bold text-cuanly-primaryDark num-tabular">

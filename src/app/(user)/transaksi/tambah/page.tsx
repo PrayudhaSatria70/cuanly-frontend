@@ -98,7 +98,7 @@ export default function TambahTransaksiPage() {
   const handleSaveCustomCurrency = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCurrCode.trim() || !newCurrSymbol.trim()) {
-      setAddCurrError('Currency Code and Symbol are required.');
+      setAddCurrError(t.currency.requiredError);
       return;
     }
 
@@ -120,7 +120,9 @@ export default function TambahTransaksiPage() {
 
     addNotification({
       title: t.currency.title,
+      titleEn: 'Currency',
       message: `${t.currency.successMsg} (${created.code} - ${created.symbol})`,
+      messageEn: `New currency added successfully! (${created.code} - ${created.symbol})`,
       type: 'SUCCESS',
     });
   };
@@ -130,13 +132,13 @@ export default function TambahTransaksiPage() {
     const numericAmount = parseInt(amountStr, 10);
 
     if (!numericAmount || numericAmount <= 0) {
-      setErrorMsg('Masukkan nominal transaksi yang valid.');
+      setErrorMsg(t.transactions.invalidAmount);
       return;
     }
 
     const selectedCategory = categories.find((c) => c.id === selectedCatId);
     if (!selectedCategory) {
-      setErrorMsg('Pilih salah satu kategori.');
+      setErrorMsg(t.transactions.selectCategoryError);
       return;
     }
 
@@ -153,10 +155,17 @@ export default function TambahTransaksiPage() {
       notes: notes.trim() || undefined,
     });
 
-    // Notify user
+    // Notify user with bilingual support
+    const catName =
+      (t.categories as Record<string, string>)[selectedCategory.id] ||
+      selectedCategory.fallbackName;
+    const formattedAmt = formatCurrency(numericAmount, selectedCurrency.symbol);
+
     addNotification({
-      title: type === 'EXPENSE' ? 'Pengeluaran Dicatat' : 'Pemasukan Dicatat',
-      message: `${selectedCategory.fallbackName} sebesar ${formatCurrency(numericAmount, selectedCurrency.symbol)} berhasil disimpan.`,
+      title: type === 'EXPENSE' ? t.transactions.expenseRecordedTitle : t.transactions.incomeRecordedTitle,
+      titleEn: type === 'EXPENSE' ? 'Expense Recorded' : 'Income Recorded',
+      message: `${catName} sebesar ${formattedAmt} berhasil disimpan.`,
+      messageEn: `${catName} of ${formattedAmt} successfully saved.`,
       type: 'SUCCESS',
       link: `/transaksi/${newTx.id}`,
     });
@@ -354,7 +363,7 @@ export default function TambahTransaksiPage() {
                       {getCategoryIcon(cat.icon)}
                     </div>
                     <span className="text-xs font-semibold truncate flex-1">
-                      {cat.fallbackName}
+                      {(t.categories as Record<string, string>)[cat.id] || cat.fallbackName}
                     </span>
                     {isSelected && <Check className="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" />}
                   </button>
@@ -487,9 +496,9 @@ export default function TambahTransaksiPage() {
                   onChange={(e) => setNewCurrDecimals(Number(e.target.value))}
                   className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-gray-50 dark:bg-[#071018] border border-gray-200 dark:border-[#4D8DBA]/30 rounded-xl focus:bg-white dark:focus:bg-[#0B1520] focus:outline-none focus:ring-2 focus:ring-[#4D8DBA]/40 font-semibold text-gray-800 dark:text-slate-200"
                 >
-                  <option value={0}>0 Decimals (e.g. IDR, JPY, KRW)</option>
-                  <option value={2}>2 Decimals (e.g. USD, EUR, GBP, SGD, MYR)</option>
-                  <option value={3}>3 Decimals (e.g. BHD, KWD, OMR)</option>
+                  <option value={0}>{t.currency.decimals0}</option>
+                  <option value={2}>{t.currency.decimals2}</option>
+                  <option value={3}>{t.currency.decimals3}</option>
                 </select>
                 <p className="text-[10px] text-gray-400 mt-1">{t.currency.decimalsDesc}</p>
               </div>

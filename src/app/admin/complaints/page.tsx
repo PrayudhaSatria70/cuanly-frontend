@@ -10,7 +10,7 @@ import Link from 'next/link';
 
 export default function AdminComplaintsPage() {
   const { complaints } = useAdmin();
-  const { t, formatDate } = useLanguage();
+  const { t, formatDate, locale } = useLanguage();
 
   const [filter, setFilter] = useState<'ALL' | 'OPEN' | 'IN_PROGRESS' | 'RESOLVED'>('ALL');
 
@@ -27,7 +27,9 @@ export default function AdminComplaintsPage() {
           {t.admin.complaintsManagement}
         </h1>
         <p className="text-xs sm:text-sm text-gray-500">
-          Tangani laporan kendala teknis dan keluhan pelanggan secara responsif
+          {locale === 'en'
+            ? 'Manage user technical issues and customer complaints responsively'
+            : 'Tangani laporan kendala teknis dan keluhan pelanggan secara responsif'}
         </p>
       </div>
 
@@ -43,7 +45,7 @@ export default function AdminComplaintsPage() {
                 : 'text-gray-500 hover:text-gray-900'
             }`}
           >
-            Semua ({complaints.length})
+            {locale === 'en' ? 'All' : 'Semua'} ({complaints.length})
           </button>
           <button
             type="button"
@@ -54,7 +56,7 @@ export default function AdminComplaintsPage() {
                 : 'text-gray-500 hover:text-rose-700'
             }`}
           >
-            Baru Masuk ({complaints.filter((c) => c.status === 'OPEN').length})
+            {locale === 'en' ? 'Open' : 'Baru Masuk'} ({complaints.filter((c) => c.status === 'OPEN').length})
           </button>
           <button
             type="button"
@@ -65,7 +67,7 @@ export default function AdminComplaintsPage() {
                 : 'text-gray-500 hover:text-amber-700'
             }`}
           >
-            Diproses ({complaints.filter((c) => c.status === 'IN_PROGRESS').length})
+            {locale === 'en' ? 'In Progress' : 'Diproses'} ({complaints.filter((c) => c.status === 'IN_PROGRESS').length})
           </button>
           <button
             type="button"
@@ -76,7 +78,7 @@ export default function AdminComplaintsPage() {
                 : 'text-gray-500 hover:text-emerald-700'
             }`}
           >
-            Selesai ({complaints.filter((c) => c.status === 'RESOLVED').length})
+            {locale === 'en' ? 'Resolved' : 'Selesai'} ({complaints.filter((c) => c.status === 'RESOLVED').length})
           </button>
         </div>
       </GlassCard>
@@ -127,7 +129,7 @@ export default function AdminComplaintsPage() {
                     {item.description}
                   </p>
                   <div className="flex items-center gap-3 text-[10px] text-gray-400 mt-1">
-                    <span>Pelapor: {item.userName} ({item.userEmail})</span>
+                    <span>{locale === 'en' ? 'Reporter' : 'Pelapor'}: {item.userName} ({item.userEmail})</span>
                     <span>• {formatDate(item.createdAt)}</span>
                   </div>
                 </div>
@@ -138,7 +140,7 @@ export default function AdminComplaintsPage() {
                   href={`/admin/complaints/${item.id}`}
                   className="px-3.5 py-1.5 bg-gray-900 hover:bg-black text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center gap-1"
                 >
-                  <span>Respon</span>
+                  <span>{locale === 'en' ? 'Respond' : 'Respon'}</span>
                   <ChevronRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
