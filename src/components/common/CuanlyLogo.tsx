@@ -21,9 +21,10 @@ export const CuanlyLogo: React.FC<CuanlyLogoProps> = ({
     xl: { iconWidth: 64, iconHeight: 54, fontSize: 'text-3xl sm:text-4xl' },
   }[size];
 
-  const walletColor = theme === 'light' ? '#FFFFFF' : '#0C2340';
-  const textColor = theme === 'light' ? 'text-white' : 'text-[#0C2340]';
-  const claspHoleColor = theme === 'light' ? '#0C2340' : '#FFFFFF';
+  const walletColor = theme === 'light' ? '#8AD6D1' : '#4D8DBA';
+  const textColor = theme === 'light' ? 'text-white' : 'text-[#1C4A6B] dark:text-white';
+  const claspHoleColor = theme === 'light' ? '#071018' : '#FFFFFF';
+
 
   return (
     <div className={`inline-flex items-center gap-2.5 ${className}`}>
@@ -36,14 +37,14 @@ export const CuanlyLogo: React.FC<CuanlyLogoProps> = ({
         xmlns="http://www.w3.org/2000/svg"
         className="flex-shrink-0"
       >
-        {/* 1. Teal Bill Peeking from Top */}
+        {/* 1. Sekunder (#8AD6D1) Bill Peeking from Top */}
         <path
           d="M26 14C26 10.6863 28.6863 8 32 8H64C67.3137 8 70 10.6863 70 14V18H26V14Z"
-          fill="#1BC4A4"
+          fill="#8AD6D1"
           transform="rotate(-4 48 13)"
         />
 
-        {/* 2. Main Wallet Body */}
+        {/* 2. Main Wallet Body (Primer #4D8DBA) */}
         <rect
           x="10"
           y="16"
@@ -69,26 +70,26 @@ export const CuanlyLogo: React.FC<CuanlyLogoProps> = ({
         <g transform="translate(26, 52)">
           {/* Outer dial ring */}
           <circle cx="0" cy="0" r="14" fill={walletColor} />
-          {/* Segmented radial ticks */}
+          {/* Segmented radial ticks (Sekunder #8AD6D1) */}
           <circle
             cx="0"
             cy="0"
             r="11.5"
             fill="none"
-            stroke="#1BC4A4"
+            stroke="#8AD6D1"
             strokeWidth="4"
             strokeDasharray="2.2 1.6"
             strokeLinecap="butt"
           />
-          {/* White top-left arc highlight */}
+          {/* Tersier (#AEC4D4) top-left arc highlight */}
           <path
             d="M -11.5 0 A 11.5 11.5 0 0 1 0 -11.5"
             fill="none"
-            stroke="#FFFFFF"
+            stroke="#AEC4D4"
             strokeWidth="4"
             strokeLinecap="round"
           />
-          {/* Inner dark core */}
+          {/* Inner core */}
           <circle cx="0" cy="0" r="7.5" fill={walletColor} />
         </g>
       </svg>

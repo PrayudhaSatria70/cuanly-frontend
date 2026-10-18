@@ -1,6 +1,7 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -9,23 +10,40 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Direct Palette Tokens
+        primer: '#4D8DBA',
+        sekunder: '#8AD6D1',
+        tersier: '#AEC4D4',
+
         cuanly: {
-          primary: '#6B7072',
-          primaryDark: '#2C302E',
-          primaryDeep: '#181B19',
-          primaryLight: '#8C9294',
-          secondary: '#FFFFFF',
-          supporting: '#E5E7E8',
-          border: '#E2E5E7',
-          canvas: '#F6F8F9',
+          // Primer: #4D8DBA
+          primary: '#4D8DBA',
+          primaryDark: '#2E678E',
+          primaryDeep: '#1C4A6B',
+          primaryLight: '#7BAFD4',
+
+          // Sekunder: #8AD6D1
+          secondary: '#8AD6D1',
+          secondaryDark: '#4FA8A2',
+          secondaryLight: '#C9EFEF',
+
+          // Tersier: #AEC4D4
+          tertiary: '#AEC4D4',
+          tertiaryDark: '#6A899F',
+          tertiaryLight: '#E8F0F5',
+
+          supporting: '#AEC4D4',
+          border: '#AEC4D4',
+          canvas: '#F4F8FA',
+
           income: '#10B981',
-          incomeBg: '#ECFDF5',
+          incomeBg: '#E8F8F7',
           expense: '#EF4444',
           expenseBg: '#FEF2F2',
           warning: '#F59E0B',
           warningBg: '#FFFBEB',
-          info: '#3B82F6',
-          infoBg: '#EFF6FF',
+          info: '#4D8DBA',
+          infoBg: '#EDF5FA',
         },
       },
       fontFamily: {

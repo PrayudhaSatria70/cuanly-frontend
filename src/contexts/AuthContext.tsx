@@ -1,8 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, Role } from '@/types';
 import { DEMO_USER, DEMO_ADMIN } from '@/services/mockData';
+
+// 3 Minutes Session Inactivity Timeout (180,000 ms)
+export const SESSION_TIMEOUT_MS = 3 * 60 * 1000;
 
 interface AuthContextType {
   user: User | null;
@@ -13,6 +16,7 @@ interface AuthContextType {
   register: (name: string, email: string, pin: string, username?: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   switchRole: () => void;
+  sessionTimeoutMs: number;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,13 +25,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  // Initialize authentication & enforce 3-minute session freshness
   useEffect(() => {
     try {
       const stored = localStorage.getItem('cuanly_auth_user');
-      if (stored) {
-        setUser(JSON.parse(stored));
+      const lastActivityStr = localStorage.getItem('cuanly_last_activity');
+      const now = Date.now();
+
+      if (stored && lastActivityStr) {
+        const lastActivity = Number(lastActivityStr);
+        // If last activity was strictly within the past 3 minutes, restore session
+        if (!isNaN(lastActivity) && now - lastActivity < SESSION_TIMEOUT_MS) {
+          setUser(JSON.parse(stored));
+          localStorage.setItem('cuanly_last_activity', now.toString());
+        } else {
+          // Session expired after 3 minutes -> Require login
+          localStorage.removeItem('cuanly_auth_user');
+          localStorage.removeItem('cuanly_last_activity');
+          sessionStorage.setItem('cuanly_session_timed_out', 'true');
+          setUser(null);
+        }
       } else {
-        // Require explicit login by default
+        // No active session or fresh arrival -> Require explicit login first
+        localStorage.removeItem('cuanly_auth_user');
+        localStorage.removeItem('cuanly_last_activity');
         setUser(null);
       }
     } catch {
@@ -36,6 +57,77 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsInitialized(true);
     }
   }, []);
+
+  const handleTimeout = useCallback(() => {
+    setUser(null);
+    try {
+      localStorage.removeItem('cuanly_auth_user');
+      localStorage.removeItem('cuanly_last_activity');
+      sessionStorage.setItem('cuanly_session_timed_out', 'true');
+    } catch {
+      // ignore
+    }
+    // Hard navigate to ensure clean state and display timeout notification
+    window.location.href = '/login?reason=timeout';
+  }, []);
+
+  // Real-time 3-minute inactivity listener and periodic timeout check
+  useEffect(() => {
+    if (!user) return;
+
+    let lastWriteTime = Date.now();
+
+    // Throttled user activity recorder
+    const recordActivity = () => {
+      const now = Date.now();
+      if (now - lastWriteTime > 2000) {
+        lastWriteTime = now;
+        try {
+          localStorage.setItem('cuanly_last_activity', now.toString());
+        } catch {
+          // ignore
+        }
+      }
+    };
+
+    const activityEvents = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, recordActivity, { passive: true });
+    });
+
+    // Check inactivity every 2 seconds
+    const intervalId = setInterval(() => {
+      try {
+        const lastActivityStr = localStorage.getItem('cuanly_last_activity');
+        const lastActivity = lastActivityStr ? Number(lastActivityStr) : 0;
+        const now = Date.now();
+
+        if (now - lastActivity >= SESSION_TIMEOUT_MS) {
+          handleTimeout();
+        }
+      } catch {
+        // ignore
+      }
+    }, 2000);
+
+    return () => {
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, recordActivity);
+      });
+      clearInterval(intervalId);
+    };
+  }, [user, handleTimeout]);
+
+  const persistSession = (loggedInUser: User) => {
+    setUser(loggedInUser);
+    try {
+      localStorage.setItem('cuanly_auth_user', JSON.stringify(loggedInUser));
+      localStorage.setItem('cuanly_last_activity', Date.now().toString());
+      sessionStorage.removeItem('cuanly_session_timed_out');
+    } catch {
+      // ignore
+    }
+  };
 
   const login = async (identifier: string, pin: string): Promise<{ success: boolean; error?: string }> => {
     const cleanId = identifier.trim().toLowerCase();
@@ -51,8 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cleanId === DEMO_ADMIN.username?.toLowerCase() ||
       cleanId === 'admin';
     if (isAdminMatch && cleanPin === DEMO_ADMIN.pin) {
-      setUser(DEMO_ADMIN);
-      localStorage.setItem('cuanly_auth_user', JSON.stringify(DEMO_ADMIN));
+      persistSession(DEMO_ADMIN);
       return { success: true };
     }
 
@@ -62,8 +153,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       cleanId === DEMO_USER.username?.toLowerCase() ||
       cleanId === 'user';
     if (isUserMatch && cleanPin === DEMO_USER.pin) {
-      setUser(DEMO_USER);
-      localStorage.setItem('cuanly_auth_user', JSON.stringify(DEMO_USER));
+      persistSession(DEMO_USER);
       return { success: true };
     }
 
@@ -76,8 +166,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return (matchesEmail || matchesUsername) && u.pin === cleanPin;
       });
       if (found) {
-        setUser(found);
-        localStorage.setItem('cuanly_auth_user', JSON.stringify(found));
+        persistSession(found);
         return { success: true };
       }
     } catch {
@@ -100,8 +189,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         pin: cleanPin,
         createdAt: new Date().toISOString(),
       };
-      setUser(newUser);
-      localStorage.setItem('cuanly_auth_user', JSON.stringify(newUser));
+      persistSession(newUser);
       return { success: true };
     }
 
@@ -113,12 +201,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loginAsDemo = (targetRole: Role) => {
     const selected = targetRole === 'ADMIN' ? DEMO_ADMIN : DEMO_USER;
-    setUser(selected);
-    try {
-      localStorage.setItem('cuanly_auth_user', JSON.stringify(selected));
-    } catch {
-      // ignore
-    }
+    persistSession(selected);
   };
 
   const register = async (
@@ -152,23 +235,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const registeredUsers = JSON.parse(localStorage.getItem('cuanly_registered_users') || '[]');
       registeredUsers.push(newUser);
       localStorage.setItem('cuanly_registered_users', JSON.stringify(registeredUsers));
-      setUser(newUser);
-      localStorage.setItem('cuanly_auth_user', JSON.stringify(newUser));
+      persistSession(newUser);
       return { success: true };
     } catch {
-      setUser(newUser);
+      persistSession(newUser);
       return { success: true };
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     setUser(null);
     try {
       localStorage.removeItem('cuanly_auth_user');
+      localStorage.removeItem('cuanly_last_activity');
+      sessionStorage.removeItem('cuanly_session_timed_out');
     } catch {
       // ignore
     }
-  };
+  }, []);
 
   const switchRole = () => {
     if (user?.role === 'ADMIN') {
@@ -189,6 +273,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         switchRole,
+        sessionTimeoutMs: SESSION_TIMEOUT_MS,
       }}
     >
       {isInitialized ? children : null}

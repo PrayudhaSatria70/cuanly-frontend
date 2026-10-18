@@ -387,7 +387,7 @@ export default function TambahTransaksiPage() {
           <div className="pt-4 border-t border-gray-100">
             <button
               type="submit"
-              className="w-full py-3.5 bg-cuanly-primaryDark hover:bg-black text-white font-bold text-sm sm:text-base rounded-xl shadow-md hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-[#4D8DBA] hover:bg-[#2E678E] text-white font-bold text-sm sm:text-base rounded-xl shadow-md shadow-[#4D8DBA]/25 hover:shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
             >
               <span>
                 {type === 'EXPENSE'
@@ -407,14 +407,14 @@ export default function TambahTransaksiPage() {
             role="dialog"
             aria-modal="true"
           >
-            <div className="px-6 py-5 bg-gradient-to-r from-cuanly-primaryDark to-[#383D3A] text-white flex items-center justify-between">
+            <div className="px-6 py-5 bg-gradient-to-r from-[#1C4A6B] to-[#4D8DBA] text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-xl bg-white/10 backdrop-blur-md">
-                  <Coins className="w-5 h-5 text-emerald-400" />
+                  <Coins className="w-5 h-5 text-[#8AD6D1]" />
                 </div>
                 <div>
                   <h3 className="text-base font-bold">{t.currency.addModalTitle}</h3>
-                  <p className="text-xs text-gray-300">{t.currency.addModalSubtitle}</p>
+                  <p className="text-xs text-gray-200">{t.currency.addModalSubtitle}</p>
                 </div>
               </div>
               <button

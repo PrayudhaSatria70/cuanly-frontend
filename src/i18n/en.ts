@@ -58,7 +58,12 @@ export const en = {
     switchLanguage: 'Change Language',
     demoUser: 'Login as Demo User',
     demoAdmin: 'Login as Demo Admin',
+    darkMode: 'Dark Mode',
+    lightMode: 'Light Mode',
+    toggleTheme: 'Toggle Theme',
+    theme: 'Display Theme',
   },
+
 
   // Home
   home: {
@@ -280,5 +285,7 @@ export const en = {
     loginFailed: 'Login failed.',
     pinMinError: 'PIN must be at least 4 or 6 digits.',
     registerFailed: 'Registration failed.',
+    sessionTimeoutTitle: 'Session Expired (3-Minute Timeout)',
+    sessionTimeoutDesc: 'Your account session timed out after 3 minutes of inactivity for security reasons. Please log in again.',
   },
 };

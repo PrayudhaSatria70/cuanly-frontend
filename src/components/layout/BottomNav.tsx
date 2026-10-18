@@ -38,15 +38,15 @@ export const BottomNav: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden glass-nav pb-safe">
+    <nav className="fixed bottom-0 inset-x-0 z-40 md:hidden glass-nav pb-safe border-t border-gray-200/80 dark:border-[#4D8DBA]/20">
       <div className="relative flex items-center justify-around h-16 max-w-md mx-auto px-2">
         {/* Item 1: Home */}
         <Link
           href={navItems[0].href}
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
             navItems[0].isActive
-              ? 'text-cuanly-primaryDark font-bold'
-              : 'text-gray-400 hover:text-gray-700 font-medium'
+              ? 'text-cuanly-primaryDark dark:text-[#8AD6D1] font-bold'
+              : 'text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <Home className={`w-5 h-5 ${navItems[0].isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
@@ -58,8 +58,8 @@ export const BottomNav: React.FC = () => {
           href={navItems[1].href}
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
             navItems[1].isActive
-              ? 'text-cuanly-primaryDark font-bold'
-              : 'text-gray-400 hover:text-gray-700 font-medium'
+              ? 'text-cuanly-primaryDark dark:text-[#8AD6D1] font-bold'
+              : 'text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <Receipt className={`w-5 h-5 ${navItems[1].isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
@@ -70,10 +70,10 @@ export const BottomNav: React.FC = () => {
         <div className="relative -top-5 flex items-center justify-center px-1">
           <Link
             href="/transaksi/tambah"
-            className="w-13 h-13 w-12 h-12 rounded-full bg-gradient-to-tr from-[#2C302E] to-[#6B7072] text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all border-4 border-white"
+            className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#1C4A6B] to-[#4D8DBA] text-white flex items-center justify-center shadow-lg shadow-[#4D8DBA]/35 hover:scale-105 active:scale-95 transition-all border-4 border-white dark:border-[#071018]"
             title={t.home.addExpenseBtn}
           >
-            <Plus className="w-6 h-6 stroke-[3]" />
+            <Plus className="w-6 h-6 stroke-[3] text-[#8AD6D1]" />
           </Link>
         </div>
 
@@ -82,8 +82,8 @@ export const BottomNav: React.FC = () => {
           href={navItems[2].href}
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
             navItems[2].isActive
-              ? 'text-cuanly-primaryDark font-bold'
-              : 'text-gray-400 hover:text-gray-700 font-medium'
+              ? 'text-cuanly-primaryDark dark:text-[#8AD6D1] font-bold'
+              : 'text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <PieChart className={`w-5 h-5 ${navItems[2].isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
@@ -95,8 +95,8 @@ export const BottomNav: React.FC = () => {
           href={navItems[3].href}
           className={`flex-1 flex flex-col items-center justify-center py-1 transition-colors ${
             navItems[3].isActive
-              ? 'text-cuanly-primaryDark font-bold'
-              : 'text-gray-400 hover:text-gray-700 font-medium'
+              ? 'text-cuanly-primaryDark dark:text-[#8AD6D1] font-bold'
+              : 'text-gray-400 hover:text-gray-700 dark:text-slate-400 dark:hover:text-slate-200 font-medium'
           }`}
         >
           <User className={`w-5 h-5 ${navItems[3].isActive ? 'stroke-[2.5]' : 'stroke-2'}`} />
@@ -104,5 +104,6 @@ export const BottomNav: React.FC = () => {
         </Link>
       </div>
     </nav>
+
   );
 };

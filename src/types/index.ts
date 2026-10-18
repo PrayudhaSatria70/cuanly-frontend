@@ -133,3 +133,6 @@ export interface NotificationItem {
   isRead: boolean;
   link?: string;
 }
+
+export type Theme = 'light' | 'dark';
+

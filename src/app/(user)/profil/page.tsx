@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
@@ -18,6 +19,8 @@ import {
   Info,
   Check,
   Wallet,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -25,9 +28,11 @@ export default function ProfilPage() {
   const { t, locale, activeCurrency, formatCurrency } = useLanguage();
   const { user, role, switchRole, logout } = useAuth();
   const { transactions, summary } = useFinance();
+  const { isDark, toggleTheme } = useTheme();
 
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
+
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
 
   const handleExportData = () => {
@@ -146,20 +151,61 @@ export default function ProfilPage() {
         </h3>
 
         {/* Language */}
-        <div className="flex items-center justify-between py-2 border-b border-gray-100">
+        <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-[#4D8DBA]/20">
           <div className="flex items-center gap-2.5">
-            <Globe className="w-4 h-4 text-gray-500" />
+            <Globe className="w-4 h-4 text-gray-500 dark:text-slate-400" />
             <div>
-              <span className="text-xs sm:text-sm font-semibold text-gray-700 block">
+              <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-200 block">
                 {t.profile.language}
               </span>
-              <span className="text-[10px] text-gray-400">
+              <span className="text-[10px] text-gray-400 dark:text-slate-400">
                 Bahasa antarmuka ({locale === 'id' ? 'Indonesia' : 'English'})
               </span>
             </div>
           </div>
           <LanguageSwitcher />
         </div>
+
+        {/* Display Theme */}
+        <div className="flex items-center justify-between py-2 border-b border-gray-100 dark:border-[#4D8DBA]/20">
+          <div className="flex items-center gap-2.5">
+            {isDark ? (
+              <Moon className="w-4 h-4 text-[#4D8DBA]" />
+            ) : (
+              <Sun className="w-4 h-4 text-amber-500" />
+            )}
+            <div>
+              <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-200 block">
+                {t.common.theme || 'Display Theme'}
+              </span>
+              <span className="text-[10px] text-gray-400 dark:text-slate-400">
+                {isDark ? (t.common.darkMode || 'Dark Mode') : (t.common.lightMode || 'Light Mode')}
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+              isDark
+                ? 'bg-[#0D1926] text-amber-300 border-[#4D8DBA]/40 hover:bg-[#112233]'
+                : 'bg-white text-slate-700 border-[#AEC4D4]/60 hover:bg-[#AEC4D4]/15'
+            }`}
+          >
+            {isDark ? (
+              <>
+                <Sun className="w-3.5 h-3.5 text-amber-300" />
+                <span>{t.common.lightMode || 'Light Mode'}</span>
+              </>
+            ) : (
+              <>
+                <Moon className="w-3.5 h-3.5 text-[#4D8DBA]" />
+                <span>{t.common.darkMode || 'Dark Mode'}</span>
+              </>
+            )}
+          </button>
+        </div>
+
 
         {/* Currency */}
         <div className="flex items-center justify-between py-2 border-b border-gray-100">

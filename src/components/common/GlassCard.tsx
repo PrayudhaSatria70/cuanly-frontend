@@ -21,7 +21,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   } else if (variant === 'dark') {
     baseStyle = 'glass-panel-dark rounded-2xl';
   } else if (variant === 'gradient') {
-    baseStyle = 'bg-gradient-to-br from-[#2C302E] via-[#3F4446] to-[#6B7072] text-white rounded-2xl shadow-lg border border-white/10';
+    baseStyle = 'bg-gradient-to-br from-[#1C4A6B] via-[#2E678E] to-[#4D8DBA] text-white rounded-2xl shadow-lg border border-white/20';
   }
 
   const hoverStyle = hoverEffect

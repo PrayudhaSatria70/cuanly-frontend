@@ -58,7 +58,12 @@ export const id = {
     switchLanguage: 'Ganti Bahasa',
     demoUser: 'Masuk sebagai Demo User',
     demoAdmin: 'Masuk sebagai Demo Admin',
+    darkMode: 'Mode Gelap',
+    lightMode: 'Mode Terang',
+    toggleTheme: 'Ganti Tema',
+    theme: 'Tema Tampilan',
   },
+
 
   // Beranda
   home: {
@@ -280,5 +285,7 @@ export const id = {
     loginFailed: 'Login gagal.',
     pinMinError: 'PIN minimal harus terdiri dari 4 atau 6 digit.',
     registerFailed: 'Pendaftaran gagal.',
+    sessionTimeoutTitle: 'Sesi Berakhir (Timeout 3 Menit)',
+    sessionTimeoutDesc: 'Sesi akun Anda telah berakhir demi keamanan setelah 3 menit tidak ada aktivitas. Silakan masuk kembali.',
   },
 };

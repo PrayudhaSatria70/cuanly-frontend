@@ -44,10 +44,10 @@ export const DesktopNav: React.FC = () => {
   ];
 
   return (
-    <aside className="hidden md:flex flex-col w-64 lg:w-72 flex-shrink-0 glass-panel border-r border-gray-200/80 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4 lg:p-5 space-y-6">
+    <aside className="hidden md:flex flex-col w-64 lg:w-72 flex-shrink-0 glass-panel border-r border-gray-200/80 dark:border-[#4D8DBA]/20 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto p-4 lg:p-5 space-y-6">
       {/* User Section */}
       <div>
-        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 px-3">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-slate-400 px-3">
           {t.nav.userMenu || 'User Menu'}
         </span>
         <div className="mt-2 space-y-1">
@@ -60,11 +60,11 @@ export const DesktopNav: React.FC = () => {
                 href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   isActive
-                    ? 'bg-cuanly-primaryDark text-white shadow-sm'
-                    : 'text-gray-600 hover:text-cuanly-primaryDark hover:bg-gray-100/70'
+                    ? 'bg-[#4D8DBA] text-white shadow-sm'
+                    : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-gray-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#8AD6D1]' : 'text-gray-400 dark:text-slate-400'}`} />
                 <span>{item.name}</span>
               </Link>
             );
@@ -73,13 +73,13 @@ export const DesktopNav: React.FC = () => {
       </div>
 
       {/* Admin Section (Always accessible for easy testing or if role is ADMIN) */}
-      <div className="pt-4 border-t border-gray-200/70">
+      <div className="pt-4 border-t border-gray-200/70 dark:border-[#4D8DBA]/20">
         <div className="flex items-center justify-between px-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-300">
             {t.nav.adminBackoffice || 'Admin Backoffice'}
           </span>
           {role === 'ADMIN' && (
-            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700">
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
               Active
             </span>
           )}
@@ -95,10 +95,10 @@ export const DesktopNav: React.FC = () => {
                 className={`flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-purple-700 text-white shadow-sm font-semibold'
-                    : 'text-gray-600 hover:text-purple-700 hover:bg-purple-50'
+                    : 'text-gray-600 dark:text-slate-300 hover:text-purple-700 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-purple-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-purple-400 dark:text-purple-300'}`} />
                 <span>{item.name}</span>
               </Link>
             );
@@ -107,4 +107,5 @@ export const DesktopNav: React.FC = () => {
       </div>
     </aside>
   );
+
 };

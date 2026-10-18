@@ -29,17 +29,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       return;
     }
 
-    // 2. If authenticated and accessing auth page -> redirect to dashboard
-    if (isAuthenticated && isAuthPage) {
-      if (user?.role === 'ADMIN') {
-        router.replace('/admin/dashboard');
-      } else {
-        router.replace('/beranda');
-      }
-      return;
-    }
-
-    // 3. If regular user trying to access /admin -> redirect to /beranda
+    // 2. If regular user trying to access /admin -> redirect to /beranda
     if (isAuthenticated && user?.role === 'USER' && pathname.startsWith('/admin')) {
       router.replace('/beranda');
     }
@@ -52,7 +42,7 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
   // Auth pages (Login / Register): clean, dedicated layout
   if (isAuthPage) {
     return (
-      <main className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6">
+      <main className="min-h-screen w-full flex items-center justify-center p-4 sm:p-6 bg-cuanly-canvas dark:bg-[#071018] text-cuanly-primaryDark dark:text-slate-100 transition-colors duration-200">
         {children}
       </main>
     );
@@ -60,7 +50,8 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   // Protected App Shell with Navigation
   return (
-    <div className="min-h-screen flex flex-col w-full bg-cuanly-canvas">
+    <div className="min-h-screen flex flex-col w-full bg-cuanly-canvas dark:bg-[#071018] text-cuanly-primaryDark dark:text-slate-100 transition-colors duration-200">
+
       <TopHeader />
       <NotificationDrawer />
       <div className="flex-1 flex w-full min-h-[calc(100vh-4rem)]">

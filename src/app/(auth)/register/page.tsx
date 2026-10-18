@@ -60,10 +60,10 @@ export default function RegisterPage() {
         <button
           type="button"
           onClick={handleBack}
-          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#0C2340] bg-white/90 hover:bg-white border border-gray-200/90 rounded-xl transition-all shadow-xs hover:shadow-sm active:scale-95 group backdrop-blur-xs cursor-pointer"
+          className="inline-flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-semibold text-gray-700 hover:text-[#4D8DBA] bg-white/90 hover:bg-white border border-gray-200/90 rounded-xl transition-all shadow-xs hover:shadow-sm active:scale-95 group backdrop-blur-xs cursor-pointer"
           title={t.auth.backToPrevious}
         >
-          <ArrowLeft className="w-4 h-4 text-gray-500 group-hover:-translate-x-1 transition-transform" />
+          <ArrowLeft className="w-4 h-4 text-gray-500 group-hover:-translate-x-1 group-hover:text-[#4D8DBA] transition-all" />
           <span>{t.auth.backToPrevious}</span>
         </button>
         <LanguageSwitcher compact />
@@ -177,10 +177,10 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-[#0C2340] hover:bg-black text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3.5 bg-[#4D8DBA] hover:bg-[#2E678E] text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md shadow-[#4D8DBA]/25 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>{loading ? t.auth.registering : t.auth.createAccountBtn}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 text-[#8AD6D1]" />
           </button>
         </form>
 
@@ -188,14 +188,14 @@ export default function RegisterPage() {
           <button
             type="button"
             onClick={handleBack}
-            className="inline-flex items-center gap-1.5 text-gray-500 hover:text-[#0C2340] font-medium transition-colors cursor-pointer group"
+            className="inline-flex items-center gap-1.5 text-gray-500 hover:text-[#4D8DBA] font-medium transition-colors cursor-pointer group"
           >
             <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
             <span>{t.auth.back}</span>
           </button>
           <div>
             <span>{t.auth.haveAccount}{' '}</span>
-            <Link href="/login" className="font-bold text-emerald-600 hover:underline">
+            <Link href="/login" className="font-bold text-[#4D8DBA] hover:text-[#2E678E] hover:underline">
               {t.auth.loginHere}
             </Link>
           </div>

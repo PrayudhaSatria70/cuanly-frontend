@@ -62,9 +62,9 @@ export default function BudgetPage() {
         <button
           type="button"
           onClick={() => setIsEditAllowanceOpen(true)}
-          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-cuanly-primaryDark hover:bg-black text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+          className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-xl text-xs sm:text-sm font-semibold shadow-sm shadow-[#4D8DBA]/25 transition-all hover:scale-[1.02] active:scale-95"
         >
-          <Wallet className="w-4 h-4 text-emerald-400" />
+          <Wallet className="w-4 h-4 text-[#8AD6D1]" />
           <span>{t.budget.editOverallAllowance}</span>
         </button>
       </div>
@@ -74,10 +74,10 @@ export default function BudgetPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-100">
           <div>
             <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-              <PieChart className="w-4 h-4 text-emerald-600" />
+              <PieChart className="w-4 h-4 text-[#4D8DBA]" />
               {t.budget.totalAllocation}
             </span>
-            <div className="text-2xl sm:text-3xl font-extrabold text-cuanly-primaryDark num-tabular mt-0.5">
+            <div className="text-2xl sm:text-3xl font-extrabold text-[#1C4A6B] num-tabular mt-0.5">
               {formatCurrency(summary.totalBudgetLimit)}
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function BudgetPage() {
             </div>
             <div className="border-l pl-4 border-gray-200">
               <span className="text-gray-500 block">{t.budget.remaining}</span>
-              <span className="font-bold text-emerald-600 num-tabular">
+              <span className="font-bold text-[#2E678E] num-tabular">
                 {formatCurrency(summary.remainingBudget)}
               </span>
             </div>
@@ -111,7 +111,7 @@ export default function BudgetPage() {
                   ? 'bg-rose-500'
                   : totalUsedPercent >= 75
                   ? 'bg-amber-400'
-                  : 'bg-emerald-500'
+                  : 'bg-gradient-to-r from-[#8AD6D1] to-[#4D8DBA]'
               }`}
               style={{ width: `${totalUsedPercent}%` }}
             />

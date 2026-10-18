@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -17,6 +17,7 @@ import {
   EyeOff,
   Sparkles,
   KeyRound,
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -30,6 +31,18 @@ export default function LoginPage() {
   const [showPin, setShowPin] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSessionTimeout, setIsSessionTimeout] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isTimeoutQuery = window.location.search.includes('reason=timeout');
+      const isTimeoutStorage = sessionStorage.getItem('cuanly_session_timed_out') === 'true';
+      if (isTimeoutQuery || isTimeoutStorage) {
+        setIsSessionTimeout(true);
+        sessionStorage.removeItem('cuanly_session_timed_out');
+      }
+    }
+  }, []);
 
   // Auto-fill form values with username or email
   const handleAutoFill = (role: 'USER' | 'ADMIN', useEmail: boolean = false) => {
@@ -99,6 +112,23 @@ export default function LoginPage() {
 
       {/* Main Login Card */}
       <GlassCard className="p-6 space-y-5 shadow-lg">
+        {/* Session Inactivity Timeout Alert */}
+        {isSessionTimeout && (
+          <div className="p-3.5 bg-amber-50/90 border border-amber-200/90 text-amber-900 rounded-xl flex items-start gap-3 shadow-xs">
+            <div className="p-1.5 bg-amber-100 rounded-lg text-amber-700 flex-shrink-0 mt-0.5">
+              <Clock className="w-4 h-4" />
+            </div>
+            <div className="space-y-0.5 text-xs">
+              <h4 className="font-bold text-amber-950">
+                {t.auth.sessionTimeoutTitle}
+              </h4>
+              <p className="text-amber-800 leading-relaxed text-[11px] sm:text-xs">
+                {t.auth.sessionTimeoutDesc}
+              </p>
+            </div>
+          </div>
+        )}
+
         <form onSubmit={handleManualLogin} className="space-y-4">
           {errorMsg && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold rounded-xl flex items-center gap-2">
@@ -163,17 +193,17 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 bg-[#0C2340] hover:bg-black text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-3.5 bg-[#4D8DBA] hover:bg-[#2E678E] text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-md shadow-[#4D8DBA]/25 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer"
           >
             <span>{loading ? t.auth.verifying : t.common.login}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 text-[#8AD6D1]" />
           </button>
         </form>
 
         {/* Text "Belum punya akun? Daftar Akun Baru di Sini" */}
         <div className="text-center pt-3 border-t border-gray-100 text-xs text-gray-500">
           {t.auth.noAccount}{' '}
-          <Link href="/register" className="font-bold text-emerald-600 hover:underline">
+          <Link href="/register" className="font-bold text-[#4D8DBA] hover:text-[#2E678E] hover:underline">
             {t.auth.registerHere}
           </Link>
         </div>
@@ -182,23 +212,23 @@ export default function LoginPage() {
         <div className="pt-4 border-t border-dashed border-gray-200/90 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1.5 text-xs font-bold text-gray-700">
-              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <Sparkles className="w-3.5 h-3.5 text-[#4D8DBA]" />
               <span>{t.auth.demoTitle}</span>
             </div>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700">
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#8AD6D1]/25 text-[#1C4A6B]">
               {t.auth.demoBadge}
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {/* Demo 1: USER */}
-            <div className="p-3 bg-emerald-50/50 hover:bg-emerald-50/80 border border-emerald-200/80 rounded-xl transition-all space-y-2">
+            <div className="p-3 bg-[#EDF5FA] hover:bg-[#E2F0F8] border border-[#AEC4D4]/60 rounded-xl transition-all space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-emerald-900 flex items-center gap-1">
-                  <User className="w-3.5 h-3.5 text-emerald-600" />
+                <span className="text-xs font-bold text-[#1C4A6B] flex items-center gap-1">
+                  <User className="w-3.5 h-3.5 text-[#4D8DBA]" />
                   {t.auth.userAccountTitle}
                 </span>
-                <span className="text-[10px] bg-emerald-100/80 text-emerald-800 px-1.5 py-0.5 rounded font-mono font-bold">
+                <span className="text-[10px] bg-[#8AD6D1]/30 text-[#1C4A6B] px-1.5 py-0.5 rounded font-mono font-bold">
                   user
                 </span>
               </div>
@@ -206,7 +236,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handleAutoFill('USER', false)}
-                  className="flex-1 py-1.5 px-2 bg-white hover:bg-gray-50 border border-emerald-200 text-emerald-800 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer shadow-2xs active:scale-95"
+                  className="flex-1 py-1.5 px-2 bg-white hover:bg-gray-50 border border-[#AEC4D4] text-[#1C4A6B] rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer shadow-2xs active:scale-95"
                   title={t.auth.fillFormTooltip}
                 >
                   {t.auth.fillFormBtn}
@@ -214,7 +244,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handleDirectDemoLogin('USER')}
-                  className="flex-1 py-1.5 px-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] font-bold transition-all text-center shadow-xs cursor-pointer active:scale-95"
+                  className="flex-1 py-1.5 px-2 bg-[#4D8DBA] hover:bg-[#2E678E] text-white rounded-lg text-[11px] font-bold transition-all text-center shadow-xs cursor-pointer active:scale-95"
                   title={t.auth.oneClickTooltip}
                 >
                   {t.auth.oneClickLoginBtn}
@@ -223,13 +253,13 @@ export default function LoginPage() {
             </div>
 
             {/* Demo 2: ADMIN */}
-            <div className="p-3 bg-purple-50/50 hover:bg-purple-50/80 border border-purple-200/80 rounded-xl transition-all space-y-2">
+            <div className="p-3 bg-[#F4F8FA] hover:bg-[#EBF3F7] border border-[#AEC4D4]/60 rounded-xl transition-all space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-purple-900 flex items-center gap-1">
-                  <Shield className="w-3.5 h-3.5 text-purple-600" />
+                <span className="text-xs font-bold text-[#1C4A6B] flex items-center gap-1">
+                  <Shield className="w-3.5 h-3.5 text-[#2E678E]" />
                   {t.auth.adminAccountTitle}
                 </span>
-                <span className="text-[10px] bg-purple-100/80 text-purple-800 px-1.5 py-0.5 rounded font-mono font-bold">
+                <span className="text-[10px] bg-[#AEC4D4]/30 text-[#1C4A6B] px-1.5 py-0.5 rounded font-mono font-bold">
                   admin
                 </span>
               </div>
@@ -237,7 +267,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handleAutoFill('ADMIN', false)}
-                  className="flex-1 py-1.5 px-2 bg-white hover:bg-gray-50 border border-purple-200 text-purple-900 rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer shadow-2xs active:scale-95"
+                  className="flex-1 py-1.5 px-2 bg-white hover:bg-gray-50 border border-[#AEC4D4] text-[#1C4A6B] rounded-lg text-[11px] font-bold transition-all text-center cursor-pointer shadow-2xs active:scale-95"
                   title={t.auth.fillFormTooltip}
                 >
                   {t.auth.fillFormBtn}
@@ -245,7 +275,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => handleDirectDemoLogin('ADMIN')}
-                  className="flex-1 py-1.5 px-2 bg-purple-700 hover:bg-purple-800 text-white rounded-lg text-[11px] font-bold transition-all text-center shadow-xs cursor-pointer active:scale-95"
+                  className="flex-1 py-1.5 px-2 bg-[#1C4A6B] hover:bg-[#153852] text-white rounded-lg text-[11px] font-bold transition-all text-center shadow-xs cursor-pointer active:scale-95"
                   title={t.auth.oneClickTooltip}
                 >
                   {t.auth.oneClickLoginBtn}
