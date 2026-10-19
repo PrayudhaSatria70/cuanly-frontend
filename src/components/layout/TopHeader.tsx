@@ -94,9 +94,9 @@ export const TopHeader: React.FC = () => {
           {/* Pricing Plan Pill with Canva Gold Crown - ONLY VISIBLE TO USER / DEMO USER */}
           {role !== 'ADMIN' && (
             <Link
-              href="/pricing"
+              href="/my-plan"
               className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-2xs hover:scale-105 active:scale-95 bg-gradient-to-r from-amber-500/10 via-amber-400/15 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 text-amber-700 dark:text-amber-300 border-amber-400/40"
-              title={locale === 'en' ? 'View Pricing Plans & Feature Comparison' : 'Lihat Detail & Perbandingan Paket Langganan'}
+              title={locale === 'en' ? 'My Plan & Subscription Management' : 'Paket Saya & Pengaturan Langganan'}
             >
               <Crown className="w-3.5 h-3.5 fill-amber-400 text-amber-500 flex-shrink-0" />
               <span className="hidden sm:inline">
@@ -260,7 +260,7 @@ export const TopHeader: React.FC = () => {
                     </div>
                   ) : (
                     <Link
-                      href="/pricing"
+                      href="/my-plan"
                       onClick={() => setIsProfileMenuOpen(false)}
                       className="flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-400/10 to-yellow-500/10 hover:from-amber-500/20 hover:to-yellow-500/20 border border-amber-400/30 text-xs transition-all group"
                     >

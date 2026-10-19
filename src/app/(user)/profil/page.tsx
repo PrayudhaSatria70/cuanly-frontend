@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
@@ -24,6 +25,7 @@ import {
   Settings,
   Edit3,
   Camera,
+  Crown,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -32,6 +34,7 @@ export default function ProfilPage() {
   const { user, role, switchRole, logout, updateUserProfile } = useAuth();
   const { transactions, summary } = useFinance();
   const { isDark, toggleTheme } = useTheme();
+  const { tier } = useSubscription();
 
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [downloadSuccess, setDownloadSuccess] = useState(false);
@@ -313,6 +316,35 @@ export default function ProfilPage() {
             {activeCurrency.code} ({activeCurrency.symbol})
           </span>
         </div>
+
+        {/* Subscription Plan (My Plan) */}
+        {role !== 'ADMIN' && (
+          <Link
+            href="/my-plan"
+            className="flex items-center justify-between py-2.5 border-b border-gray-100 dark:border-[#4D8DBA]/20 hover:opacity-85 transition-opacity"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-amber-400/20 text-amber-600 dark:text-amber-400">
+                <Crown className="w-4 h-4 fill-amber-400 text-amber-500" />
+              </div>
+              <div>
+                <span className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-slate-200 block">
+                  {t.myPlan.title}
+                </span>
+                <span className="text-[10px] text-gray-400 dark:text-slate-400">
+                  {tier === 'FREE' && 'Cuanly Basic (Free)'}
+                  {tier === 'SILVER' && 'Cuanly Silver Pro'}
+                  {tier === 'GOLD' && 'Cuanly Gold Max'}
+                  {tier === 'B2B' && 'Cuanly B2B Enterprise'}
+                </span>
+              </div>
+            </div>
+            <span className="text-xs font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <span>{locale === 'en' ? 'Manage' : 'Kelola'}</span>
+              <span>&rarr;</span>
+            </span>
+          </Link>
+        )}
 
         {/* Monthly Allowance Limit */}
         <div className="flex items-center justify-between py-2 border-b border-gray-100">

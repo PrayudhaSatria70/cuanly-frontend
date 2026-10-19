@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { Transaction, Category, BudgetLimit, FinancialSummary } from '@/types';
-import { INITIAL_CATEGORIES, INITIAL_BUDGETS, INITIAL_TRANSACTIONS } from '@/services/mockData';
+import { INITIAL_CATEGORIES, INITIAL_BUDGETS, INITIAL_TRANSACTIONS, ADMIN_INITIAL_BUDGETS, ADMIN_INITIAL_TRANSACTIONS } from '@/services/mockData';
 import { transactionsApi, categoriesApi, financeApi } from '@/services/api';
 import { useAuth } from './AuthContext';
 
@@ -37,7 +37,8 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const userId = user?.id;
-  const isDemoUser = userId === 'usr_demo_1';
+  const isDemoUser = userId === 'usr_demo_1' || userId === 'usr_demo_01';
+  const isAdminUser = user?.role === 'ADMIN' || user?.username === 'admin' || userId === 'usr_live_admin' || userId === 'usr_admin_01';
 
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [budgets, setBudgets] = useState<BudgetLimit[]>([]);
@@ -69,6 +70,25 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setTransactions(INITIAL_TRANSACTIONS);
         setBudgets(INITIAL_BUDGETS);
         setMonthlyAllowanceState(6700000);
+      }
+      return;
+    }
+
+    if (isAdminUser) {
+      // Admin live account: loads rich admin financial dataset
+      try {
+        const storedTx = localStorage.getItem(`cuanly_transactions_${userId}`) || localStorage.getItem('cuanly_transactions_admin');
+        setTransactions(storedTx ? JSON.parse(storedTx) : ADMIN_INITIAL_TRANSACTIONS);
+
+        const storedBudgets = localStorage.getItem(`cuanly_budgets_${userId}`) || localStorage.getItem('cuanly_budgets_admin');
+        setBudgets(storedBudgets ? JSON.parse(storedBudgets) : ADMIN_INITIAL_BUDGETS);
+
+        const storedAllowance = localStorage.getItem(`cuanly_monthly_allowance_${userId}`) || localStorage.getItem('cuanly_monthly_allowance_admin');
+        setMonthlyAllowanceState(storedAllowance ? Number(storedAllowance) : 10000000);
+      } catch {
+        setTransactions(ADMIN_INITIAL_TRANSACTIONS);
+        setBudgets(ADMIN_INITIAL_BUDGETS);
+        setMonthlyAllowanceState(10000000);
       }
       return;
     }

@@ -90,7 +90,7 @@ export default function BerandaPage() {
               <Link
                 href="/pricing"
                 className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 transition-all hover:scale-105 active:scale-95"
-                title="Lihat / Kelola Paket Langganan"
+                title={locale === 'en' ? 'View / Manage Subscription Plan' : 'Lihat / Kelola Paket Langganan'}
               >
                 <Crown className="w-3 h-3 fill-amber-400 text-amber-500" />
                 <span>
@@ -475,9 +475,7 @@ export default function BerandaPage() {
                     : t.home.budgetWarningTitle}
                 </h4>
                 <p className="text-xs mt-0.5 leading-relaxed text-rose-800 dark:text-rose-200/90">
-                  {locale === 'en'
-                    ? `Your spending for category ${warningCatName} has reached `
-                    : 'Pengeluaran untuk kategori '}
+                  {locale === 'en' ? 'Your spending for category ' : 'Pengeluaran untuk kategori '}
                   <strong>{warningCatName}</strong>{' '}
                   {locale === 'en' ? 'has reached ' : 'telah mencapai '}
                   <span className="font-bold">{activeBudgetWarning.percent}%</span>{' '}

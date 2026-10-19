@@ -24,19 +24,36 @@ import {
 
 const CATEGORY_META: Record<
   InvestmentCategory,
-  { label: string; icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string }
+  { icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; color: string }
 > = {
-  REKSADANA: { label: 'Reksa Dana', icon: Landmark, color: '#4D8DBA' },
-  SAHAM: { label: 'Saham (IDX)', icon: TrendingUp, color: '#10B981' },
-  EMAS: { label: 'Emas Mulia', icon: Coins, color: '#F59E0B' },
-  CRYPTO: { label: 'Kripto (Crypto)', icon: CircleDollarSign, color: '#8B5CF6' },
-  PROPERTI: { label: 'Properti & Aset Riil', icon: Building, color: '#EC4899' },
+  REKSADANA: { icon: Landmark, color: '#4D8DBA' },
+  SAHAM: { icon: TrendingUp, color: '#10B981' },
+  EMAS: { icon: Coins, color: '#F59E0B' },
+  CRYPTO: { icon: CircleDollarSign, color: '#8B5CF6' },
+  PROPERTI: { icon: Building, color: '#EC4899' },
 };
 
 export const InvestmentTrackerModal: React.FC = () => {
   const { user } = useAuth();
-  const { formatCurrency } = useLanguage();
+  const { formatCurrency, t, locale } = useLanguage();
   const { isInvestmentModalOpen, closeInvestmentModal } = useSubscription();
+
+  const getCategoryLabel = (cat: InvestmentCategory) => {
+    switch (cat) {
+      case 'REKSADANA':
+        return t.modals.investments.categories.reksadana;
+      case 'SAHAM':
+        return t.modals.investments.categories.saham;
+      case 'EMAS':
+        return t.modals.investments.categories.emas;
+      case 'CRYPTO':
+        return t.modals.investments.categories.crypto;
+      case 'PROPERTI':
+        return t.modals.investments.categories.properti;
+      default:
+        return cat;
+    }
+  };
 
   const [items, setItems] = useState<InvestmentAsset[]>([]);
   const [summary, setSummary] = useState<InvestmentSummary>({
@@ -193,7 +210,13 @@ export const InvestmentTrackerModal: React.FC = () => {
     const cPrice = Math.round(parseFloat(currentPrice) || 0);
 
     if (!name.trim() || bPrice <= 0 || cPrice <= 0) {
-      setFeedback({ message: 'Nama instrumen, harga beli, dan harga saat ini harus diisi valid.', type: 'error' });
+      setFeedback({
+        message:
+          locale === 'id'
+            ? 'Nama instrumen, harga beli, dan harga saat ini harus diisi valid.'
+            : 'Instrument name, buy price, and current price must be valid.',
+        type: 'error',
+      });
       return;
     }
 
@@ -227,7 +250,13 @@ export const InvestmentTrackerModal: React.FC = () => {
         };
         saveAssets([newAsset, ...items]);
       }
-      setFeedback({ message: `Berhasil menambahkan aset ${name}!`, type: 'success' });
+      setFeedback({
+        message:
+          locale === 'id'
+            ? `Berhasil menambahkan aset ${name}!`
+            : `Successfully added asset ${name}!`,
+        type: 'success',
+      });
       setIsAdding(false);
       setName('');
       setBuyPrice('');
@@ -250,7 +279,13 @@ export const InvestmentTrackerModal: React.FC = () => {
         createdAt: new Date().toISOString(),
       };
       saveAssets([newAsset, ...items]);
-      setFeedback({ message: `Berhasil menambahkan aset ${name}!`, type: 'success' });
+      setFeedback({
+        message:
+          locale === 'id'
+            ? `Berhasil menambahkan aset ${name}!`
+            : `Successfully added asset ${name}!`,
+        type: 'success',
+      });
       setIsAdding(false);
       setName('');
       setBuyPrice('');
@@ -268,7 +303,7 @@ export const InvestmentTrackerModal: React.FC = () => {
     }
     const updated = items.filter((a) => a.id !== id);
     saveAssets(updated);
-    setFeedback({ message: 'Aset investasi berhasil dihapus.', type: 'success' });
+    setFeedback({ message: t.modals.investments.deleteSuccess, type: 'success' });
   };
 
   if (!isInvestmentModalOpen) return null;
@@ -285,14 +320,14 @@ export const InvestmentTrackerModal: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold text-[#0C2340] dark:text-white">
-                  Pelacakan Aset & Portofolio Investasi
+                  {t.modals.investments.title}
                 </h3>
                 <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                  Gold & B2B
+                  {t.modals.investments.goldB2bBadge}
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                Pantau diversifikasi reksadana, saham, emas, kripto, dan properti Anda dalam satu dasbor
+                {t.modals.investments.subtitle}
               </p>
             </div>
           </div>
@@ -337,7 +372,7 @@ export const InvestmentTrackerModal: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
               <div>
                 <span className="text-xs uppercase tracking-wider font-extrabold text-[#8AD6D1]">
-                  Total Nilai Portofolio (Net Worth)
+                  {t.modals.investments.totalNetWorth}
                 </span>
                 <div className="text-3xl font-extrabold tracking-tight mt-1">
                   {formatCurrency(summary.totalCurrentValue)}
@@ -368,17 +403,25 @@ export const InvestmentTrackerModal: React.FC = () => {
 
             <div className="pt-3 border-t border-white/15 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs relative z-10">
               <div>
-                <span className="text-slate-300">Modal Investasi:</span>
+                <span className="text-slate-300">{t.modals.investments.totalInvested}:</span>
                 <p className="font-bold text-white mt-0.5">{formatCurrency(summary.totalInvested)}</p>
               </div>
               <div>
-                <span className="text-slate-300">Jumlah Aset:</span>
-                <p className="font-bold text-white mt-0.5">{summary.assetCount} Instrumen</p>
+                <span className="text-slate-300">{locale === 'id' ? 'Jumlah Aset:' : 'Total Assets:'}</span>
+                <p className="font-bold text-white mt-0.5">
+                  {summary.assetCount} {locale === 'id' ? 'Instrumen' : 'Assets'}
+                </p>
               </div>
               <div className="col-span-2 sm:col-span-1">
-                <span className="text-slate-300">Status Kinerja:</span>
+                <span className="text-slate-300">{locale === 'id' ? 'Status Kinerja:' : 'Performance:'}</span>
                 <p className="font-bold text-[#8AD6D1] mt-0.5">
-                  {summary.totalGainLoss >= 0 ? 'Surplus Bertumbuh 🚀' : 'Evaluasi Alokasi ⚠️'}
+                  {summary.totalGainLoss >= 0
+                    ? locale === 'id'
+                      ? 'Surplus Bertumbuh 🚀'
+                      : 'Growing Surplus 🚀'
+                    : locale === 'id'
+                    ? 'Evaluasi Alokasi ⚠️'
+                    : 'Review Allocation ⚠️'}
                 </p>
               </div>
             </div>
@@ -388,7 +431,7 @@ export const InvestmentTrackerModal: React.FC = () => {
           {summary.totalCurrentValue > 0 && (
             <div className="space-y-2">
               <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Alokasi Portofolio Berdasarkan Kategori
+                {locale === 'id' ? 'Alokasi Portofolio Berdasarkan Kategori' : 'Portfolio Allocation by Category'}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                 {(Object.keys(CATEGORY_META) as InvestmentCategory[]).map((cat) => {
@@ -406,7 +449,7 @@ export const InvestmentTrackerModal: React.FC = () => {
                     >
                       <div className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 dark:text-slate-300">
                         <meta.icon className="w-3.5 h-3.5" style={{ color: meta.color }} />
-                        <span className="truncate">{meta.label}</span>
+                        <span className="truncate">{getCategoryLabel(cat)}</span>
                       </div>
                       <div className="text-sm font-extrabold text-[#0C2340] dark:text-white">
                         {percent}%
@@ -425,7 +468,9 @@ export const InvestmentTrackerModal: React.FC = () => {
           {!isAdding ? (
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Daftar Instrumen Portofolio ({items.length})
+                {locale === 'id'
+                  ? `Daftar Instrumen Portofolio (${items.length})`
+                  : `Portfolio Asset List (${items.length})`}
               </span>
               <button
                 type="button"
@@ -433,33 +478,33 @@ export const InvestmentTrackerModal: React.FC = () => {
                 className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#4D8DBA] hover:bg-[#2E678E] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Tambah Aset Investasi</span>
+                <span>{t.modals.investments.addAssetBtn}</span>
               </button>
             </div>
           ) : (
             <form onSubmit={handleAddAsset} className="p-4 rounded-xl border border-[#4D8DBA]/30 bg-gray-50 dark:bg-slate-900/60 space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#0C2340] dark:text-white">
-                  Catat Aset Investasi Baru
+                  {t.modals.investments.formTitle}
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsAdding(false)}
                   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-slate-200"
                 >
-                  Batal
+                  {t.modals.investments.cancelBtn}
                 </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Nama Instrumen / Emiten
+                    {t.modals.investments.assetNameLabel}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: BBCA / Antam 10gr / BTC"
+                    placeholder={t.modals.investments.assetNamePlaceholder}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
@@ -468,7 +513,7 @@ export const InvestmentTrackerModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Kategori Aset
+                    {t.modals.investments.categoryLabel}
                   </label>
                   <select
                     value={category}
@@ -477,7 +522,7 @@ export const InvestmentTrackerModal: React.FC = () => {
                   >
                     {(Object.keys(CATEGORY_META) as InvestmentCategory[]).map((cat) => (
                       <option key={cat} value={cat}>
-                        {CATEGORY_META[cat].label}
+                        {getCategoryLabel(cat)}
                       </option>
                     ))}
                   </select>
@@ -485,7 +530,7 @@ export const InvestmentTrackerModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Jumlah / Unit / Lembar
+                    {t.modals.investments.quantityLabel}
                   </label>
                   <input
                     type="number"
@@ -501,12 +546,12 @@ export const InvestmentTrackerModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Harga Beli Rata-Rata per Unit (Rp)
+                    {t.modals.investments.buyPriceLabel}
                   </label>
                   <input
                     type="number"
                     required
-                    placeholder="Contoh: 10000"
+                    placeholder="10000"
                     value={buyPrice}
                     onChange={(e) => setBuyPrice(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
@@ -515,12 +560,12 @@ export const InvestmentTrackerModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Harga Pasar Saat Ini per Unit (Rp)
+                    {t.modals.investments.currentPriceLabel}
                   </label>
                   <input
                     type="number"
                     required
-                    placeholder="Contoh: 12500"
+                    placeholder="12500"
                     value={currentPrice}
                     onChange={(e) => setCurrentPrice(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
@@ -529,11 +574,11 @@ export const InvestmentTrackerModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Catatan Investasi (Opsional)
+                    {t.modals.investments.notesLabel}
                   </label>
                   <input
                     type="text"
-                    placeholder="Misal: Rencana simpan 5 tahun"
+                    placeholder={t.modals.investments.notesPlaceholder}
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
@@ -547,13 +592,13 @@ export const InvestmentTrackerModal: React.FC = () => {
                   onClick={() => setIsAdding(false)}
                   className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
-                  Batal
+                  {t.modals.investments.cancelBtn}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white shadow-xs cursor-pointer"
                 >
-                  Simpan Aset
+                  {t.modals.investments.saveBtn}
                 </button>
               </div>
             </form>
@@ -565,10 +610,12 @@ export const InvestmentTrackerModal: React.FC = () => {
               <Briefcase className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto" />
               <div className="space-y-1">
                 <p className="text-sm font-bold text-[#0C2340] dark:text-white">
-                  Belum ada portofolio investasi tercatat
+                  {t.modals.investments.empty}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Catat reksadana, saham, emas, atau aset kripto Anda untuk melihat estimasi kekayaan bersih (Net Worth) secara menyeluruh.
+                  {locale === 'id'
+                    ? 'Catat reksadana, saham, emas, atau aset kripto Anda untuk melihat estimasi kekayaan bersih (Net Worth) secara menyeluruh.'
+                    : 'Record your mutual funds, stocks, gold, or crypto assets to track your total net worth seamlessly.'}
                 </p>
               </div>
               <button
@@ -577,7 +624,7 @@ export const InvestmentTrackerModal: React.FC = () => {
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-[#4D8DBA] text-white hover:bg-[#2E678E] transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Tambah Aset Pertama</span>
+                <span>{t.modals.investments.addAssetBtn}</span>
               </button>
             </div>
           ) : (
@@ -608,11 +655,11 @@ export const InvestmentTrackerModal: React.FC = () => {
                             className="text-[10px] font-extrabold px-2 py-0.5 rounded-full text-white"
                             style={{ backgroundColor: meta.color }}
                           >
-                            {meta.label}
+                            {getCategoryLabel(asset.category)}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-slate-400">
-                          {asset.quantity} unit • Beli @ {formatCurrency(asset.buyPrice)} • Sekarang @ {formatCurrency(asset.currentPrice)}
+                          {asset.quantity} {locale === 'id' ? 'unit' : 'units'} • {locale === 'id' ? 'Beli @' : 'Buy @'} {formatCurrency(asset.buyPrice)} • {locale === 'id' ? 'Sekarang @' : 'Current @'} {formatCurrency(asset.currentPrice)}
                         </p>
                         {asset.notes && (
                           <p className="text-[11px] text-gray-400 dark:text-slate-500 italic">
@@ -645,7 +692,7 @@ export const InvestmentTrackerModal: React.FC = () => {
                         type="button"
                         onClick={() => handleDelete(asset.id)}
                         className="p-2 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                        title="Hapus aset"
+                        title={locale === 'id' ? 'Hapus aset' : 'Delete asset'}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -659,13 +706,19 @@ export const InvestmentTrackerModal: React.FC = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-[#4D8DBA]/20 bg-gray-50/50 dark:bg-slate-900/40 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-          <span>Tersedia untuk pengguna paket <strong>Gold</strong> & <strong>B2B</strong>.</span>
+          <span>
+            {locale === 'id' ? (
+              <>Tersedia untuk pengguna paket <strong>Gold</strong> & <strong>B2B</strong>.</>
+            ) : (
+              <>Available for <strong>Gold</strong> & <strong>B2B</strong> tier subscribers.</>
+            )}
+          </span>
           <button
             type="button"
             onClick={closeInvestmentModal}
             className="px-4 py-1.5 rounded-xl bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 font-bold text-[#0C2340] dark:text-white transition-all cursor-pointer"
           >
-            Tutup
+            {t.modals.investments.closeBtn}
           </button>
         </div>
       </div>

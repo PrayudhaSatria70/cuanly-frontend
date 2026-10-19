@@ -272,24 +272,24 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
               <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
                 <div>
                   <label className="text-[10px] font-extrabold uppercase text-amber-800 dark:text-amber-300 block mb-1">
-                    Tenor (Bulan Cicilan)
+                    {t.modals.debt.tenorLabel}
                   </label>
                   <select
                     value={tenorMonths}
                     onChange={(e) => setTenorMonths(e.target.value)}
                     className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-[#071018] border border-amber-400/30 font-bold"
                   >
-                    <option value="1">1 Bulan (Lunas Langsung)</option>
-                    <option value="3">3 Bulan (Cicilan 3x)</option>
-                    <option value="6">6 Bulan (Cicilan 6x)</option>
-                    <option value="12">12 Bulan (Cicilan 12x)</option>
-                    <option value="24">24 Bulan (Cicilan 24x)</option>
+                    <option value="1">{t.modals.debt.tenor1}</option>
+                    <option value="3">{t.modals.debt.tenor3}</option>
+                    <option value="6">{t.modals.debt.tenor6}</option>
+                    <option value="12">{t.modals.debt.tenor12}</option>
+                    <option value="24">{t.modals.debt.tenor24}</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="text-[10px] font-extrabold uppercase text-amber-800 dark:text-amber-300 block mb-1">
-                    Estimasi Bunga / Margin (%)
+                    {t.modals.debt.interestLabel}
                   </label>
                   <input
                     type="number"
@@ -333,7 +333,7 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
                   key={item.id}
                   className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                     item.isSettled
-                      ? 'bg-gray-50/60 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800 opacity-60'
+                       ? 'bg-gray-50/60 dark:bg-gray-900/40 border-gray-200 dark:border-gray-800 opacity-60'
                       : 'bg-white dark:bg-[#071018] border-gray-200/80 dark:border-[#4D8DBA]/25 hover:border-amber-400'
                   }`}
                 >
@@ -346,7 +346,7 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
                           ? 'bg-emerald-500 border-emerald-500 text-white'
                           : 'border-gray-300 hover:border-emerald-500 text-transparent'
                       }`}
-                      title={item.isSettled ? (locale === 'en' ? 'Mark as Unsettled' : 'Tandai Belum Lunas') : t.modals.debt.markSettled}
+                      title={item.isSettled ? t.modals.debt.unsettledTooltip : t.modals.debt.markSettled}
                     >
                       <CheckCircle2 className="w-4 h-4" />
                     </button>
@@ -377,7 +377,12 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
                         </span>
                         {item.tenorMonths && item.tenorMonths > 1 && (
                           <span className="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold">
-                            Tenor {item.tenorMonths}x • {item.installmentAmount ? formatCurrency(item.installmentAmount) : ''}/bln
+                            {t.modals.debt.tenorBadge
+                              .replace('{tenor}', String(item.tenorMonths))
+                              .replace(
+                                '{amount}',
+                                item.installmentAmount ? formatCurrency(item.installmentAmount) : ''
+                              )}
                           </span>
                         )}
                         {item.notes && <span>• {item.notes}</span>}
@@ -397,7 +402,7 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
                       type="button"
                       onClick={() => deleteDebt(item.id)}
                       className="p-1 text-gray-400 hover:text-rose-600 cursor-pointer"
-                      title={locale === 'en' ? 'Delete record' : 'Hapus catatan'}
+                      title={t.modals.debt.deleteTooltip}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
-import { Sparkles, X, ShieldAlert, ArrowRight } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Sparkles, X, ArrowRight } from 'lucide-react';
 
 export const MinorAdBanner: React.FC = () => {
   const { tier, isAdmin, openPlanModal } = useSubscription();
+  const { t } = useLanguage();
   const [isDismissed, setIsDismissed] = useState(false);
 
   // Minor ads only appear on the Basic (Free) tier for non-admin accounts
@@ -26,17 +28,17 @@ export const MinorAdBanner: React.FC = () => {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                Sponsor Finansial
+                {t.minorAd.badge}
               </span>
               <span className="text-xs font-semibold text-gray-500 dark:text-slate-400">
-                Tips Keuangan Cuanly
+                {t.minorAd.tips}
               </span>
             </div>
             <p className="text-sm font-bold text-[#0C2340] dark:text-white">
-              Amankan Dana Darurat 3–6 Bulan Pengeluaran di Reksa Dana Pasar Uang
+              {t.minorAd.title}
             </p>
             <p className="text-xs text-gray-600 dark:text-slate-300 max-w-xl">
-              Pisahkan pos darurat dari rekening harian agar tidak terpakai impulsif. Dapatkan imbal hasil stabil 4–6% p.a. tanpa potongan administrasi bulanan.
+              {t.minorAd.desc}
             </p>
           </div>
         </div>
@@ -47,7 +49,7 @@ export const MinorAdBanner: React.FC = () => {
             onClick={() => openPlanModal('SILVER')}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold rounded-xl text-white bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] shadow-xs hover:shadow-md transition-all cursor-pointer"
           >
-            <span>Bebas Iklan (Silver)</span>
+            <span>{t.minorAd.adFreeBtn}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
@@ -55,8 +57,8 @@ export const MinorAdBanner: React.FC = () => {
             type="button"
             onClick={() => setIsDismissed(true)}
             className="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-200/50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
-            title="Tutup Iklan Sementara"
-            aria-label="Tutup sponsor"
+            title={t.minorAd.dismissTooltip}
+            aria-label={t.minorAd.dismissTooltip}
           >
             <X className="w-4 h-4" />
           </button>

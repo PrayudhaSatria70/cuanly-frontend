@@ -24,8 +24,9 @@ import {
 
 export const BusinessFinanceModal: React.FC = () => {
   const { user } = useAuth();
-  const { formatCurrency } = useLanguage();
+  const { formatCurrency, t, locale } = useLanguage();
   const { isBusinessModalOpen, closeBusinessModal } = useSubscription();
+  const b = t.modals.business;
 
   const [activeTab, setActiveTab] = useState<'cashflow' | 'tax'>('cashflow');
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
@@ -173,7 +174,7 @@ export const BusinessFinanceModal: React.FC = () => {
     });
 
     setIsEditing(false);
-    setFeedback('Data profil bisnis & parameter arus kas berhasil diperbarui.');
+    setFeedback(b.saveProfileSuccess);
   };
 
   const handleExportTax = () => {
@@ -204,7 +205,7 @@ export const BusinessFinanceModal: React.FC = () => {
     link.click();
     document.body.removeChild(link);
 
-    setFeedback('Laporan pajak berhasil diekspor ke file CSV.');
+    setFeedback(b.exportSuccess);
   };
 
   if (!isBusinessModalOpen) return null;
@@ -221,14 +222,14 @@ export const BusinessFinanceModal: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold text-[#0C2340] dark:text-white">
-                  Keuangan Bisnis & Pajak UMKM
+                  {b.title}
                 </h3>
                 <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-700 dark:text-blue-300 border border-blue-500/30">
-                  B2B Plan Eksklusif
+                  {b.b2bBadge}
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                {profile?.businessName || 'Bisnis Anda'} • Manajemen arus kas usaha & kepatuhan pajak sederhana
+                {profile?.businessName || (locale === 'en' ? 'Your Business' : 'Bisnis Anda')} • {b.subtitle}
               </p>
             </div>
           </div>
@@ -236,6 +237,7 @@ export const BusinessFinanceModal: React.FC = () => {
             type="button"
             onClick={closeBusinessModal}
             className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label={b.closeBtn}
           >
             <X className="w-5 h-5" />
           </button>
@@ -253,7 +255,7 @@ export const BusinessFinanceModal: React.FC = () => {
             }`}
           >
             <TrendingUp className="w-4 h-4" />
-            <span>Arus Kas Bisnis & Runway</span>
+            <span>{b.tabCashflow}</span>
           </button>
 
           <button
@@ -266,7 +268,7 @@ export const BusinessFinanceModal: React.FC = () => {
             }`}
           >
             <Scale className="w-4 h-4" />
-            <span>Laporan Pajak Sederhana (PPh Final 0.5%)</span>
+            <span>{b.tabTax}</span>
           </button>
         </div>
 
@@ -292,7 +294,7 @@ export const BusinessFinanceModal: React.FC = () => {
                 {profile?.businessName}
               </span>
               <p className="text-gray-500 dark:text-slate-400">
-                NPWP: {profile?.npwp || 'Belum diatur'} • Tahun Pajak: {profile?.period}
+                NPWP: {profile?.npwp || (locale === 'en' ? 'Not configured' : 'Belum diatur')} • {locale === 'en' ? 'Tax Year' : 'Tahun Pajak'}: {profile?.period}
               </p>
             </div>
             <button
@@ -300,7 +302,7 @@ export const BusinessFinanceModal: React.FC = () => {
               onClick={() => setIsEditing(!isEditing)}
               className="px-3 py-1.5 rounded-xl border border-gray-300 dark:border-slate-700 text-xs font-bold hover:bg-gray-200 dark:hover:bg-slate-800 transition-colors self-start sm:self-center cursor-pointer"
             >
-              {isEditing ? 'Tutup Edit' : 'Ubah Data Bisnis'}
+              {isEditing ? (locale === 'en' ? 'Close Edit' : 'Tutup Edit') : b.editProfile}
             </button>
           </div>
 
@@ -308,36 +310,37 @@ export const BusinessFinanceModal: React.FC = () => {
           {isEditing && (
             <form onSubmit={handleUpdateProfile} className="p-4 rounded-xl border border-[#4D8DBA]/30 bg-white dark:bg-slate-900 space-y-3">
               <h4 className="text-xs font-bold text-[#0C2340] dark:text-white">
-                Perbarui Parameter Keuangan Bisnis
+                {locale === 'en' ? 'Update Business Financial Parameters' : 'Perbarui Parameter Keuangan Bisnis'}
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Nama Badan Usaha / Brand
+                    {b.businessName}
                   </label>
                   <input
                     type="text"
                     required
                     value={businessName}
+                    placeholder={b.businessNamePlaceholder}
                     onChange={(e) => setBusinessName(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    NPWP (Opsional)
+                    {b.npwpLabel}
                   </label>
                   <input
                     type="text"
                     value={npwp}
-                    placeholder="00.000.000.0-000.000"
+                    placeholder={b.npwpPlaceholder}
                     onChange={(e) => setNpwp(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
                   />
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Estimasi Omzet Tahunan (Rp)
+                    {b.annualRevenue}
                   </label>
                   <input
                     type="number"
@@ -349,7 +352,7 @@ export const BusinessFinanceModal: React.FC = () => {
                 </div>
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Beban Operasional Tahunan (Rp)
+                    {b.operatingExpense}
                   </label>
                   <input
                     type="number"
@@ -366,13 +369,13 @@ export const BusinessFinanceModal: React.FC = () => {
                   onClick={() => setIsEditing(false)}
                   className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700"
                 >
-                  Batal
+                  {b.cancelBtn}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-1.5 text-xs font-bold rounded-xl bg-[#4D8DBA] hover:bg-[#2E678E] text-white shadow-xs"
                 >
-                  Simpan Perubahan
+                  {b.saveProfile}
                 </button>
               </div>
             </form>
@@ -386,30 +389,30 @@ export const BusinessFinanceModal: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <span className="text-xs uppercase tracking-wider font-extrabold text-[#8AD6D1]">
-                      Business Cash Runway
+                      {b.runwayTitle}
                     </span>
                     <div className="text-3xl font-extrabold tracking-tight mt-1">
-                      {cashflow.runwayMonths} Bulan Ketahanan Kas
+                      {b.runwayMonths.replace('{months}', String(cashflow.runwayMonths))}
                     </div>
                   </div>
                   <div className="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-bold self-start sm:self-center flex items-center gap-1.5">
                     <CheckCircle2 className="w-4 h-4" />
-                    <span>Runway Sehat (&gt; 6 Bulan)</span>
+                    <span>{b.runwaySafe}</span>
                   </div>
                 </div>
 
                 <div className="pt-3 border-t border-white/15 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
                   <div>
-                    <span className="text-slate-300">Net Arus Kas:</span>
+                    <span className="text-slate-300">{b.netCashflow}:</span>
                     <p className="font-bold text-white mt-0.5">{formatCurrency(cashflow.netCashflow)}</p>
                   </div>
                   <div>
-                    <span className="text-slate-300">Burn Rate Bulanan:</span>
+                    <span className="text-slate-300">{locale === 'en' ? 'Monthly Burn Rate:' : 'Burn Rate Bulanan:'}</span>
                     <p className="font-bold text-white mt-0.5">{formatCurrency(cashflow.monthlyBurnRate)}/bln</p>
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <span className="text-slate-300">Status Operasional:</span>
-                    <p className="font-bold text-[#8AD6D1] mt-0.5">Surplus Berkelanjutan ✨</p>
+                    <span className="text-slate-300">{locale === 'en' ? 'Operational Status:' : 'Status Operasional:'}</span>
+                    <p className="font-bold text-[#8AD6D1] mt-0.5">{locale === 'en' ? 'Sustainable Surplus ✨' : 'Surplus Berkelanjutan ✨'}</p>
                   </div>
                 </div>
               </div>
@@ -417,7 +420,7 @@ export const BusinessFinanceModal: React.FC = () => {
               {/* 3 Categories Cashflow Breakdown */}
               <div className="space-y-3">
                 <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                  Rincian 3 Pilar Arus Kas Bisnis
+                  {locale === 'en' ? '3 Pillars of Business Cashflow' : 'Rincian 3 Pilar Arus Kas Bisnis'}
                 </span>
 
                 <div className="space-y-3">
@@ -426,15 +429,15 @@ export const BusinessFinanceModal: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#0C2340] dark:text-white flex items-center gap-1.5">
                         <TrendingUp className="w-4 h-4 text-emerald-500" />
-                        <span>1. Arus Kas Operasional (Operating Cashflow)</span>
+                        <span>1. {b.operatingCashflow}</span>
                       </span>
                       <span className="text-xs font-extrabold text-emerald-600 dark:text-emerald-400">
                         +{formatCurrency(cashflow.operating.net)}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-xs text-gray-500 dark:text-slate-400 pt-1 border-t border-gray-100 dark:border-slate-800">
-                      <div>Kas Masuk (Penjualan/Jasa): <strong className="text-[#0C2340] dark:text-white">{formatCurrency(cashflow.operating.cashIn)}</strong></div>
-                      <div>Kas Keluar (Operasional): <strong className="text-[#0C2340] dark:text-white">{formatCurrency(cashflow.operating.cashOut)}</strong></div>
+                      <div>{locale === 'en' ? 'Customer Receipts:' : 'Kas Masuk (Penjualan/Jasa):'} <strong className="text-[#0C2340] dark:text-white">{formatCurrency(cashflow.operating.cashIn)}</strong></div>
+                      <div>{locale === 'en' ? 'Operating Outflows:' : 'Kas Keluar (Operasional):'} <strong className="text-[#0C2340] dark:text-white">{formatCurrency(cashflow.operating.cashOut)}</strong></div>
                     </div>
                   </div>
 
@@ -443,14 +446,14 @@ export const BusinessFinanceModal: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#0C2340] dark:text-white flex items-center gap-1.5">
                         <TrendingDown className="w-4 h-4 text-amber-500" />
-                        <span>2. Arus Kas Investasi (Investing Cashflow)</span>
+                        <span>2. {b.investingCashflow}</span>
                       </span>
                       <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
                         {formatCurrency(cashflow.investing.net)}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Alokasi belanja modal (CAPEX) untuk mesin, perlengkapan kantor, dan aset fisik penunjang usaha.
+                      {b.investingCashflowDesc}
                     </p>
                   </div>
 
@@ -459,14 +462,14 @@ export const BusinessFinanceModal: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-[#0C2340] dark:text-white flex items-center gap-1.5">
                         <Building2 className="w-4 h-4 text-[#4D8DBA]" />
-                        <span>3. Arus Kas Pendanaan (Financing Cashflow)</span>
+                        <span>3. {b.financingCashflow}</span>
                       </span>
                       <span className="text-xs font-extrabold text-[#4D8DBA] dark:text-[#8AD6D1]">
                         +{formatCurrency(cashflow.financing.net)}
                       </span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-slate-400">
-                      Suntikan modal pemilik (ekuitas) atau pinjaman modal kerja ekspansi.
+                      {b.financingCashflowDesc}
                     </p>
                   </div>
                 </div>
@@ -482,14 +485,16 @@ export const BusinessFinanceModal: React.FC = () => {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div>
                     <span className="text-xs uppercase tracking-wider font-extrabold text-[#8AD6D1]">
-                      Status Pajak PPh Final UMKM ({taxReport.period})
+                      {locale === 'en' ? `MSME Final Income Tax Status (${taxReport.period})` : `Status Pajak PPh Final UMKM (${taxReport.period})`}
                     </span>
                     <div className="text-2xl font-extrabold tracking-tight mt-1">
-                      {taxReport.status}
+                      {locale === 'en'
+                        ? (taxReport.taxDue === 0 ? 'TAX EXEMPT (Revenue < Rp500M)' : 'TAX DUE')
+                        : taxReport.status}
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs text-slate-300">Estimasi Pajak Terutang:</span>
+                    <span className="text-xs text-slate-300">{b.taxDue}:</span>
                     <div className="text-2xl font-extrabold text-amber-400 mt-0.5">
                       {formatCurrency(taxReport.taxDue)}
                     </div>
@@ -498,7 +503,7 @@ export const BusinessFinanceModal: React.FC = () => {
 
                 <div className="pt-3 border-t border-white/15 text-xs text-slate-300 flex items-center gap-2">
                   <ShieldCheck className="w-4 h-4 text-[#8AD6D1] shrink-0" />
-                  <span>Dasar Regulasi: {taxReport.legalReference}</span>
+                  <span>{locale === 'en' ? 'Regulatory Basis:' : 'Dasar Regulasi:'} {taxReport.legalReference}</span>
                 </div>
               </div>
 
@@ -506,7 +511,7 @@ export const BusinessFinanceModal: React.FC = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                    Perhitungan PPh Final UMKM 0.5%
+                    {b.taxSimTitle}
                   </span>
                   <button
                     type="button"
@@ -514,7 +519,7 @@ export const BusinessFinanceModal: React.FC = () => {
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4D8DBA] hover:bg-[#2E678E] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    <span>Ekspor SPT Sederhana (CSV)</span>
+                    <span>{b.exportTax}</span>
                   </button>
                 </div>
 
@@ -522,23 +527,23 @@ export const BusinessFinanceModal: React.FC = () => {
                   <table className="w-full text-left">
                     <tbody className="divide-y divide-gray-200 dark:divide-slate-800">
                       <tr className="bg-gray-50/50 dark:bg-slate-900/40">
-                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">Total Omzet Bruto ({taxReport.period}):</td>
+                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">{b.accumulatedRevenue} ({taxReport.period}):</td>
                         <td className="p-3 font-bold text-right text-[#0C2340] dark:text-white">{formatCurrency(taxReport.grossRevenue)}</td>
                       </tr>
                       <tr>
-                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">Batas Omzet Tidak Kena Pajak (Pasal 7 UU HPP):</td>
+                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">{b.taxExemption}:</td>
                         <td className="p-3 font-bold text-right text-emerald-600 dark:text-emerald-400">-{formatCurrency(taxReport.exemptThreshold)}</td>
                       </tr>
                       <tr className="bg-gray-50/50 dark:bg-slate-900/40">
-                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">Dasar Pengenaan Pajak (DPP Kena Pajak):</td>
+                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">{b.taxBase}:</td>
                         <td className="p-3 font-bold text-right text-[#0C2340] dark:text-white">{formatCurrency(taxReport.taxableRevenue)}</td>
                       </tr>
                       <tr>
-                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">Tarif PPh Final UMKM (PP 23/2018):</td>
+                        <td className="p-3 font-medium text-gray-600 dark:text-slate-400">{locale === 'en' ? 'SME Final Tax Rate (PP 23/2018):' : 'Tarif PPh Final UMKM (PP 23/2018):'}</td>
                         <td className="p-3 font-bold text-right text-[#4D8DBA] dark:text-[#8AD6D1]">0.5%</td>
                       </tr>
                       <tr className="bg-[#4D8DBA]/10 font-bold">
-                        <td className="p-3 text-[#0C2340] dark:text-white">Total Pajak Final Terutang:</td>
+                        <td className="p-3 text-[#0C2340] dark:text-white">{b.taxDue}:</td>
                         <td className="p-3 text-right text-lg text-[#4D8DBA] dark:text-[#8AD6D1]">{formatCurrency(taxReport.taxDue)}</td>
                       </tr>
                     </tbody>
@@ -547,7 +552,15 @@ export const BusinessFinanceModal: React.FC = () => {
 
                 <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-900 dark:text-blue-300">
                   <p>
-                    <strong>💡 Ketentuan Wajib Pajak UMKM:</strong> Sesuai UU Harmonisasi Peraturan Perpajakan (UU HPP), Wajib Pajak Orang Pribadi dengan peredaran bruto s.d Rp 500.000.000 dalam 1 tahun pajak <strong>TIDAK DIKENAKAN PPh Final 0.5%</strong>. Pajak hanya dihitung atas kelebihan omzet di atas Rp 500 Juta.
+                    {locale === 'en' ? (
+                      <>
+                        <strong>💡 MSME Tax Exemption Rules:</strong> Under the Indonesian Tax Harmonization Law (UU HPP), Individual Taxpayers with gross annual turnover up to Rp 500,000,000 are <strong>EXEMPT from 0.5% Final Tax</strong>. The 0.5% rate applies only to revenue exceeding Rp 500 million.
+                      </>
+                    ) : (
+                      <>
+                        <strong>💡 Ketentuan Wajib Pajak UMKM:</strong> Sesuai UU Harmonisasi Peraturan Perpajakan (UU HPP), Wajib Pajak Orang Pribadi dengan peredaran bruto s.d Rp 500.000.000 dalam 1 tahun pajak <strong>TIDAK DIKENAKAN PPh Final 0.5%</strong>. Pajak hanya dihitung atas kelebihan omzet di atas Rp 500 Juta.
+                      </>
+                    )}
                   </p>
                 </div>
               </div>
@@ -557,13 +570,13 @@ export const BusinessFinanceModal: React.FC = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-[#4D8DBA]/20 bg-gray-50/50 dark:bg-slate-900/40 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-          <span>Fitur eksklusif bagi pemegang paket <strong>B2B Plan</strong> & akun Live Admin.</span>
+          <span>{locale === 'en' ? <>Exclusive feature for <strong>B2B Plan</strong> subscribers & Live Admin.</> : <>Fitur eksklusif bagi pemegang paket <strong>B2B Plan</strong> & akun Live Admin.</>}</span>
           <button
             type="button"
             onClick={closeBusinessModal}
             className="px-4 py-1.5 rounded-xl bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 font-bold text-[#0C2340] dark:text-white transition-all cursor-pointer"
           >
-            Tutup
+            {b.closeBtn}
           </button>
         </div>
       </div>

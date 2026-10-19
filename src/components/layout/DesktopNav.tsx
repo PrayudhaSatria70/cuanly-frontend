@@ -104,116 +104,131 @@ export const DesktopNav: React.FC = () => {
             <span>{t.nav.subscriptionFeatures}</span>
           </span>
           <div className="mt-2 space-y-1">
-            {/* Multi-Dompet */}
-            <button
-              type="button"
-              onClick={openWalletModal}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 1. Multi-Dompet (/wallets) */}
+            <Link
+              href="/wallets"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/wallets'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Wallet className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-[#4D8DBA]" />
+                <Wallet className={`w-4 h-4 transition-colors ${
+                  pathname === '/wallets' ? 'text-[#4D8DBA] dark:text-[#8AD6D1]' : 'text-gray-400 dark:text-slate-400 group-hover:text-[#4D8DBA]'
+                }`} />
                 <span>{t.nav.multiWallet}</span>
               </div>
               {!hasAccess('SILVER') && <PremiumCrownBadge plan="SILVER" />}
-            </button>
+            </Link>
 
-            {/* Utang & Piutang (Gold) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (!hasAccess('GOLD')) {
-                  openUpgradeModal(
-                    t.modals.debt.title,
-                    'GOLD',
-                    t.modals.debt.subtitle
-                  );
-                } else {
-                  openDebtModal();
-                }
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 2. Utang & Piutang (/debts) */}
+            <Link
+              href="/debts"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/debts'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <HandCoins className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-amber-500" />
+                <HandCoins className={`w-4 h-4 transition-colors ${
+                  pathname === '/debts' ? 'text-amber-500 dark:text-amber-400' : 'text-gray-400 dark:text-slate-400 group-hover:text-amber-500'
+                }`} />
                 <span>{t.nav.debtManager}</span>
               </div>
               {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
-            </button>
+            </Link>
 
-            {/* Shared Workspace (B2B) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (!hasAccess('B2B')) {
-                  openUpgradeModal(
-                    t.modals.workspace.title,
-                    'B2B',
-                    t.modals.workspace.subtitle
-                  );
-                } else {
-                  openWorkspaceModal();
-                }
-              }}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 3. Shared Workspace (/workspace) */}
+            <Link
+              href="/workspace"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/workspace'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Building2 className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-purple-500" />
+                <Building2 className={`w-4 h-4 transition-colors ${
+                  pathname === '/workspace' ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-slate-400 group-hover:text-purple-500'
+                }`} />
                 <span>{t.nav.teamWorkspace}</span>
               </div>
               {!hasAccess('B2B') && <PremiumCrownBadge plan="B2B" />}
-            </button>
+            </Link>
 
-            {/* Bank Sync Otomatis (Gold) */}
-            <button
-              type="button"
-              onClick={openBankSyncModal}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 4. Bank Sync Otomatis (/bank-sync) */}
+            <Link
+              href="/bank-sync"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/bank-sync'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Building className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-[#4D8DBA]" />
+                <Building className={`w-4 h-4 transition-colors ${
+                  pathname === '/bank-sync' ? 'text-[#4D8DBA] dark:text-[#8AD6D1]' : 'text-gray-400 dark:text-slate-400 group-hover:text-[#4D8DBA]'
+                }`} />
                 <span>Bank Sync Otomatis</span>
               </div>
               {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
-            </button>
+            </Link>
 
-            {/* Aset & Investasi (Gold) */}
-            <button
-              type="button"
-              onClick={openInvestmentModal}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 5. Aset & Investasi (/investasi) */}
+            <Link
+              href="/investasi"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/investasi'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-emerald-500" />
+                <TrendingUp className={`w-4 h-4 transition-colors ${
+                  pathname === '/investasi' ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-400 dark:text-slate-400 group-hover:text-emerald-500'
+                }`} />
                 <span>Aset & Investasi</span>
               </div>
               {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
-            </button>
+            </Link>
 
-            {/* Laporan Analitik AI (Gold) */}
-            <button
-              type="button"
-              onClick={openAiAnalyticsModal}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 6. Laporan Analitik AI (/analitik-ai) */}
+            <Link
+              href="/analitik-ai"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/analitik-ai'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Brain className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-violet-500" />
+                <Brain className={`w-4 h-4 transition-colors ${
+                  pathname === '/analitik-ai' ? 'text-violet-600 dark:text-violet-400' : 'text-gray-400 dark:text-slate-400 group-hover:text-violet-500'
+                }`} />
                 <span>Analitik AI Cuanly</span>
               </div>
               {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
-            </button>
+            </Link>
 
-            {/* Bisnis & Pajak UMKM (B2B) */}
-            <button
-              type="button"
-              onClick={openBusinessModal}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            {/* 7. Bisnis & Pajak UMKM (/bisnis) */}
+            <Link
+              href="/bisnis"
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold transition-all group ${
+                pathname === '/bisnis'
+                  ? 'bg-[#4D8DBA]/15 text-[#2E678E] dark:text-[#8AD6D1] font-bold shadow-2xs'
+                  : 'text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15'
+              }`}
             >
               <div className="flex items-center gap-3">
-                <Briefcase className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-blue-500" />
+                <Briefcase className={`w-4 h-4 transition-colors ${
+                  pathname === '/bisnis' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-400 group-hover:text-blue-500'
+                }`} />
                 <span>Bisnis & Pajak UMKM</span>
               </div>
               {!hasAccess('B2B') && <PremiumCrownBadge plan="B2B" />}
-            </button>
+            </Link>
           </div>
         </div>
 
@@ -273,7 +288,7 @@ export const DesktopNav: React.FC = () => {
               </div>
             </div>
             <Link
-              href="/pricing"
+              href="/my-plan"
               className="w-full flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white text-xs font-bold shadow-xs hover:shadow-sm transition-all"
             >
               <Crown className="w-3.5 h-3.5 fill-amber-300 text-amber-100" />

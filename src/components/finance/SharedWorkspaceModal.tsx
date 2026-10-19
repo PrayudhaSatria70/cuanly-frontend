@@ -52,10 +52,42 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
   };
 
   const auditLogs = [
-    { id: 'log_1', user: 'Owner Tim', action: 'Memperbarui alokasi saldo Shared Wallet Pool', time: '10 menit yang lalu' },
-    { id: 'log_2', user: 'Finance Manager', action: 'Mencatat pengeluaran operasional Rp850.000', time: '2 jam yang lalu' },
-    { id: 'log_3', user: 'Staff Kasir', action: 'Menambahkan mutasi kas masuk penjualan Rp3.200.000', time: '5 jam yang lalu' },
-    { id: 'log_4', user: 'Sistem Cuanly', action: 'Rekonsiliasi otomatis dompet bersama berhasil', time: '1 hari yang lalu' },
+    {
+      id: 'log_1',
+      user: locale === 'en' ? 'Team Owner' : 'Owner Tim',
+      action:
+        locale === 'en'
+          ? 'Updated Shared Wallet Pool allocation balance'
+          : 'Memperbarui alokasi saldo Shared Wallet Pool',
+      time: locale === 'en' ? '10 minutes ago' : '10 menit yang lalu',
+    },
+    {
+      id: 'log_2',
+      user: 'Finance Manager',
+      action:
+        locale === 'en'
+          ? 'Recorded operational expense Rp850,000'
+          : 'Mencatat pengeluaran operasional Rp850.000',
+      time: locale === 'en' ? '2 hours ago' : '2 jam yang lalu',
+    },
+    {
+      id: 'log_3',
+      user: locale === 'en' ? 'Cashier Staff' : 'Staff Kasir',
+      action:
+        locale === 'en'
+          ? 'Added sales cash-in transaction Rp3,200,000'
+          : 'Menambahkan mutasi kas masuk penjualan Rp3.200.000',
+      time: locale === 'en' ? '5 hours ago' : '5 jam yang lalu',
+    },
+    {
+      id: 'log_4',
+      user: locale === 'en' ? 'Cuanly System' : 'Sistem Cuanly',
+      action:
+        locale === 'en'
+          ? 'Automated shared wallet reconciliation completed'
+          : 'Rekonsiliasi otomatis dompet bersama berhasil',
+      time: locale === 'en' ? '1 day ago' : '1 hari yang lalu',
+    },
   ];
 
   return (
@@ -104,7 +136,7 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
             }`}
           >
             <Users className="w-3.5 h-3.5" />
-            <span>Shared Pool & Anggota</span>
+            <span>{t.modals.workspace.tabPool}</span>
           </button>
           <button
             type="button"
@@ -116,7 +148,7 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
             }`}
           >
             <Shield className="w-3.5 h-3.5" />
-            <span>Dasbor Admin Tim & Audit</span>
+            <span>{t.modals.workspace.tabAdmin}</span>
           </button>
         </div>
 
@@ -134,20 +166,20 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
               <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-slate-900/60 border border-purple-200/60 dark:border-purple-900/40 space-y-2">
                 <span className="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
                   <Shield className="w-4 h-4 text-purple-600" />
-                  <span>Matriks Izin & Hak Akses Tim B2B</span>
+                  <span>{t.modals.workspace.permissionsTitle}</span>
                 </span>
                 <div className="text-[11px] text-gray-600 dark:text-slate-300 space-y-1.5">
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-slate-800">
-                    <span className="font-bold text-amber-700 dark:text-amber-400">OWNER (Pemilik):</span>
-                    <span>Akses penuh, transfer saldo pool, kelola langganan B2B & hapus anggota</span>
+                    <span className="font-bold text-amber-700 dark:text-amber-400">{t.modals.workspace.ownerRole}</span>
+                    <span>{t.modals.workspace.ownerDesc}</span>
                   </div>
                   <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-slate-800">
-                    <span className="font-bold text-purple-700 dark:text-purple-400">ADMIN (Manajer):</span>
-                    <span>Kelola dompet bersama, undang anggota baru, verifikasi pengeluaran tim</span>
+                    <span className="font-bold text-purple-700 dark:text-purple-400">{t.modals.workspace.adminRole}</span>
+                    <span>{t.modals.workspace.adminDesc}</span>
                   </div>
                   <div className="flex justify-between items-center py-1">
-                    <span className="font-bold text-gray-700 dark:text-slate-300">MEMBER (Staff):</span>
-                    <span>Pencatatan mutasi kas harian, unggah struk belanja operasional (Read & Add only)</span>
+                    <span className="font-bold text-gray-700 dark:text-slate-300">{t.modals.workspace.memberRole}</span>
+                    <span>{t.modals.workspace.memberDesc}</span>
                   </div>
                 </div>
               </div>
@@ -155,7 +187,7 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
               {/* Team Audit Activity Log */}
               <div className="space-y-2">
                 <span className="text-xs font-bold text-gray-600 dark:text-slate-300">
-                  Log Aktivitas Tim (Audit Trail)
+                  {t.modals.workspace.auditLogTitle}
                 </span>
                 <div className="space-y-2">
                   {auditLogs.map((log) => (
@@ -203,7 +235,7 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
                 {t.modals.workspace.membersTitle} ({workspaceMembers.length} / 5):
               </span>
               <span className="text-[10px] text-gray-400">
-                {locale === 'en' ? 'B2B Quota: Max 5 Accounts' : 'Kuota B2B: Maks 5 Akun'}
+                {t.modals.workspace.quotaNote}
               </span>
             </div>
 
@@ -296,7 +328,7 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
             onClick={onClose}
             className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-slate-200 font-bold text-xs hover:bg-gray-300 transition-colors cursor-pointer"
           >
-            {locale === 'en' ? 'Close' : 'Tutup'}
+            {t.modals.workspace.closeBtn}
           </button>
         </div>
       </div>

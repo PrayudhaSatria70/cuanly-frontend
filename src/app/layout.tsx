@@ -50,7 +50,9 @@ export default function RootLayout({
                   } else {
                     document.documentElement.classList.remove('dark');
                   }
-                } catch (e) {}
+                } catch (e) {
+                  /* Safe fallback: Ignore storage access denial in restricted or private browsing mode */
+                }
               })();
             `,
           }}

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { bankSyncApi } from '@/services/api';
 import { BankConnection, BankInstitution } from '@/types';
 import {
@@ -32,6 +33,8 @@ const INSTITUTIONS: { code: BankInstitution; name: string; type: 'BANK' | 'EWALL
 export const BankSyncModal: React.FC = () => {
   const { user } = useAuth();
   const { isBankSyncModalOpen, closeBankSyncModal } = useSubscription();
+  const { t, locale } = useLanguage();
+  const b = t.modals.bankSync;
 
   const [connections, setConnections] = useState<BankConnection[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,29 +101,23 @@ export const BankSyncModal: React.FC = () => {
         }
       })
       .catch(() => {
-        try {
-          const stored = localStorage.getItem(`cuanly_bank_connections_${userId}`);
-          setConnections(stored ? JSON.parse(stored) : []);
-        } catch {
-          setConnections([]);
-        }
+        setConnections([]);
       })
       .finally(() => setIsLoading(false));
   }, [isBankSyncModalOpen, userId]);
 
-  const saveConnections = (updated: BankConnection[]) => {
-    setConnections(updated);
-    if (userId) {
-      localStorage.setItem(`cuanly_bank_connections_${userId}`, JSON.stringify(updated));
+  const saveConnections = (newConns: BankConnection[]) => {
+    setConnections(newConns);
+    try {
+      localStorage.setItem(`cuanly_bank_connections_${userId}`, JSON.stringify(newConns));
+    } catch {
+      // ignore
     }
   };
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!accountNumber.trim() || !accountName.trim()) {
-      setFeedback({ message: 'Nomor dan nama rekening wajib diisi.', type: 'error' });
-      return;
-    }
+    if (!accountNumber.trim() || !accountName.trim()) return;
 
     const payload = {
       institution: selectedInst,
@@ -144,7 +141,7 @@ export const BankSyncModal: React.FC = () => {
         };
         saveConnections([newConn, ...connections]);
       }
-      setFeedback({ message: `Berhasil menghubungkan akun ${selectedInst}!`, type: 'success' });
+      setFeedback({ message: b.connectSuccess.replace('{inst}', selectedInst), type: 'success' });
       setIsAdding(false);
       setAccountNumber('');
       setAccountName('');
@@ -158,7 +155,7 @@ export const BankSyncModal: React.FC = () => {
         createdAt: new Date().toISOString(),
       };
       saveConnections([newConn, ...connections]);
-      setFeedback({ message: `Berhasil menghubungkan akun ${selectedInst}!`, type: 'success' });
+      setFeedback({ message: b.connectSuccess.replace('{inst}', selectedInst), type: 'success' });
       setIsAdding(false);
       setAccountNumber('');
       setAccountName('');
@@ -179,7 +176,7 @@ export const BankSyncModal: React.FC = () => {
       );
       saveConnections(updated);
       setSyncingId(null);
-      setFeedback({ message: `Sinkronisasi mutasi ${instName} berhasil diperbarui. Saldo dan transaksi mutasi terbaru telah disinkronkan.`, type: 'success' });
+      setFeedback({ message: b.syncSuccess.replace('{inst}', instName), type: 'success' });
     }, 1200);
   };
 
@@ -191,7 +188,7 @@ export const BankSyncModal: React.FC = () => {
     }
     const updated = connections.filter((c) => c.id !== id);
     saveConnections(updated);
-    setFeedback({ message: 'Koneksi akun berhasil diputus.', type: 'success' });
+    setFeedback({ message: b.disconnectSuccess, type: 'success' });
   };
 
   if (!isBankSyncModalOpen) return null;
@@ -208,14 +205,14 @@ export const BankSyncModal: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-lg font-bold text-[#0C2340] dark:text-white">
-                  Bank Sync Otomatis
+                  {b.title}
                 </h3>
                 <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
-                  Gold & B2B
+                  {b.goldB2bBadge}
                 </span>
               </div>
               <p className="text-xs text-gray-500 dark:text-slate-400">
-                Hubungkan rekening bank dan e-wallet Anda untuk sinkronisasi mutasi dan saldo real-time
+                {b.subtitle}
               </p>
             </div>
           </div>
@@ -223,6 +220,7 @@ export const BankSyncModal: React.FC = () => {
             type="button"
             onClick={closeBankSyncModal}
             className="p-2 rounded-xl text-gray-400 hover:text-gray-600 dark:hover:text-slate-200 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            aria-label={b.cancelBtn}
           >
             <X className="w-5 h-5" />
           </button>
@@ -257,9 +255,9 @@ export const BankSyncModal: React.FC = () => {
           <div className="flex items-start gap-3 p-3.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-800 dark:text-blue-300">
             <ShieldCheck className="w-5 h-5 shrink-0 text-blue-500 mt-0.5" />
             <div className="text-xs space-y-0.5">
-              <span className="font-bold">Keamanan Enkripsi End-to-End Tingkat Perbankan (AES-256)</span>
+              <span className="font-bold">{b.securityTitle}</span>
               <p className="text-gray-600 dark:text-blue-200/80">
-                Cuanly hanya memiliki akses baca (read-only) untuk mutasi dan saldo kas. Kredensial transaksi dan PIN Anda tidak pernah disimpan.
+                {b.securityDesc}
               </p>
             </div>
           </div>
@@ -268,7 +266,7 @@ export const BankSyncModal: React.FC = () => {
           {!isAdding ? (
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-gray-500 dark:text-slate-400 uppercase tracking-wider">
-                Rekening & E-Wallet Terhubung ({connections.length})
+                {b.connectedTitle} ({connections.length})
               </span>
               <button
                 type="button"
@@ -276,28 +274,28 @@ export const BankSyncModal: React.FC = () => {
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#4D8DBA] hover:bg-[#2E678E] text-white text-xs font-bold transition-all shadow-2xs cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Hubungkan Akun Baru</span>
+                <span>{b.connectNewBtn}</span>
               </button>
             </div>
           ) : (
             <form onSubmit={handleConnect} className="p-4 rounded-xl border border-[#4D8DBA]/30 bg-gray-50 dark:bg-slate-900/60 space-y-3.5">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#0C2340] dark:text-white">
-                  Hubungkan Rekening Bank / E-Wallet Baru
+                  {b.formTitle}
                 </span>
                 <button
                   type="button"
                   onClick={() => setIsAdding(false)}
                   className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-slate-200"
                 >
-                  Batal
+                  {b.cancelBtn}
                 </button>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Institusi Keuangan
+                    {b.institutionLabel}
                   </label>
                   <select
                     value={selectedInst}
@@ -314,12 +312,12 @@ export const BankSyncModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Nomor Rekening / No. HP
+                    {b.accountNumberLabel}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Contoh: 8830192841"
+                    placeholder={b.accountNumberPlaceholder}
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
@@ -328,12 +326,12 @@ export const BankSyncModal: React.FC = () => {
 
                 <div>
                   <label className="block text-[11px] font-semibold text-gray-600 dark:text-slate-400 mb-1">
-                    Nama Pemilik Akun
+                    {b.accountNameLabel}
                   </label>
                   <input
                     type="text"
                     required
-                    placeholder="Sesuai buku tabungan / KTP"
+                    placeholder={b.accountNamePlaceholder}
                     value={accountName}
                     onChange={(e) => setAccountName(e.target.value)}
                     className="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-[#0C2340] dark:text-white focus:outline-hidden focus:border-[#4D8DBA]"
@@ -347,13 +345,13 @@ export const BankSyncModal: React.FC = () => {
                   onClick={() => setIsAdding(false)}
                   className="px-3 py-1.5 text-xs font-semibold rounded-xl border border-gray-200 dark:border-slate-700 text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800 cursor-pointer"
                 >
-                  Batal
+                  {b.cancelBtn}
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-1.5 text-xs font-bold rounded-xl bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white shadow-xs cursor-pointer"
                 >
-                  Sambungkan Akun
+                  {b.connectBtn}
                 </button>
               </div>
             </form>
@@ -365,10 +363,10 @@ export const BankSyncModal: React.FC = () => {
               <CreditCard className="w-10 h-10 text-gray-300 dark:text-slate-600 mx-auto" />
               <div className="space-y-1">
                 <p className="text-sm font-bold text-[#0C2340] dark:text-white">
-                  Belum ada rekening atau e-wallet yang terhubung
+                  {b.empty}
                 </p>
                 <p className="text-xs text-gray-500 dark:text-slate-400 max-w-sm mx-auto">
-                  Hubungkan akun BCA, Mandiri, BRI, BNI, GoPay, OVO, atau Dana Anda untuk memulai pencatatan otomatis tanpa repot input manual.
+                  {b.subtitle}
                 </p>
               </div>
               <button
@@ -377,7 +375,7 @@ export const BankSyncModal: React.FC = () => {
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-[#4D8DBA] text-white hover:bg-[#2E678E] transition-all cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
-                <span>Hubungkan Sekarang</span>
+                <span>{b.connectBtn}</span>
               </button>
             </div>
           ) : (
@@ -411,22 +409,22 @@ export const BankSyncModal: React.FC = () => {
                           </span>
                           <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            Otomatis
+                            {b.autoSyncActive}
                           </span>
                         </div>
                         <p className="text-xs text-gray-500 dark:text-slate-400">
                           {conn.accountName} • <span className="font-mono">•••• {conn.accountNumber.slice(-4) || conn.accountNumber}</span>
                         </p>
                         <p className="text-[11px] text-gray-400 dark:text-slate-500">
-                          Sinkronisasi terakhir:{' '}
+                          {b.lastSynced}{' '}
                           {conn.lastSyncAt
-                            ? new Date(conn.lastSyncAt).toLocaleTimeString('id-ID', {
+                            ? new Date(conn.lastSyncAt).toLocaleTimeString(locale === 'en' ? 'en-US' : 'id-ID', {
                                 hour: '2-digit',
                                 minute: '2-digit',
                                 day: 'numeric',
                                 month: 'short',
                               })
-                            : 'Belum pernah'}
+                            : (locale === 'en' ? 'Never' : 'Belum pernah')}
                         </p>
                       </div>
                     </div>
@@ -441,17 +439,17 @@ export const BankSyncModal: React.FC = () => {
                             ? 'bg-gray-100 dark:bg-slate-800 text-gray-400 border-gray-300'
                             : 'border-[#4D8DBA]/40 text-[#4D8DBA] dark:text-[#8AD6D1] hover:bg-[#4D8DBA]/10'
                         }`}
-                        title="Tarik mutasi terbaru sekarang"
+                        title={b.syncNow}
                       >
                         <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin text-[#4D8DBA]' : ''}`} />
-                        <span>{isSyncing ? 'Sinkronisasi...' : 'Sinkronkan'}</span>
+                        <span>{isSyncing ? b.syncing : b.syncNow}</span>
                       </button>
 
                       <button
                         type="button"
                         onClick={() => handleDisconnect(conn.id)}
                         className="p-1.5 rounded-xl text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                        title="Putus koneksi akun"
+                        title={b.disconnect}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -465,13 +463,13 @@ export const BankSyncModal: React.FC = () => {
 
         {/* Footer */}
         <div className="p-4 border-t border-gray-200 dark:border-[#4D8DBA]/20 bg-gray-50/50 dark:bg-slate-900/40 flex items-center justify-between text-xs text-gray-500 dark:text-slate-400">
-          <span>Tersedia untuk pengguna paket <strong>Gold</strong> & <strong>B2B</strong>.</span>
+          <span>{locale === 'en' ? <>Available for <strong>Gold</strong> & <strong>B2B</strong> plans.</> : <>Tersedia untuk pengguna paket <strong>Gold</strong> & <strong>B2B</strong>.</>}</span>
           <button
             type="button"
             onClick={closeBankSyncModal}
             className="px-4 py-1.5 rounded-xl bg-gray-200 dark:bg-slate-800 hover:bg-gray-300 dark:hover:bg-slate-700 font-bold text-[#0C2340] dark:text-white transition-all cursor-pointer"
           >
-            Tutup
+            {b.closeBtn}
           </button>
         </div>
       </div>

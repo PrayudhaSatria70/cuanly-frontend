@@ -2,9 +2,17 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { SubscriptionTier, Wallet, DebtItem, WorkspaceMember } from '@/types';
-import { INITIAL_WALLETS, INITIAL_DEBTS, INITIAL_WORKSPACE_MEMBERS } from '@/services/mockData';
+import {
+  INITIAL_WALLETS,
+  INITIAL_DEBTS,
+  INITIAL_WORKSPACE_MEMBERS,
+  ADMIN_INITIAL_WALLETS,
+  ADMIN_INITIAL_DEBTS,
+  ADMIN_INITIAL_WORKSPACE_MEMBERS,
+} from '@/services/mockData';
 import { walletsApi, debtsApi, workspaceApi, pricingApi } from '@/services/api';
 import { useAuth } from './AuthContext';
+import { useLanguage } from './LanguageContext';
 
 interface UpgradeModalData {
   featureName: string;
@@ -21,6 +29,7 @@ interface SubscriptionContextType {
   setTier: (tier: SubscriptionTier) => void;
   hasAccess: (requiredPlan: SubscriptionTier) => boolean;
   upgradePlan: (newPlan: SubscriptionTier) => void;
+  cancelPlan: () => void;
   isUpgradeModalOpen: boolean;
   upgradeModalData: UpgradeModalData | null;
   openUpgradeModal: (
@@ -96,6 +105,7 @@ const SubscriptionContext = createContext<SubscriptionContextType | undefined>(u
 
 export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, role } = useAuth();
+  const { locale } = useLanguage();
   const isAdmin = role === 'ADMIN' || user?.role === 'ADMIN';
 
   const [plan, setPlanState] = useState<SubscriptionTier>('FREE');
@@ -129,7 +139,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [warningThresholdPercent, setWarningThresholdPercentState] = useState<number>(80);
 
   const userId = user?.id;
-  const isDemoUser = userId === 'usr_demo_1';
+  const isDemoUser = userId === 'usr_demo_1' || userId === 'usr_demo_01';
+  const isAdminUser = user?.role === 'ADMIN' || user?.username === 'admin' || userId === 'usr_live_admin' || userId === 'usr_admin_01';
 
   // Synchronize and initialize user-scoped wallets, debts, and workspace
   useEffect(() => {
@@ -138,6 +149,8 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const storedPlan = localStorage.getItem('cuanly_subscription_tier') as SubscriptionTier;
       if (storedPlan && ['FREE', 'SILVER', 'GOLD', 'B2B'].includes(storedPlan)) {
         setPlanState(storedPlan);
+      } else if (isAdminUser) {
+        setPlanState('B2B');
       } else {
         setPlanState('FREE');
       }
@@ -174,6 +187,24 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setWallets(INITIAL_WALLETS);
         setDebts(INITIAL_DEBTS);
         setWorkspaceMembers(INITIAL_WORKSPACE_MEMBERS);
+      }
+      return;
+    }
+
+    if (isAdminUser) {
+      try {
+        const storedWallets = localStorage.getItem(`cuanly_wallets_${userId}`) || localStorage.getItem('cuanly_wallets_admin');
+        setWallets(storedWallets ? JSON.parse(storedWallets) : ADMIN_INITIAL_WALLETS);
+
+        const storedDebts = localStorage.getItem(`cuanly_debts_${userId}`) || localStorage.getItem('cuanly_debts_admin');
+        setDebts(storedDebts ? JSON.parse(storedDebts) : ADMIN_INITIAL_DEBTS);
+
+        const storedMembers = localStorage.getItem(`cuanly_workspace_members_${userId}`) || localStorage.getItem('cuanly_workspace_members_admin');
+        setWorkspaceMembers(storedMembers ? JSON.parse(storedMembers) : ADMIN_INITIAL_WORKSPACE_MEMBERS);
+      } catch {
+        setWallets(ADMIN_INITIAL_WALLETS);
+        setDebts(ADMIN_INITIAL_DEBTS);
+        setWorkspaceMembers(ADMIN_INITIAL_WORKSPACE_MEMBERS);
       }
       return;
     }
@@ -280,6 +311,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     [setPlan]
   );
 
+  const cancelPlan = useCallback(() => {
+    upgradePlan('FREE');
+  }, [upgradePlan]);
+
   // Effective plan: Admin always has full features (B2B equivalent / no restrictions)
   const effectivePlan: SubscriptionTier = isAdmin ? 'B2B' : plan;
 
@@ -315,19 +350,31 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const planHighlights: Record<SubscriptionTier, { name: string; desc: string }> = {
         FREE: {
           name: 'Core Smart Money Tracking & OCR',
-          desc: 'Pencatatan harian arus kas, scan struk otomatis dengan AI OCR, dan laporan grafik bulanan.',
+          desc:
+            locale === 'en'
+              ? 'Daily cash flow tracking, automated receipt scanning with AI OCR, and monthly financial charts.'
+              : 'Pencatatan harian arus kas, scan struk otomatis dengan AI OCR, dan laporan grafik bulanan.',
         },
         SILVER: {
           name: 'Unlimited Multi-Wallets & CSV Export',
-          desc: 'Kelola seluruh pos rekening dan e-wallet tanpa batasan jumlah serta ekspor laporan ke format CSV/Excel.',
+          desc:
+            locale === 'en'
+              ? 'Manage all your bank accounts and e-wallets with zero limits and export financial reports to CSV/Excel format.'
+              : 'Kelola seluruh pos rekening dan e-wallet tanpa batasan jumlah serta ekspor laporan ke format CSV/Excel.',
         },
         GOLD: {
           name: 'Debt & Receivables Manager',
-          desc: 'Track loans and receivables due for settlement with custom budgeting alerts and priority backup.',
+          desc:
+            locale === 'en'
+              ? 'Track loans and receivables due for settlement with custom budgeting alerts and priority backup.'
+              : 'Pantau pinjaman dan piutang jatuh tempo dengan peringatan overspending kustom dan backup prioritas.',
         },
         B2B: {
           name: 'Team Shared Workspace & Collaborative Multi-Wallets',
-          desc: 'Satu database dompet kas bersama yang dapat diakses, dipantau, dan diedit oleh seluruh anggota tim Anda.',
+          desc:
+            locale === 'en'
+              ? 'A single shared team treasury pool that can be accessed, monitored, and updated by all team members.'
+              : 'Satu database dompet kas bersama yang dapat diakses, dipantau, dan diedit oleh seluruh anggota tim Anda.',
         },
       };
 
@@ -338,7 +385,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
       setIsUpgradeModalOpen(true);
     },
-    []
+    [locale]
   );
 
   const closeUpgradeModal = useCallback(() => {
@@ -360,70 +407,104 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const openBankSyncModal = useCallback(() => {
     if (!isAdmin && !hasAccess('GOLD')) {
       openUpgradeModal(
-        'Bank Sync Otomatis',
+        locale === 'en' ? 'Automated Bank Sync' : 'Bank Sync Otomatis',
         'GOLD',
-        'Hubungkan dan sinkronisasikan mutasi rekening bank dan e-wallet secara otomatis (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana).',
-        [
-          'Sinkronisasi otomatis mutasi bank & e-wallet',
-          'Pembaruan saldo kas secara real-time',
-          'Riwayat transaksi otomatis tanpa input manual',
-        ]
+        locale === 'en'
+          ? 'Connect and automatically sync mutations and balances from bank accounts and e-wallets (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana).'
+          : 'Hubungkan dan sinkronisasikan mutasi rekening bank dan e-wallet secara otomatis (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana).',
+        locale === 'en'
+          ? [
+              'Automated sync for bank & e-wallet transactions',
+              'Real-time cash balance updates',
+              'Automated transaction history without manual input',
+            ]
+          : [
+              'Sinkronisasi otomatis mutasi bank & e-wallet',
+              'Pembaruan saldo kas secara real-time',
+              'Riwayat transaksi otomatis tanpa input manual',
+            ]
       );
       return;
     }
     setIsBankSyncModalOpen(true);
-  }, [isAdmin, hasAccess, openUpgradeModal]);
+  }, [isAdmin, hasAccess, openUpgradeModal, locale]);
 
   const openInvestmentModal = useCallback(() => {
     if (!isAdmin && !hasAccess('GOLD')) {
       openUpgradeModal(
-        'Pelacakan Aset & Investasi',
+        locale === 'en' ? 'Asset & Investment Tracking' : 'Pelacakan Aset & Investasi',
         'GOLD',
-        'Monitor portofolio reksadana, saham, emas, crypto, dan properti lengkap dengan kalkulasi net worth dan gain/loss.',
-        [
-          'Pantau nilai bersih (Net Worth) secara real-time',
-          'Pelacakan keuntungan / kerugian (Gain/Loss %)',
-          'Alokasi diversifikasi portofolio investasi terpadu',
-        ]
+        locale === 'en'
+          ? 'Monitor mutual funds, stocks, gold, crypto, and real estate portfolios with real-time net worth and gain/loss calculation.'
+          : 'Monitor portofolio reksadana, saham, emas, crypto, dan properti lengkap dengan kalkulasi net worth dan gain/loss.',
+        locale === 'en'
+          ? [
+              'Track total net worth in real time',
+              'Monitor profit / loss percentage (Gain/Loss %)',
+              'Integrated investment diversification asset allocation',
+            ]
+          : [
+              'Pantau nilai bersih (Net Worth) secara real-time',
+              'Pelacakan keuntungan / kerugian (Gain/Loss %)',
+              'Alokasi diversifikasi portofolio investasi terpadu',
+            ]
       );
       return;
     }
     setIsInvestmentModalOpen(true);
-  }, [isAdmin, hasAccess, openUpgradeModal]);
+  }, [isAdmin, hasAccess, openUpgradeModal, locale]);
 
   const openAiAnalyticsModal = useCallback(() => {
     if (!isAdmin && !hasAccess('GOLD')) {
       openUpgradeModal(
-        'Laporan Analitik AI',
+        locale === 'en' ? 'AI Financial Analytics' : 'Laporan Analitik AI',
         'GOLD',
-        'Dapatkan skor kesehatan finansial, deteksi anomali pengeluaran, proyeksi arus kas 30 hari, dan rekomendasi cerdas dari AI.',
-        [
-          'Skor kesehatan finansial real-time (0-100)',
-          'Deteksi dini anomali dan lonjakan pengeluaran',
-          'Proyeksi ketahanan arus kas & rekomendasi tabungan cerdas',
-        ]
+        locale === 'en'
+          ? 'Receive AI financial health score, anomaly detection, 30-day cashflow runway projections, and smart savings advice.'
+          : 'Dapatkan skor kesehatan finansial, deteksi anomali pengeluaran, proyeksi arus kas 30 hari, dan rekomendasi cerdas dari AI.',
+        locale === 'en'
+          ? [
+              'Real-time financial health score (0-100)',
+              'Early detection of spending spikes and anomalies',
+              'Cashflow runway projections & intelligent savings advice',
+            ]
+          : [
+              'Skor kesehatan finansial real-time (0-100)',
+              'Deteksi dini anomali dan lonjakan pengeluaran',
+              'Proyeksi ketahanan arus kas & rekomendasi tabungan cerdas',
+            ]
       );
       return;
     }
     setIsAiAnalyticsModalOpen(true);
-  }, [isAdmin, hasAccess, openUpgradeModal]);
+  }, [isAdmin, hasAccess, openUpgradeModal, locale]);
 
   const openBusinessModal = useCallback(() => {
     if (!isAdmin && !hasAccess('B2B')) {
       openUpgradeModal(
-        'Manajemen Arus Kas Bisnis & Laporan Pajak Sederhana',
+        locale === 'en'
+          ? 'Business Cashflow & Simplified Tax Management'
+          : 'Manajemen Arus Kas Bisnis & Laporan Pajak Sederhana',
         'B2B',
-        'Kelola arus kas operasional, investasi, dan pendanaan UMKM lengkap dengan kalkulator runway dan estimasi PPh Final 0.5% (PP 23/2018).',
-        [
-          'Manajemen arus kas operasional, investasi & pendanaan bisnis',
-          'Kalkulator ketahanan kas (Business Runway)',
-          'Laporan pajak sederhana PPh Final UMKM 0.5%',
-        ]
+        locale === 'en'
+          ? 'Manage operating, investing, and financing business cashflow with runway resilience calculator and 0.5% MSME final tax estimation.'
+          : 'Kelola arus kas operasional, investasi, dan pendanaan UMKM lengkap dengan kalkulator runway dan estimasi PPh Final 0.5% (PP 23/2018).',
+        locale === 'en'
+          ? [
+              'Operating, investing & financing business cashflow management',
+              'Business cash runway calculator',
+              'Simplified MSME 0.5% final income tax report',
+            ]
+          : [
+              'Manajemen arus kas operasional, investasi & pendanaan bisnis',
+              'Kalkulator ketahanan kas (Business Runway)',
+              'Laporan pajak sederhana PPh Final UMKM 0.5%',
+            ]
       );
       return;
     }
     setIsBusinessModalOpen(true);
-  }, [isAdmin, hasAccess, openUpgradeModal]);
+  }, [isAdmin, hasAccess, openUpgradeModal, locale]);
 
   // Wallets handling
   const addWallet = (wallet: Omit<Wallet, 'id'>) => {
@@ -432,17 +513,29 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       openUpgradeModal(
         'Unlimited Wallets',
         'SILVER',
-        'Paket Basic (Free) dibatasi maksimal 2 Wallets. Upgrade ke Silver Plan untuk membuat dan mengelola dompet tanpa batas (Unlimited Wallets).',
-        [
-          'Bebas buat dompet bank, e-wallet, dan pos tabungan tanpa batas',
-          'Ekspor laporan keuangan ke format CSV/Excel kapan saja',
-          'Akses filter grafik kustom berdasarkan rentang tanggal',
-          'Pengalaman aplikasi bebas iklan',
-        ]
+        locale === 'en'
+          ? 'Basic (Free) plan is limited to 2 Wallets. Upgrade to Silver Plan to manage unlimited wallets and accounts.'
+          : 'Paket Basic (Free) dibatasi maksimal 2 Wallets. Upgrade ke Silver Plan untuk membuat dan mengelola dompet tanpa batas (Unlimited Wallets).',
+        locale === 'en'
+          ? [
+              'Create unlimited bank accounts, e-wallets, and savings pools',
+              'Export financial reports to CSV/Excel anytime',
+              'Access custom chart filters with date ranges',
+              '100% ad-free experience',
+            ]
+          : [
+              'Bebas buat dompet bank, e-wallet, dan pos tabungan tanpa batas',
+              'Ekspor laporan keuangan ke format CSV/Excel kapan saja',
+              'Akses filter grafik kustom berdasarkan rentang tanggal',
+              'Pengalaman aplikasi bebas iklan',
+            ]
       );
       return {
         success: false,
-        error: 'Batas 2 Wallets tercapai. Upgrade ke Silver Plan untuk Unlimited Wallets.',
+        error:
+          locale === 'en'
+            ? 'Limit of 2 Wallets reached. Upgrade to Silver Plan for Unlimited Wallets.'
+            : 'Batas 2 Wallets tercapai. Upgrade ke Silver Plan untuk Unlimited Wallets.',
       };
     }
 
@@ -710,6 +803,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setTier: setPlan,
         hasAccess,
         upgradePlan,
+        cancelPlan,
         isUpgradeModalOpen,
         upgradeModalData,
         openUpgradeModal,

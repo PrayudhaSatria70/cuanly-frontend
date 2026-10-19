@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { CuanlyLogo } from '@/components/common/CuanlyLogo';
+import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
 import { pricingApi } from '@/services/api';
 import { SubscriptionTier } from '@/types';
 import {
@@ -25,6 +27,8 @@ import {
   Wallet,
   Building2,
   HelpCircle,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -33,6 +37,7 @@ export default function CheckoutPage() {
   const { user, isAuthenticated } = useAuth();
   const { upgradePlan } = useSubscription();
   const { t, locale, formatCurrency } = useLanguage();
+  const { isDark, toggleTheme } = useTheme();
 
   // URL Query Params: plan & billing
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('B2B');
@@ -164,38 +169,56 @@ export default function CheckoutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B12] text-slate-100 flex flex-col font-sans selection:bg-[#4D8DBA]/30">
+    <div className="min-h-screen bg-cuanly-canvas dark:bg-[#070B12] text-[#0C2340] dark:text-slate-100 flex flex-col font-sans selection:bg-[#4D8DBA]/30 transition-colors duration-200">
       {/* Background Subtle Ambient Highlights */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute top-0 right-1/4 w-[500px] h-[300px] bg-gradient-to-b from-[#8AD6D1]/10 to-transparent blur-3xl opacity-50" />
-        <div className="absolute bottom-0 left-10 w-96 h-96 bg-[#4D8DBA]/10 rounded-full blur-3xl" />
+        <div className="absolute top-0 right-1/4 w-[500px] h-[300px] bg-gradient-to-b from-[#8AD6D1]/20 to-transparent blur-3xl opacity-40 dark:opacity-50" />
+        <div className="absolute bottom-0 left-10 w-96 h-96 bg-[#4D8DBA]/10 rounded-full blur-3xl opacity-50 dark:opacity-40" />
       </div>
 
       {/* Top Header Bar */}
-      <header className="relative z-10 border-b border-slate-800/80 bg-[#070B12]/80 backdrop-blur-xl sticky top-0">
+      <header className="relative z-10 border-b border-gray-200/80 dark:border-slate-800/80 bg-white/85 dark:bg-[#070B12]/80 backdrop-blur-xl sticky top-0 transition-colors duration-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 sm:gap-4">
             <button
               type="button"
               onClick={() => router.back()}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors cursor-pointer"
+              className="p-2 rounded-xl text-slate-500 hover:text-[#0C2340] dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors cursor-pointer"
               title={locale === 'en' ? 'Back' : 'Kembali'}
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-2.5">
               <CuanlyLogo size="sm" variant="icon" />
-              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-white">
+              <h1 className="text-lg sm:text-xl font-bold tracking-tight text-[#0C2340] dark:text-white">
                 {locale === 'en' ? 'Configure your plan' : 'Konfigurasi Paket Anda'}
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-800/80 text-slate-300 border border-slate-700/60">
-              <Lock className="w-3.5 h-3.5 text-emerald-400" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700/60">
+              <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>{locale === 'en' ? '256-bit Encrypted Checkout' : 'Pembayaran Terenkripsi 256-bit'}</span>
             </span>
+
+            {/* Dark / Light Mode Toggle */}
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={`p-2 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                isDark
+                  ? 'bg-[#0D1926] text-amber-300 border-[#4D8DBA]/40 hover:bg-[#112233]'
+                  : 'bg-white text-slate-700 border-gray-200 hover:bg-slate-100 shadow-2xs'
+              }`}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
+            {/* Language Switcher */}
+            <LanguageSwitcher />
           </div>
         </div>
       </header>
@@ -212,39 +235,39 @@ export default function CheckoutPage() {
             {/* Section 1: Plan Details */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold tracking-wide uppercase text-slate-400">
+                <h2 className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
                   {locale === 'en' ? 'Plan details' : 'Detail Paket'}
                 </h2>
-                <div className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
                   <span>{locale === 'en' ? 'Selected tier:' : 'Tier terpilih:'}</span>
-                  <span className="font-extrabold text-[#8AD6D1]">{selectedTier}</span>
+                  <span className="font-extrabold text-[#2E678E] dark:text-[#8AD6D1]">{selectedTier}</span>
                 </div>
               </div>
 
               {/* Billing Cycle Pill Toggles (Annual billing with SAVE 19% badge vs Monthly) */}
-              <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-[#0F1624] border border-slate-800">
+              <div className="grid grid-cols-2 gap-3 p-1.5 rounded-2xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => setBillingCycle('annual')}
                   className={`relative p-3.5 rounded-xl text-left transition-all cursor-pointer flex items-center justify-between ${
                     billingCycle === 'annual'
-                      ? 'bg-[#182338] text-white shadow-lg border border-slate-700'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-[#EDF5FA] dark:bg-[#182338] text-[#0C2340] dark:text-white shadow-xs border border-[#4D8DBA]/30 dark:border-slate-700'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
                     <div
                       className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                        billingCycle === 'annual' ? 'border-[#8AD6D1]' : 'border-slate-600'
+                        billingCycle === 'annual' ? 'border-[#4D8DBA] dark:border-[#8AD6D1]' : 'border-slate-300 dark:border-slate-600'
                       }`}
                     >
-                      {billingCycle === 'annual' && <div className="w-2 h-2 rounded-full bg-[#8AD6D1]" />}
+                      {billingCycle === 'annual' && <div className="w-2 h-2 rounded-full bg-[#4D8DBA] dark:bg-[#8AD6D1]" />}
                     </div>
                     <span className="text-xs sm:text-sm font-bold">
                       {locale === 'en' ? 'Annual billing' : 'Tagihan Tahunan'}
                     </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-[#8AD6D1]/20 text-[#8AD6D1] border border-[#8AD6D1]/30">
+                  <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:bg-[#8AD6D1]/20 dark:text-[#8AD6D1] border border-emerald-500/30 dark:border-[#8AD6D1]/30">
                     {locale === 'en' ? 'SAVE 19%' : 'HEMAT 20%'}
                   </span>
                 </button>
@@ -254,16 +277,16 @@ export default function CheckoutPage() {
                   onClick={() => setBillingCycle('monthly')}
                   className={`relative p-3.5 rounded-xl text-left transition-all cursor-pointer flex items-center gap-2.5 ${
                     billingCycle === 'monthly'
-                      ? 'bg-[#182338] text-white shadow-lg border border-slate-700'
-                      : 'text-slate-400 hover:text-slate-200'
+                      ? 'bg-[#EDF5FA] dark:bg-[#182338] text-[#0C2340] dark:text-white shadow-xs border border-[#4D8DBA]/30 dark:border-slate-700'
+                      : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200'
                   }`}
                 >
                   <div
                     className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                      billingCycle === 'monthly' ? 'border-[#8AD6D1]' : 'border-slate-600'
+                      billingCycle === 'monthly' ? 'border-[#4D8DBA] dark:border-[#8AD6D1]' : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
-                    {billingCycle === 'monthly' && <div className="w-2 h-2 rounded-full bg-[#8AD6D1]" />}
+                    {billingCycle === 'monthly' && <div className="w-2 h-2 rounded-full bg-[#4D8DBA] dark:bg-[#8AD6D1]" />}
                   </div>
                   <span className="text-xs sm:text-sm font-bold">
                     {locale === 'en' ? 'Monthly billing' : 'Tagihan Bulanan'}
@@ -272,41 +295,41 @@ export default function CheckoutPage() {
               </div>
 
               {/* Seat Customization / Tier details Container */}
-              <div className="p-5 sm:p-6 rounded-2xl bg-[#0F1624] border border-slate-800/90 space-y-5">
+              <div className="p-5 sm:p-6 rounded-2xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800/90 shadow-2xs space-y-5">
                 {selectedTier === 'B2B' ? (
                   <>
                     {/* Item 1: Standard Seats */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-bold text-sm text-white">
+                          <div className="font-bold text-sm text-[#0C2340] dark:text-white">
                             {locale === 'en' ? 'Standard seats' : 'Standard seats'}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             {locale === 'en' ? 'Best for most employees' : 'Terbaik untuk sebagian besar anggota tim'}
                           </div>
                         </div>
-                        <div className="font-semibold text-xs sm:text-sm text-slate-200">
+                        <div className="font-semibold text-xs sm:text-sm text-slate-700 dark:text-slate-200">
                           IDR 337,000/month
                         </div>
                       </div>
 
                       {/* Interactive Seat Counter */}
-                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#070B12] border border-slate-800">
-                        <span className="text-xs font-mono font-bold pl-2 text-white">{standardSeats}</span>
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F4F8FA] dark:bg-[#070B12] border border-gray-200 dark:border-slate-800">
+                        <span className="text-xs font-mono font-bold pl-2 text-[#0C2340] dark:text-white">{standardSeats}</span>
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
                             disabled={standardSeats <= 1}
                             onClick={() => setStandardSeats((prev) => Math.max(1, prev - 1))}
-                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-gray-200 dark:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setStandardSeats((prev) => prev + 1)}
-                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-gray-200 dark:border-transparent flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -314,42 +337,42 @@ export default function CheckoutPage() {
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-800/80" />
+                    <div className="border-t border-gray-100 dark:border-slate-800/80" />
 
                     {/* Item 2: Premium Seats */}
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <div>
-                          <div className="font-bold text-sm text-white">
+                          <div className="font-bold text-sm text-[#0C2340] dark:text-white">
                             {locale === 'en' ? 'Premium seats' : 'Premium seats'}
                           </div>
-                          <div className="text-xs text-slate-400">
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
                             {locale === 'en'
                               ? '5x more usage than standard, priority team sync'
                               : '5x kapasitas pemakaian lebih besar dari standar'}
                           </div>
                         </div>
-                        <div className="font-semibold text-xs sm:text-sm text-slate-200">
+                        <div className="font-semibold text-xs sm:text-sm text-slate-700 dark:text-slate-200">
                           IDR 1,685,000/month
                         </div>
                       </div>
 
                       {/* Interactive Seat Counter */}
-                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#070B12] border border-slate-800">
-                        <span className="text-xs font-mono font-bold pl-2 text-white">{premiumSeats}</span>
+                      <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F4F8FA] dark:bg-[#070B12] border border-gray-200 dark:border-slate-800">
+                        <span className="text-xs font-mono font-bold pl-2 text-[#0C2340] dark:text-white">{premiumSeats}</span>
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
                             disabled={premiumSeats <= 0}
                             onClick={() => setPremiumSeats((prev) => Math.max(0, prev - 1))}
-                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-gray-200 dark:border-transparent disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                           >
                             <Minus className="w-3.5 h-3.5" />
                           </button>
                           <button
                             type="button"
                             onClick={() => setPremiumSeats((prev) => prev + 1)}
-                            className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center transition-colors cursor-pointer"
+                            className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-gray-200 dark:border-transparent flex items-center justify-center transition-colors cursor-pointer shadow-2xs"
                           >
                             <Plus className="w-3.5 h-3.5" />
                           </button>
@@ -362,23 +385,23 @@ export default function CheckoutPage() {
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="font-bold text-sm text-white">
+                        <div className="font-bold text-sm text-[#0C2340] dark:text-white">
                           {currentConfig.title}
                         </div>
-                        <div className="text-xs text-slate-400">
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           {selectedTier === 'GOLD'
                             ? (locale === 'en' ? 'Complete debt tracking & custom thresholds' : 'Manajemen utang piutang & custom budget')
                             : (locale === 'en' ? 'Unlimited wallets & CSV exports' : 'Dompet tanpa batas & ekspor laporan')}
                         </div>
                       </div>
-                      <div className="font-extrabold text-sm text-[#8AD6D1]">
+                      <div className="font-extrabold text-sm text-[#2E678E] dark:text-[#8AD6D1]">
                         {billingCycle === 'annual'
                           ? formatCurrency((currentConfig as any).annualRate) + '/yr'
                           : formatCurrency((currentConfig as any).monthlyRate) + '/mo'}
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-[#070B12] border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                    <div className="p-3.5 rounded-xl bg-[#F4F8FA] dark:bg-[#070B12] border border-gray-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                       {locale === 'en'
                         ? 'Includes full personal account synchronization across all mobile & web platforms with instant cloud updates.'
                         : 'Termasuk sinkronisasi cloud real-time tanpa batas di semua perangkat web & mobile Cuanly.'}
@@ -392,16 +415,16 @@ export default function CheckoutPage() {
                 <button
                   type="button"
                   onClick={() => setShowAdditionalSettings(!showAdditionalSettings)}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-[#0C2340] dark:text-slate-400 dark:hover:text-slate-200 transition-colors cursor-pointer"
                 >
                   <span>{locale === 'en' ? 'Additional settings' : 'Pengaturan Tambahan'}</span>
                   {showAdditionalSettings ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                 </button>
 
                 {showAdditionalSettings && (
-                  <div className="mt-3 p-4 rounded-2xl bg-[#0F1624] border border-slate-800 space-y-3 animate-in fade-in duration-150">
+                  <div className="mt-3 p-4 rounded-2xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800 shadow-2xs space-y-3 animate-in fade-in duration-150">
                     <div>
-                      <label className="text-[11px] font-bold text-slate-400 block mb-1">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
                         {locale === 'en' ? 'Tax ID / NPWP (Optional)' : 'NPWP / Nomor Pokok Wajib Pajak (Opsional)'}
                       </label>
                       <input
@@ -409,11 +432,11 @@ export default function CheckoutPage() {
                         value={taxId}
                         onChange={(e) => setTaxId(e.target.value)}
                         placeholder="00.000.000.0-000.000"
-                        className="w-full px-3 py-2 rounded-xl bg-[#070B12] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#4D8DBA]"
+                        className="w-full px-3 py-2 rounded-xl bg-[#F4F8FA] dark:bg-[#070B12] border border-gray-200 dark:border-slate-800 text-xs text-[#0C2340] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#4D8DBA]"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] font-bold text-slate-400 block mb-1">
+                      <label className="text-[11px] font-bold text-slate-600 dark:text-slate-400 block mb-1">
                         {locale === 'en' ? 'Company / Business Name' : 'Nama Perusahaan / Bisnis'}
                       </label>
                       <input
@@ -421,7 +444,7 @@ export default function CheckoutPage() {
                         value={companyName}
                         onChange={(e) => setCompanyName(e.target.value)}
                         placeholder="PT Cuanly Inovasi Finansial"
-                        className="w-full px-3 py-2 rounded-xl bg-[#070B12] border border-slate-800 text-xs text-white focus:outline-none focus:border-[#4D8DBA]"
+                        className="w-full px-3 py-2 rounded-xl bg-[#F4F8FA] dark:bg-[#070B12] border border-gray-200 dark:border-slate-800 text-xs text-[#0C2340] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#4D8DBA]"
                       />
                     </div>
                   </div>
@@ -431,7 +454,7 @@ export default function CheckoutPage() {
 
             {/* Section 2: Pay with (Payment Methods & Card Form) */}
             <div className="space-y-4 pt-2">
-              <h2 className="text-sm font-semibold tracking-wide uppercase text-slate-400">
+              <h2 className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-slate-500 dark:text-slate-400">
                 {locale === 'en' ? 'Pay with' : 'Metode Pembayaran'}
               </h2>
 
@@ -440,18 +463,18 @@ export default function CheckoutPage() {
                 type="button"
                 onClick={handleSubscribe}
                 disabled={isProcessing}
-                className="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-slate-100 text-black font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.99] cursor-pointer"
+                className="w-full py-3.5 px-4 rounded-2xl bg-black hover:bg-gray-900 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-black font-extrabold text-sm flex items-center justify-center gap-2 transition-all shadow-md active:scale-[0.99] cursor-pointer"
               >
                 <span className="text-base tracking-tight font-black">Pay</span>
-                <span className="text-xs font-semibold text-slate-700">| Instant Checkout</span>
+                <span className="text-xs font-semibold text-slate-300 dark:text-slate-700">| Instant Checkout</span>
               </button>
 
               {/* OR Divider */}
               <div className="relative flex items-center justify-center my-3">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-800" />
+                  <div className="w-full border-t border-gray-200 dark:border-slate-800" />
                 </div>
-                <span className="relative px-3 bg-[#070B12] text-[11px] font-bold text-slate-500 uppercase">
+                <span className="relative px-3 bg-cuanly-canvas dark:bg-[#070B12] text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase transition-colors">
                   {locale === 'en' ? 'OR' : 'ATAU'}
                 </span>
               </div>
@@ -460,7 +483,7 @@ export default function CheckoutPage() {
               <form onSubmit={handleSubscribe} className="space-y-3">
                 {/* Card Number Input with Brand Logos */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 block">
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block">
                     {locale === 'en' ? 'Card number' : 'Nomor Kartu Kredit / Debit'}
                   </label>
                   <div className="relative">
@@ -470,7 +493,7 @@ export default function CheckoutPage() {
                       onChange={(e) => setCardNumber(e.target.value)}
                       placeholder="1234 5678 9012 3456"
                       required
-                      className="w-full pl-3.5 pr-32 py-3 rounded-xl bg-[#0F1624] border border-slate-800 text-xs sm:text-sm font-mono tracking-wider text-white focus:outline-none focus:border-[#8AD6D1] transition-colors"
+                      className="w-full pl-3.5 pr-32 py-3 rounded-xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800 text-xs sm:text-sm font-mono tracking-wider text-[#0C2340] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#4D8DBA] dark:focus:border-[#8AD6D1] shadow-2xs transition-colors"
                     />
                     {/* Card Brand Badges (Visa, Mastercard, JCB, Amex) */}
                     <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 pointer-events-none">
@@ -485,7 +508,7 @@ export default function CheckoutPage() {
                 {/* Expiration date & Security code */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 block">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block">
                       {locale === 'en' ? 'Expiration date' : 'Masa Berlaku'}
                     </label>
                     <input
@@ -494,12 +517,12 @@ export default function CheckoutPage() {
                       onChange={(e) => setExpDate(e.target.value)}
                       placeholder="MM/YY"
                       required
-                      className="w-full px-3.5 py-3 rounded-xl bg-[#0F1624] border border-slate-800 text-xs sm:text-sm font-mono text-white focus:outline-none focus:border-[#8AD6D1] transition-colors"
+                      className="w-full px-3.5 py-3 rounded-xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800 text-xs sm:text-sm font-mono text-[#0C2340] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#4D8DBA] dark:focus:border-[#8AD6D1] shadow-2xs transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-bold text-slate-400 block">
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block">
                       {locale === 'en' ? 'Security code' : 'Kode Keamanan (CVC)'}
                     </label>
                     <div className="relative">
@@ -510,16 +533,16 @@ export default function CheckoutPage() {
                         onChange={(e) => setCvc(e.target.value)}
                         placeholder="CVC"
                         required
-                        className="w-full pl-3.5 pr-9 py-3 rounded-xl bg-[#0F1624] border border-slate-800 text-xs sm:text-sm font-mono text-white focus:outline-none focus:border-[#8AD6D1] transition-colors"
+                        className="w-full pl-3.5 pr-9 py-3 rounded-xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800 text-xs sm:text-sm font-mono text-[#0C2340] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#4D8DBA] dark:focus:border-[#8AD6D1] shadow-2xs transition-colors"
                       />
-                      <CreditCard className="w-4 h-4 text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <CreditCard className="w-4 h-4 text-slate-400 dark:text-slate-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                     </div>
                   </div>
                 </div>
 
                 {/* Cardholder Name */}
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 block">
+                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 block">
                     {locale === 'en' ? 'Cardholder name' : 'Nama Pemilik Kartu'}
                   </label>
                   <input
@@ -528,18 +551,18 @@ export default function CheckoutPage() {
                     onChange={(e) => setCardHolder(e.target.value)}
                     placeholder="Nama sesuai kartu"
                     required
-                    className="w-full px-3.5 py-3 rounded-xl bg-[#0F1624] border border-slate-800 text-xs sm:text-sm text-white focus:outline-none focus:border-[#8AD6D1] transition-colors"
+                    className="w-full px-3.5 py-3 rounded-xl bg-white dark:bg-[#0F1624] border border-gray-200 dark:border-slate-800 text-xs sm:text-sm text-[#0C2340] dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:border-[#4D8DBA] dark:focus:border-[#8AD6D1] shadow-2xs transition-colors"
                   />
                 </div>
 
                 {/* Save Details Checkbox */}
                 <div className="pt-2">
-                  <label className="flex items-start gap-2.5 text-xs text-slate-400 cursor-pointer select-none">
+                  <label className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-400 cursor-pointer select-none">
                     <input
                       type="checkbox"
                       checked={savePaymentDetails}
                       onChange={(e) => setSavePaymentDetails(e.target.checked)}
-                      className="mt-0.5 rounded border-slate-700 text-[#4D8DBA] focus:ring-0 focus:outline-none"
+                      className="mt-0.5 rounded border-gray-300 dark:border-slate-700 text-[#4D8DBA] focus:ring-0 focus:outline-none"
                     />
                     <span>
                       {locale === 'en'
@@ -556,28 +579,28 @@ export default function CheckoutPage() {
           {/* RIGHT COLUMN: Order Summary Card (Matching user screenshot)              */}
           {/* ========================================================================= */}
           <div className="lg:col-span-5 sticky top-24">
-            <div className="p-6 sm:p-7 rounded-3xl bg-[#121926] border border-slate-800/90 shadow-2xl space-y-6">
+            <div className="p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#121926] border border-gray-200 dark:border-slate-800/90 shadow-xl dark:shadow-2xl space-y-6 transition-colors duration-200">
               
               {/* Plan Title & Features */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl sm:text-2xl font-black text-white">
+                  <h3 className="text-xl sm:text-2xl font-black text-[#0C2340] dark:text-white">
                     {currentConfig.title}
                   </h3>
-                  <span className="px-2.5 py-1 rounded-full text-xs font-black uppercase bg-[#8AD6D1]/20 text-[#8AD6D1] border border-[#8AD6D1]/30">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-black uppercase bg-[#4D8DBA]/10 text-[#2E678E] border border-[#4D8DBA]/25 dark:bg-[#8AD6D1]/20 dark:text-[#8AD6D1] dark:border-[#8AD6D1]/30">
                     {selectedTier}
                   </span>
                 </div>
 
                 {/* Top Features */}
                 <div className="space-y-3 pt-1">
-                  <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                     {locale === 'en' ? 'Top features' : 'Fitur Utama'}
                   </div>
                   <ul className="space-y-2.5">
                     {currentConfig.topFeatures.map((feat: string, idx: number) => (
-                      <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <li key={idx} className="flex items-start gap-2.5 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400 flex-shrink-0 mt-0.5" />
                         <span>{feat}</span>
                       </li>
                     ))}
@@ -585,13 +608,13 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-800" />
+              <div className="border-t border-gray-200 dark:border-slate-800" />
 
               {/* Calculation Breakdown */}
               <div className="space-y-3 text-xs">
                 {selectedTier === 'B2B' ? (
                   <>
-                    <div className="flex items-center justify-between text-slate-300">
+                    <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
                       <span>{standardSeats} standard seats ({billingCycle})</span>
                       <span className="font-mono">
                         {formatCurrency(
@@ -603,7 +626,7 @@ export default function CheckoutPage() {
                     </div>
 
                     {premiumSeats > 0 && (
-                      <div className="flex items-center justify-between text-slate-300">
+                      <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
                         <span>{premiumSeats} premium seats ({billingCycle})</span>
                         <span className="font-mono">
                           {formatCurrency(
@@ -616,25 +639,25 @@ export default function CheckoutPage() {
                     )}
                   </>
                 ) : (
-                  <div className="flex items-center justify-between text-slate-300">
+                  <div className="flex items-center justify-between text-slate-700 dark:text-slate-300">
                     <span>1 license ({billingCycle})</span>
                     <span className="font-mono">{formatCurrency(subtotal)}</span>
                   </div>
                 )}
 
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                   <span>{locale === 'en' ? 'Subtotal' : 'Subtotal'}</span>
                   <span className="font-mono">{formatCurrency(subtotal)}</span>
                 </div>
 
-                <div className="flex items-center justify-between text-slate-400">
+                <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
                   <span>{locale === 'en' ? 'Estimated tax' : 'Estimasi Pajak (PPN)'}</span>
                   <span className="font-mono">IDR 0.00</span>
                 </div>
 
-                <div className="border-t border-slate-800 pt-2 flex items-center justify-between text-base">
-                  <span className="font-bold text-white">{locale === 'en' ? 'Due today' : 'Total Tagihan'}</span>
-                  <span className="font-black text-lg text-[#8AD6D1] font-mono">
+                <div className="border-t border-gray-200 dark:border-slate-800 pt-2 flex items-center justify-between text-base">
+                  <span className="font-bold text-[#0C2340] dark:text-white">{locale === 'en' ? 'Due today' : 'Total Tagihan'}</span>
+                  <span className="font-black text-lg text-[#2E678E] dark:text-[#8AD6D1] font-mono">
                     {formatCurrency(dueToday)}
                   </span>
                 </div>
@@ -645,16 +668,16 @@ export default function CheckoutPage() {
                 type="button"
                 onClick={handleSubscribe}
                 disabled={isProcessing || paymentSuccess}
-                className="w-full py-4 rounded-2xl bg-white hover:bg-slate-100 text-slate-950 font-black text-sm tracking-wide transition-all shadow-xl hover:shadow-2xl active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-[#0C2340] hover:bg-[#183659] text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-950 font-black text-sm tracking-wide transition-all shadow-lg hover:shadow-xl active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
               >
                 {isProcessing ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     <span>{locale === 'en' ? 'Processing Payment...' : 'Memproses Pembayaran...'}</span>
                   </>
                 ) : paymentSuccess ? (
                   <>
-                    <Check className="w-5 h-5 text-emerald-600" />
+                    <Check className="w-5 h-5 text-emerald-400 dark:text-emerald-600" />
                     <span>{locale === 'en' ? 'Subscribed Successfully!' : 'Berlangganan Berhasil!'}</span>
                   </>
                 ) : (
@@ -663,7 +686,7 @@ export default function CheckoutPage() {
               </button>
 
               {/* Renewal and Terms Disclaimer (Matching user screenshot) */}
-              <p className="text-[11px] text-slate-400 leading-relaxed text-justify">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed text-justify">
                 {locale === 'en' ? (
                   <>
                     Renews {billingCycle} until cancelled. You'll be charged {formatCurrency(dueToday)} based on active seats. Cancel anytime in Settings. By subscribing, you agree to the Business Terms and authorize us to store and charge your payment method.
@@ -680,9 +703,10 @@ export default function CheckoutPage() {
       </main>
 
       {/* Footer Guarantee */}
-      <footer className="relative z-10 border-t border-slate-800/80 py-6 text-center text-xs text-slate-500">
+      <footer className="relative z-10 border-t border-gray-200/80 dark:border-slate-800/80 py-6 text-center text-xs text-slate-400 dark:text-slate-500 transition-colors">
         <p>© {new Date().getFullYear()} Cuanly Technologies. All transactions encrypted & PCI-DSS compliant.</p>
       </footer>
     </div>
   );
 }
+

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Crown } from 'lucide-react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface PremiumCrownBadgeProps {
   plan?: 'SILVER' | 'GOLD' | 'B2B';
@@ -18,6 +19,7 @@ export const PremiumCrownBadge: React.FC<PremiumCrownBadgeProps> = ({
   className = '',
 }) => {
   const { isAdmin } = useSubscription();
+  const { t } = useLanguage();
 
   // Admin and demo admin are strictly exempt from pricing plans and have 100% full feature access.
   // Lock / crown badges are only for user and user demo.
@@ -33,12 +35,14 @@ export const PremiumCrownBadge: React.FC<PremiumCrownBadgeProps> = ({
       : 'from-[#4D8DBA] to-[#8AD6D1] text-white';
 
   const iconSize = size === 'sm' ? 'w-3 h-3' : size === 'md' ? 'w-3.5 h-3.5' : 'w-4 h-4';
+  const simpleTooltip = t.crownBadge.tooltipSimple.replace('{plan}', plan);
+  const detailedTooltip = t.crownBadge.tooltip.replace('{plan}', plan);
 
   if (variant === 'pill') {
     return (
       <span
         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-gradient-to-r ${planColor} shadow-xs border border-white/30 backdrop-blur-xs select-none ${className}`}
-        title={`Fitur Premium (${plan} Plan)`}
+        title={simpleTooltip}
       >
         <Crown className={`${iconSize} fill-current drop-shadow-2xs`} />
         <span>{plan}</span>
@@ -50,7 +54,7 @@ export const PremiumCrownBadge: React.FC<PremiumCrownBadgeProps> = ({
     return (
       <span
         className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-extrabold uppercase bg-amber-400/20 text-amber-700 dark:text-amber-300 border border-amber-400/50 shadow-2xs ${className}`}
-        title={`Fitur Premium (${plan} Plan)`}
+        title={simpleTooltip}
       >
         <Crown className={`${iconSize} fill-amber-400 text-amber-500`} />
         <span>PRO</span>
@@ -62,7 +66,7 @@ export const PremiumCrownBadge: React.FC<PremiumCrownBadgeProps> = ({
   return (
     <span
       className={`inline-flex items-center justify-center p-0.5 rounded-md bg-gradient-to-br from-amber-300 via-amber-400 to-amber-500 text-amber-950 shadow-xs ring-1 ring-amber-400/60 flex-shrink-0 animate-pulse duration-1000 ${className}`}
-      title={`Fitur Berlangganan: ${plan} Plan (Klik untuk Upgrade)`}
+      title={detailedTooltip}
     >
       <Crown className={`${iconSize} fill-amber-900 text-amber-950`} />
     </span>

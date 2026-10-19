@@ -359,7 +359,7 @@ export default function ScanReceiptPage() {
                     {formatCurrency(sample.totalAmount)}
                   </div>
                   <span className="text-[10px] text-gray-400 dark:text-slate-500 mt-1">
-                    Klik untuk uji OCR &rarr;
+                    {locale === 'en' ? 'Click to test OCR →' : 'Klik untuk uji OCR →'}
                   </span>
                 </button>
               ))}
@@ -379,7 +379,9 @@ export default function ScanReceiptPage() {
               {t.receipt.processing}
             </h3>
             <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
-              Mengekstrak nama toko, tanggal, item barang, dan total transaksi...
+              {locale === 'en'
+                ? 'Extracting merchant name, date, line items, and transaction total...'
+                : 'Mengekstrak nama toko, tanggal, item barang, dan total transaksi...'}
             </p>
           </div>
           <div className="w-48 h-1.5 bg-gray-200 dark:bg-gray-800 rounded-full mx-auto overflow-hidden">
@@ -400,7 +402,8 @@ export default function ScanReceiptPage() {
                     {t.receipt.resultTitle}
                   </h3>
                   <p className="text-[11px] text-gray-500 dark:text-slate-400">
-                    Akurasi OCR: <span className="font-bold text-emerald-600 dark:text-emerald-400">{scannedData.confidenceScore}%</span>
+                    {locale === 'en' ? 'OCR Confidence: ' : 'Akurasi OCR: '}
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400">{scannedData.confidenceScore}%</span>
                   </p>
                 </div>
               </div>
@@ -410,7 +413,7 @@ export default function ScanReceiptPage() {
                 onClick={() => setScannedData(null)}
                 className="text-xs text-gray-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 font-medium cursor-pointer"
               >
-                Scan Ulang
+                {locale === 'en' ? 'Rescan Receipt' : 'Scan Ulang'}
               </button>
             </div>
 
@@ -420,7 +423,7 @@ export default function ScanReceiptPage() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={scannedData.receiptImageUrl}
-                  alt="Struk"
+                  alt={locale === 'en' ? 'Receipt' : 'Struk'}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -444,7 +447,7 @@ export default function ScanReceiptPage() {
                 <div>
                   <label className="text-[11px] font-semibold text-gray-500 dark:text-slate-400 flex items-center gap-1 mb-1">
                     <FileText className="w-3.5 h-3.5 text-[#4D8DBA]" />
-                    Total Nominal (Rp)
+                    {locale === 'en' ? 'Total Amount (Rp)' : 'Total Nominal (Rp)'}
                   </label>
                   <input
                     type="number"
