@@ -21,7 +21,8 @@ export const EditAllowanceModal: React.FC<EditAllowanceModalProps> = ({ isOpen, 
 
   useEffect(() => {
     if (isOpen) {
-      setAmountStr((monthlyAllowance || summary.totalBudgetLimit || 6700000).toString());
+      const val = monthlyAllowance > 0 ? monthlyAllowance : (summary.totalBudgetLimit > 0 ? summary.totalBudgetLimit : '');
+      setAmountStr(val.toString());
       setErrorMsg('');
     }
   }, [isOpen, monthlyAllowance, summary.totalBudgetLimit]);

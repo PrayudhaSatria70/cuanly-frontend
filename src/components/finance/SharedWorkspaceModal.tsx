@@ -25,6 +25,7 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
   const { workspaceMembers, addWorkspaceMember, wallets } = useSubscription();
   const { formatCurrency, locale, t } = useLanguage();
 
+  const [activeTab, setActiveTab] = useState<'members' | 'admin'>('members');
   const [newMemberName, setNewMemberName] = useState('');
   const [newMemberEmail, setNewMemberEmail] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -49,6 +50,13 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
       setTimeout(() => setFeedback(null), 3000);
     }
   };
+
+  const auditLogs = [
+    { id: 'log_1', user: 'Owner Tim', action: 'Memperbarui alokasi saldo Shared Wallet Pool', time: '10 menit yang lalu' },
+    { id: 'log_2', user: 'Finance Manager', action: 'Mencatat pengeluaran operasional Rp850.000', time: '2 jam yang lalu' },
+    { id: 'log_3', user: 'Staff Kasir', action: 'Menambahkan mutasi kas masuk penjualan Rp3.200.000', time: '5 jam yang lalu' },
+    { id: 'log_4', user: 'Sistem Cuanly', action: 'Rekonsiliasi otomatis dompet bersama berhasil', time: '1 hari yang lalu' },
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
@@ -84,6 +92,34 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
           </button>
         </div>
 
+        {/* Tab Navigation */}
+        <div className="flex border-b border-gray-100 dark:border-gray-800 px-5 pt-3 bg-gray-50/50 dark:bg-slate-900/40">
+          <button
+            type="button"
+            onClick={() => setActiveTab('members')}
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'members'
+                ? 'border-purple-600 text-purple-700 dark:text-purple-300'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Shared Pool & Anggota</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('admin')}
+            className={`pb-2.5 px-3 text-xs font-bold border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === 'admin'
+                ? 'border-purple-600 text-purple-700 dark:text-purple-300'
+                : 'border-transparent text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Dasbor Admin Tim & Audit</span>
+          </button>
+        </div>
+
         {/* Content */}
         <div className="p-5 sm:p-6 space-y-5 max-h-[60vh] overflow-y-auto">
           {feedback && (
@@ -91,6 +127,54 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
               {feedback}
             </div>
           )}
+
+          {activeTab === 'admin' ? (
+            <div className="space-y-4">
+              {/* Role Permissions Matrix */}
+              <div className="p-4 rounded-2xl bg-purple-50/50 dark:bg-slate-900/60 border border-purple-200/60 dark:border-purple-900/40 space-y-2">
+                <span className="text-xs font-bold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
+                  <Shield className="w-4 h-4 text-purple-600" />
+                  <span>Matriks Izin & Hak Akses Tim B2B</span>
+                </span>
+                <div className="text-[11px] text-gray-600 dark:text-slate-300 space-y-1.5">
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-bold text-amber-700 dark:text-amber-400">OWNER (Pemilik):</span>
+                    <span>Akses penuh, transfer saldo pool, kelola langganan B2B & hapus anggota</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1 border-b border-gray-100 dark:border-slate-800">
+                    <span className="font-bold text-purple-700 dark:text-purple-400">ADMIN (Manajer):</span>
+                    <span>Kelola dompet bersama, undang anggota baru, verifikasi pengeluaran tim</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1">
+                    <span className="font-bold text-gray-700 dark:text-slate-300">MEMBER (Staff):</span>
+                    <span>Pencatatan mutasi kas harian, unggah struk belanja operasional (Read & Add only)</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Team Audit Activity Log */}
+              <div className="space-y-2">
+                <span className="text-xs font-bold text-gray-600 dark:text-slate-300">
+                  Log Aktivitas Tim (Audit Trail)
+                </span>
+                <div className="space-y-2">
+                  {auditLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="p-3 rounded-xl border border-gray-100 dark:border-slate-800 bg-gray-50/60 dark:bg-slate-900/40 flex items-center justify-between text-xs"
+                    >
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-[#0C2340] dark:text-white">{log.user}</span>
+                        <p className="text-gray-500 dark:text-slate-400">{log.action}</p>
+                      </div>
+                      <span className="text-[10px] text-gray-400 font-mono">{log.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
 
           {/* Shared Wallet Summary */}
           <div className="p-4 rounded-2xl bg-gradient-to-r from-purple-900 to-[#1C4A6B] text-white space-y-1.5 shadow-md">
@@ -200,6 +284,8 @@ export const SharedWorkspaceModal: React.FC<SharedWorkspaceModalProps> = ({ isOp
                 <span>{t.modals.workspace.sendInviteBtn}</span>
               </button>
             </form>
+          )}
+          </>
           )}
         </div>
 

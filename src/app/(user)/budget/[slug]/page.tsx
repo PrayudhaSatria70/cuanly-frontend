@@ -30,8 +30,22 @@ export default function CategoryBudgetDetailPage() {
     : '';
   const info = currentCat ? getCategoryBudgetInfo(currentCat.id) : null;
 
-  const [newLimit, setNewLimit] = useState(info?.limit || 1000000);
+  const [newLimit, setNewLimit] = useState(info?.limit || 0);
   const [isSaved, setIsSaved] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
+
+  React.useEffect(() => {
+    if (info && info.limit !== undefined) {
+      setNewLimit(info.limit);
+    }
+  }, [info?.limit]);
 
   if (!currentCat || !info) {
     return (
@@ -131,10 +145,10 @@ export default function CategoryBudgetDetailPage() {
         {/* Progress Bar */}
         <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 ${
+            className={`h-full rounded-full transition-all duration-700 ease-out ${
               isOver ? 'bg-rose-500' : isWarning ? 'bg-amber-400' : 'bg-emerald-500'
             }`}
-            style={{ width: `${Math.min(100, info.percent)}%` }}
+            style={{ width: `${isMounted ? Math.min(100, info.percent) : 0}%` }}
           />
         </div>
 

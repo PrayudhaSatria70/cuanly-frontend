@@ -150,3 +150,106 @@ body {
 .num-tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* ========================================================
+   Content Card Interactive Animations (Hover, Lift, Glow)
+   ======================================================== */
+.cuanly-card-interactive {
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, box-shadow;
+}
+
+.cuanly-card-interactive:hover {
+  transform: translateY(-4px) scale(1.008);
+  box-shadow: 0 16px 36px -6px rgba(77, 141, 186, 0.22), 0 6px 16px -4px rgba(77, 141, 186, 0.12);
+  border-color: rgba(77, 141, 186, 0.55);
+}
+
+.dark .cuanly-card-interactive:hover {
+  transform: translateY(-4px) scale(1.008);
+  box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.65), 0 0 25px 2px rgba(77, 141, 186, 0.28);
+  border-color: rgba(138, 214, 209, 0.45);
+}
+
+/* ========================================================
+   Chart & Graph Entrance / Transition Keyframe Animations
+   ======================================================== */
+@keyframes chartEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes donutSpinSweep {
+  0% {
+    opacity: 0;
+    transform: rotate(-180deg) scale(0.82);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-90deg) scale(1);
+  }
+}
+
+@keyframes donutCenterPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes legendPillSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-chart-entrance {
+  animation: chartEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-donut-sweep {
+  animation: donutSpinSweep 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-donut-center {
+  animation: donutCenterPop 0.75s cubic-bezier(0.34, 1.4, 0.64, 1) 0.2s both;
+}
+
+.animate-legend-pill {
+  animation: legendPillSlide 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuanly-card-interactive:hover {
+    transform: none;
+  }
+  .animate-chart-entrance,
+  .animate-donut-sweep,
+  .animate-donut-center,
+  .animate-legend-pill {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+

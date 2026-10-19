@@ -1,5 +1,23 @@
 import { apiClient } from './apiClient';
-import { User, Transaction, Category, BudgetLimit, FinancialSummary, Mitra, Complaint, Wallet, DebtItem, WorkspaceMember } from '@/types';
+import {
+  User,
+  Transaction,
+  Category,
+  BudgetLimit,
+  FinancialSummary,
+  Mitra,
+  Complaint,
+  Wallet,
+  DebtItem,
+  WorkspaceMember,
+  InvestmentAsset,
+  InvestmentSummary,
+  BankConnection,
+  AiInsightsData,
+  BusinessProfile,
+  BusinessCashflow,
+  BusinessTaxReport,
+} from '@/types';
 
 export const authApi = {
   login: (data: { identifier: string; password: string }) =>
@@ -159,3 +177,48 @@ export const adminApi = {
       resolutionNote,
     }),
 };
+
+export const investmentsApi = {
+  getAll: () =>
+    apiClient.get<{ success: boolean; items: InvestmentAsset[]; summary: InvestmentSummary }>('/investments'),
+
+  create: (data: { name: string; category: string; quantity?: number; buyPrice: number; currentPrice: number; notes?: string }) =>
+    apiClient.post<{ success: boolean; asset: InvestmentAsset }>('/investments', data),
+
+  delete: (id: string) =>
+    apiClient.delete<{ success: boolean; id: string }>(`/investments/${id}`),
+};
+
+export const bankSyncApi = {
+  getConnections: () =>
+    apiClient.get<{ success: boolean; connections: BankConnection[] }>('/bank-sync/connections'),
+
+  connect: (data: { institution: string; accountNumber: string; accountName: string; autoSync?: boolean }) =>
+    apiClient.post<{ success: boolean; connection: BankConnection }>('/bank-sync/connect', data),
+
+  syncNow: (id: string) =>
+    apiClient.post<{ success: boolean; message: string; syncedTransactionsCount: number; connection: BankConnection }>(`/bank-sync/sync/${id}`),
+
+  disconnect: (id: string) =>
+    apiClient.delete<{ success: boolean; id: string }>(`/bank-sync/${id}`),
+};
+
+export const aiAnalyticsApi = {
+  getInsights: () =>
+    apiClient.get<{ success: boolean; insights: AiInsightsData }>('/ai-analytics/insights'),
+};
+
+export const businessApi = {
+  getProfile: () =>
+    apiClient.get<{ success: boolean; profile: BusinessProfile }>('/business/profile'),
+
+  updateProfile: (data: { businessName: string; npwp?: string; annualRevenue?: number; operatingExpense?: number }) =>
+    apiClient.post<{ success: boolean; profile: BusinessProfile }>('/business/profile', data),
+
+  getCashflow: () =>
+    apiClient.get<{ success: boolean; cashflow: BusinessCashflow }>('/business/cashflow'),
+
+  getTaxReport: () =>
+    apiClient.get<{ success: boolean; taxReport: BusinessTaxReport }>('/business/tax-report'),
+};
+

@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -29,6 +30,7 @@ import Link from 'next/link';
 
 export default function TambahTransaksiPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { t, formatCurrency, currencies, activeCurrency, addCustomCurrency, setActiveCurrency } = useLanguage();
   const { categories, addTransaction } = useFinance();
   const { addNotification } = useNotification();
@@ -143,7 +145,7 @@ export default function TambahTransaksiPage() {
     }
 
     const newTx = addTransaction({
-      userId: 'usr_demo_01',
+      userId: user?.id || 'usr_registered',
       type,
       amount: numericAmount,
       currency: selectedCurrency.code,

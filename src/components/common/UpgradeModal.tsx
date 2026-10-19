@@ -88,14 +88,20 @@ export const UpgradeModal: React.FC = () => {
   const displayBenefits = benefits && benefits.length > 0 ? benefits : planInfo.defaultBenefits;
 
   const handleInstantActivate = () => {
-    if (isAuthenticated) {
-      upgradePlan(requiredPlan);
-      closeUpgradeModal();
-      if (pathname === '/pricing') {
-        router.push('/beranda');
+    closeUpgradeModal();
+    if (requiredPlan === 'FREE') {
+      if (isAuthenticated) {
+        upgradePlan('FREE');
+        if (pathname === '/pricing') router.push('/beranda');
+      } else {
+        router.push('/register');
       }
+      return;
+    }
+
+    if (isAuthenticated) {
+      router.push(`/checkout?plan=${requiredPlan.toLowerCase()}`);
     } else {
-      closeUpgradeModal();
       router.push(`/register?plan=${requiredPlan.toLowerCase()}`);
     }
   };

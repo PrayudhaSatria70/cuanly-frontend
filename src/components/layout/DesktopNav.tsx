@@ -25,6 +25,10 @@ import {
   HandCoins,
   Building2,
   Wallet,
+  Building,
+  TrendingUp,
+  Brain,
+  Briefcase,
 } from 'lucide-react';
 
 export const DesktopNav: React.FC = () => {
@@ -38,6 +42,10 @@ export const DesktopNav: React.FC = () => {
     openWalletModal,
     openDebtModal,
     openWorkspaceModal,
+    openBankSyncModal,
+    openInvestmentModal,
+    openAiAnalyticsModal,
+    openBusinessModal,
   } = useSubscription();
 
   const userItems = [
@@ -151,6 +159,58 @@ export const DesktopNav: React.FC = () => {
               <div className="flex items-center gap-3">
                 <Building2 className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-purple-500" />
                 <span>{t.nav.teamWorkspace}</span>
+              </div>
+              {!hasAccess('B2B') && <PremiumCrownBadge plan="B2B" />}
+            </button>
+
+            {/* Bank Sync Otomatis (Gold) */}
+            <button
+              type="button"
+              onClick={openBankSyncModal}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Building className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-[#4D8DBA]" />
+                <span>Bank Sync Otomatis</span>
+              </div>
+              {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+            </button>
+
+            {/* Aset & Investasi (Gold) */}
+            <button
+              type="button"
+              onClick={openInvestmentModal}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <TrendingUp className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-emerald-500" />
+                <span>Aset & Investasi</span>
+              </div>
+              {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+            </button>
+
+            {/* Laporan Analitik AI (Gold) */}
+            <button
+              type="button"
+              onClick={openAiAnalyticsModal}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Brain className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-violet-500" />
+                <span>Analitik AI Cuanly</span>
+              </div>
+              {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+            </button>
+
+            {/* Bisnis & Pajak UMKM (B2B) */}
+            <button
+              type="button"
+              onClick={openBusinessModal}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
+            >
+              <div className="flex items-center gap-3">
+                <Briefcase className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-blue-500" />
+                <span>Bisnis & Pajak UMKM</span>
               </div>
               {!hasAccess('B2B') && <PremiumCrownBadge plan="B2B" />}
             </button>

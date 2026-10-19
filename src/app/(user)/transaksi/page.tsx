@@ -350,7 +350,7 @@ export default function TransaksiPage() {
             {filtered.map((tx) => (
               <div
                 key={tx.id}
-                className="py-3.5 px-3 flex items-center justify-between gap-3 hover:bg-gray-50/80 rounded-xl transition-all group"
+                className="py-3.5 px-3 flex items-center justify-between gap-3 hover:bg-gray-50/80 dark:hover:bg-[#112233]/60 rounded-xl transition-all duration-200 hover:translate-x-1 group"
               >
                 <Link
                   href={`/transaksi/${tx.id}`}

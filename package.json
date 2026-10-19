@@ -22,5 +22,15 @@
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "typescript": "~6.0.2"
+  },
+  "overrides": {
+    "chokidar": {
+      "braces": "^3.0.3"
+    },
+    "micromatch": {
+      "braces": "^3.0.3"
+    },
+    "braces": "^3.0.3",
+    "postcss-selector-parser": "^7.1.6"
   }
 }

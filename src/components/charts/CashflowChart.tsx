@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { TrendingUp, ArrowDownRight, ArrowUpRight } from 'lucide-react';
@@ -9,6 +9,14 @@ export const CashflowChart: React.FC = () => {
   const { t, formatCurrency, locale } = useLanguage();
   const { summary } = useFinance();
   const [activeMonth, setActiveMonth] = useState('Oct');
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Realistic 4-month comparison data
   const data = [
@@ -23,7 +31,7 @@ export const CashflowChart: React.FC = () => {
   const savingsRate = current.income > 0 ? Math.round(((current.income - current.expense) / current.income) * 100) : 0;
 
   return (
-    <div className="w-full">
+    <div className="w-full animate-chart-entrance">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
         <div>
           <h3 className="text-base font-bold text-cuanly-primaryDark flex items-center gap-2">
@@ -89,24 +97,32 @@ export const CashflowChart: React.FC = () => {
 
       {/* SVG / CSS Bar Chart */}
       <div className="h-44 flex items-end justify-between gap-3 sm:gap-6 pt-4 pb-2 border-b border-gray-200">
-        {data.map((d) => {
-          const incomeHeight = Math.max(12, Math.round((d.income / maxVal) * 140));
-          const expenseHeight = Math.max(12, Math.round((d.expense / maxVal) * 140));
+        {data.map((d, index) => {
+          const targetIncomeHeight = Math.max(12, Math.round((d.income / maxVal) * 140));
+          const targetExpenseHeight = Math.max(12, Math.round((d.expense / maxVal) * 140));
+          const incomeHeight = isMounted ? targetIncomeHeight : 0;
+          const expenseHeight = isMounted ? targetExpenseHeight : 0;
           const isSelected = d.month === activeMonth;
 
           return (
             <div
               key={d.month}
               onClick={() => setActiveMonth(d.month)}
-              className={`flex-1 flex flex-col items-center cursor-pointer group transition-all ${
-                isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-70 hover:opacity-100'
+              className={`flex-1 flex flex-col items-center cursor-pointer group transition-all duration-300 ${
+                isSelected ? 'opacity-100 scale-[1.02]' : 'opacity-75 hover:opacity-100'
               }`}
             >
               <div className="w-full flex items-end justify-center gap-1.5 sm:gap-2 h-36">
                 {/* Income Bar */}
                 <div
-                  style={{ height: `${incomeHeight}px` }}
-                  className="w-3 sm:w-5 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-t-md transition-all group-hover:brightness-110 shadow-sm relative group/bar"
+                  style={{
+                    height: `${incomeHeight}px`,
+                    transitionProperty: 'height, transform, opacity',
+                    transitionDuration: '700ms',
+                    transitionTimingFunction: 'cubic-bezier(0.34, 1.25, 0.64, 1)',
+                    transitionDelay: `${index * 80}ms`,
+                  }}
+                  className="w-3.5 sm:w-5 bg-gradient-to-t from-emerald-600 to-teal-400 rounded-t-md transition-all group-hover:brightness-110 group-hover:scale-y-105 shadow-sm relative group/bar"
                 >
                   <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover/bar:block bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap z-20 shadow-md">
                     +{formatCurrency(d.income)}
@@ -115,8 +131,14 @@ export const CashflowChart: React.FC = () => {
 
                 {/* Expense Bar */}
                 <div
-                  style={{ height: `${expenseHeight}px` }}
-                  className="w-3 sm:w-5 bg-gradient-to-t from-rose-600 to-red-400 rounded-t-md transition-all group-hover:brightness-110 shadow-sm relative group/bar"
+                  style={{
+                    height: `${expenseHeight}px`,
+                    transitionProperty: 'height, transform, opacity',
+                    transitionDuration: '700ms',
+                    transitionTimingFunction: 'cubic-bezier(0.34, 1.25, 0.64, 1)',
+                    transitionDelay: `${index * 80 + 40}ms`,
+                  }}
+                  className="w-3.5 sm:w-5 bg-gradient-to-t from-rose-600 to-red-400 rounded-t-md transition-all group-hover:brightness-110 group-hover:scale-y-105 shadow-sm relative group/bar"
                 >
                   <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover/bar:block bg-gray-900 text-white text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap z-20 shadow-md">
                     -{formatCurrency(d.expense)}
@@ -125,8 +147,8 @@ export const CashflowChart: React.FC = () => {
               </div>
 
               <span
-                className={`mt-2 text-xs font-semibold ${
-                  isSelected ? 'text-cuanly-primaryDark font-bold underline decoration-2' : 'text-gray-500'
+                className={`mt-2 text-xs transition-all ${
+                  isSelected ? 'text-cuanly-primaryDark font-bold underline decoration-2 decoration-[#4D8DBA]' : 'text-gray-500 font-semibold'
                 }`}
               >
                 {d.month}

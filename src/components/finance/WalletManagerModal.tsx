@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { Wallet } from '@/types';
 import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
 import {
@@ -24,6 +25,7 @@ interface WalletManagerModalProps {
 }
 
 export const WalletManagerModal: React.FC<WalletManagerModalProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const { wallets, addWallet, deleteWallet, hasAccess, plan, openUpgradeModal } = useSubscription();
   const { formatCurrency, locale, t } = useLanguage();
 
@@ -62,7 +64,7 @@ export const WalletManagerModal: React.FC<WalletManagerModalProps> = ({ isOpen, 
     const balanceNum = Number(initialBalance) || 0;
 
     const res = addWallet({
-      userId: 'usr_demo_01',
+      userId: user?.id || 'usr_registered',
       name: walletName.trim(),
       type: walletType,
       balance: balanceNum,

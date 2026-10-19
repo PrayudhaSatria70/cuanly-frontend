@@ -10,6 +10,10 @@ import { NotificationDrawer } from '@/components/layout/NotificationDrawer';
 import { WalletManagerModal } from '@/components/finance/WalletManagerModal';
 import { DebtManagerModal } from '@/components/finance/DebtManagerModal';
 import { SharedWorkspaceModal } from '@/components/finance/SharedWorkspaceModal';
+import { BankSyncModal } from '@/components/finance/BankSyncModal';
+import { InvestmentTrackerModal } from '@/components/finance/InvestmentTrackerModal';
+import { AiAnalyticsModal } from '@/components/finance/AiAnalyticsModal';
+import { BusinessFinanceModal } from '@/components/finance/BusinessFinanceModal';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -32,7 +36,8 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const isPricingPage = pathname === '/pricing';
-  const isStandalonePage = isAuthPage || isPricingPage;
+  const isCheckoutPage = pathname === '/checkout';
+  const isStandalonePage = isAuthPage || isPricingPage || isCheckoutPage;
 
   useEffect(() => {
     if (!mounted) return;
@@ -71,6 +76,15 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
     );
   }
 
+  // Standalone checkout payment gateway page (Configure your plan)
+  if (isCheckoutPage) {
+    return (
+      <div className="min-h-screen w-full bg-[#0a0f18] text-slate-100 transition-colors duration-200">
+        {children}
+      </div>
+    );
+  }
+
   // Protected App Shell with Navigation
   return (
     <div className="min-h-screen flex flex-col w-full bg-cuanly-canvas dark:bg-[#071018] text-cuanly-primaryDark dark:text-slate-100 transition-colors duration-200">
@@ -88,6 +102,10 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
       <WalletManagerModal isOpen={isWalletModalOpen} onClose={closeWalletModal} />
       <DebtManagerModal isOpen={isDebtModalOpen} onClose={closeDebtModal} />
       <SharedWorkspaceModal isOpen={isWorkspaceModalOpen} onClose={closeWorkspaceModal} />
+      <BankSyncModal />
+      <InvestmentTrackerModal />
+      <AiAnalyticsModal />
+      <BusinessFinanceModal />
     </div>
   );
 };

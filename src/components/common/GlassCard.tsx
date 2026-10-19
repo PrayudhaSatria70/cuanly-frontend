@@ -11,7 +11,7 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   children,
   className = '',
   variant = 'default',
-  hoverEffect = false,
+  hoverEffect = true,
   ...props
 }) => {
   let baseStyle = 'glass-panel rounded-2xl';
@@ -25,7 +25,9 @@ export const GlassCard: React.FC<GlassCardProps> = ({
   }
 
   const hoverStyle = hoverEffect
-    ? 'transition-all duration-300 hover:shadow-glass-hover hover:-translate-y-0.5'
+    ? variant === 'gradient'
+      ? 'cuanly-card-interactive hover:shadow-[0_20px_42px_-6px_rgba(28,74,107,0.45)] hover:border-white/40'
+      : 'cuanly-card-interactive'
     : '';
 
   return (

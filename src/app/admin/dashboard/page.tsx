@@ -245,7 +245,7 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
         <Link
           href="/admin/users"
-          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 transition-all hover:shadow-xs group"
+          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 cuanly-card-interactive group cursor-pointer"
         >
           <Users className="w-5 h-5 mx-auto text-purple-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
@@ -254,7 +254,7 @@ export default function AdminDashboardPage() {
         </Link>
         <Link
           href="/admin/verification"
-          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 transition-all hover:shadow-xs group"
+          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 cuanly-card-interactive group cursor-pointer"
         >
           <ShieldCheck className="w-5 h-5 mx-auto text-emerald-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
@@ -263,7 +263,7 @@ export default function AdminDashboardPage() {
         </Link>
         <Link
           href="/admin/transactions"
-          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 transition-all hover:shadow-xs group"
+          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 cuanly-card-interactive group cursor-pointer"
         >
           <Activity className="w-5 h-5 mx-auto text-blue-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">
@@ -272,7 +272,7 @@ export default function AdminDashboardPage() {
         </Link>
         <Link
           href="/admin/categories"
-          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 transition-all hover:shadow-xs group"
+          className="p-4 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl text-center space-y-1 cuanly-card-interactive group cursor-pointer"
         >
           <Layers className="w-5 h-5 mx-auto text-amber-600 group-hover:scale-110 transition-transform" />
           <span className="text-xs font-bold text-cuanly-primaryDark block">

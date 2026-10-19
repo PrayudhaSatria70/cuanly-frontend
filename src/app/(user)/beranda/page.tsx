@@ -9,6 +9,7 @@ import { CashflowChart } from '@/components/charts/CashflowChart';
 import { CategoryDonutChart } from '@/components/charts/CategoryDonutChart';
 import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
 import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
+import { MinorAdBanner } from '@/components/common/MinorAdBanner';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import {
   Wallet,
@@ -26,6 +27,10 @@ import {
   Building2,
   Crown,
   Shield,
+  TrendingUp,
+  Brain,
+  Briefcase,
+  Building,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -43,9 +48,21 @@ export default function BerandaPage() {
     openWalletModal,
     openDebtModal,
     openWorkspaceModal,
+    openBankSyncModal,
+    openInvestmentModal,
+    openAiAnalyticsModal,
+    openBusinessModal,
   } = useSubscription();
 
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const recentTransactions = transactions.slice(0, 5);
 
@@ -111,6 +128,9 @@ export default function BerandaPage() {
           </Link>
         </div>
       </div>
+
+      {/* Minor Ad Banner for Free tier users */}
+      <MinorAdBanner />
 
       {/* Hero Balance Card with Gradient & Glass Accents */}
       <GlassCard variant="gradient" className="relative overflow-hidden p-6 sm:p-7">
@@ -204,14 +224,14 @@ export default function BerandaPage() {
           </div>
           <div className="w-full bg-white/20 h-2.5 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
+              className={`h-full rounded-full transition-all duration-700 ease-out ${
                 budgetUsagePercent >= 100
                   ? 'bg-rose-500'
                   : budgetUsagePercent >= 75
                   ? 'bg-amber-400'
                   : 'bg-gradient-to-r from-[#8AD6D1] to-[#4D8DBA]'
               }`}
-              style={{ width: `${budgetUsagePercent}%` }}
+              style={{ width: `${isMounted ? budgetUsagePercent : 0}%` }}
             />
           </div>
         </div>
@@ -223,7 +243,7 @@ export default function BerandaPage() {
         <button
           type="button"
           onClick={openWalletModal}
-          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#4D8DBA] dark:text-[#8AD6D1] flex items-center justify-center border border-blue-200/50">
@@ -260,7 +280,7 @@ export default function BerandaPage() {
             }
             openDebtModal();
           }}
-          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-amber-400 transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-amber-400 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center border border-amber-200/50">
@@ -299,7 +319,7 @@ export default function BerandaPage() {
             }
             openWorkspaceModal();
           }}
-          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-purple-400 transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-purple-400 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-200/50">
@@ -318,6 +338,109 @@ export default function BerandaPage() {
                 {hasAccess('B2B')
                   ? `${workspaceMembers.length} ${locale === 'en' ? 'active team members' : 'anggota tim aktif'}`
                   : (locale === 'en' ? 'Requires B2B Plan' : 'Perlu B2B Plan')}
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+      </div>
+
+      {/* Advanced Premium & Intelligence Financial Features Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Card 1: Bank Sync Otomatis (Gold) */}
+        <button
+          type="button"
+          onClick={openBankSyncModal}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-[#4D8DBA] dark:text-[#8AD6D1] flex items-center justify-center border border-blue-200/50">
+              <Building className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-[#4D8DBA]">
+                  Bank Sync Otomatis
+                </h4>
+                {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                BCA, Mandiri, BRI, GoPay & Dana
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Card 2: Pelacakan Aset & Investasi (Gold) */}
+        <button
+          type="button"
+          onClick={openInvestmentModal}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-emerald-500 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-200/50">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-emerald-600">
+                  Aset & Investasi
+                </h4>
+                {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Reksadana, Saham & Net Worth
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Card 3: Laporan Analitik AI (Gold) */}
+        <button
+          type="button"
+          onClick={openAiAnalyticsModal}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-violet-500 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 dark:bg-violet-950/40 text-violet-600 dark:text-violet-400 flex items-center justify-center border border-violet-200/50">
+              <Brain className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-violet-600">
+                  Analitik AI Cuanly
+                </h4>
+                {!hasAccess('GOLD') && <PremiumCrownBadge plan="GOLD" />}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Skor Finansial & Deteksi Anomali
+              </p>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:translate-x-0.5 transition-transform" />
+        </button>
+
+        {/* Card 4: Bisnis & Pajak UMKM (B2B) */}
+        <button
+          type="button"
+          onClick={openBusinessModal}
+          className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-blue-500 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center border border-blue-200/50">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-blue-600">
+                  Arus Kas Bisnis & Pajak
+                </h4>
+                {!hasAccess('B2B') && <PremiumCrownBadge plan="B2B" />}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-slate-400">
+                Runway & PPh Final UMKM 0.5%
               </p>
             </div>
           </div>
@@ -418,7 +541,7 @@ export default function BerandaPage() {
             <Link
               key={tx.id}
               href={`/transaksi/${tx.id}`}
-              className="py-3 flex items-center justify-between gap-3 hover:bg-gray-50/80 px-2 rounded-xl transition-colors group"
+              className="py-3 flex items-center justify-between gap-3 hover:bg-gray-50/80 dark:hover:bg-[#112233]/60 px-2 rounded-xl transition-all duration-200 hover:translate-x-1 group"
             >
               <div className="flex items-center gap-3 min-w-0">
                 <div

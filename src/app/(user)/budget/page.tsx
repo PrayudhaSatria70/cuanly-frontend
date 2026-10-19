@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useSubscription } from '@/contexts/SubscriptionContext';
@@ -31,6 +31,14 @@ export default function BudgetPage() {
   const [editingLimit, setEditingLimit] = useState<number>(0);
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState<boolean>(false);
   const [isThresholdModalOpen, setIsThresholdModalOpen] = useState<boolean>(false);
+  const [isMounted, setIsMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsMounted(true);
+    }, 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   const expenseCategories = categories.filter((c) => c.type === 'EXPENSE');
 
@@ -149,14 +157,14 @@ export default function BudgetPage() {
           </div>
           <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
+              className={`h-full rounded-full transition-all duration-700 ease-out ${
                 totalUsedPercent >= 100
                   ? 'bg-rose-500'
                   : totalUsedPercent >= 75
                   ? 'bg-amber-400'
                   : 'bg-gradient-to-r from-[#8AD6D1] to-[#4D8DBA]'
               }`}
-              style={{ width: `${totalUsedPercent}%` }}
+              style={{ width: `${isMounted ? totalUsedPercent : 0}%` }}
             />
           </div>
         </div>
@@ -164,7 +172,7 @@ export default function BudgetPage() {
 
       {/* Category Budgets Grid (6 Core Categories per Hick's Law) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {expenseCategories.map((cat) => {
+        {expenseCategories.map((cat, idx) => {
           const info = getCategoryBudgetInfo(cat.id);
           const isOver = info.percent >= 100;
           const isWarning = info.percent >= 75 && !isOver;
@@ -234,10 +242,13 @@ export default function BudgetPage() {
                 {/* Visual Progress Bar with Thresholds */}
                 <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${
+                    className={`h-full rounded-full transition-all duration-700 ease-out ${
                       isOver ? 'bg-rose-500' : isWarning ? 'bg-amber-400' : 'bg-emerald-500'
                     }`}
-                    style={{ width: `${Math.min(100, info.percent)}%` }}
+                    style={{
+                      width: `${isMounted ? Math.min(100, info.percent) : 0}%`,
+                      transitionDelay: `${120 + idx * 70}ms`,
+                    }}
                   />
                 </div>
               </div>

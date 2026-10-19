@@ -63,6 +63,26 @@ interface SubscriptionContextType {
   // Budget custom threshold (Gold+)
   warningThresholdPercent: number;
   setWarningThresholdPercent: (percent: number) => void;
+
+  // Bank Sync feature (Gold+)
+  isBankSyncModalOpen: boolean;
+  openBankSyncModal: () => void;
+  closeBankSyncModal: () => void;
+
+  // Investment tracking feature (Gold+)
+  isInvestmentModalOpen: boolean;
+  openInvestmentModal: () => void;
+  closeInvestmentModal: () => void;
+
+  // AI Analytics feature (Gold+)
+  isAiAnalyticsModalOpen: boolean;
+  openAiAnalyticsModal: () => void;
+  closeAiAnalyticsModal: () => void;
+
+  // Business Cashflow & Tax feature (B2B)
+  isBusinessModalOpen: boolean;
+  openBusinessModal: () => void;
+  closeBusinessModal: () => void;
 }
 
 const TIER_LEVELS: Record<SubscriptionTier, number> = {
@@ -97,40 +117,29 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const closeWorkspaceModal = useCallback(() => setIsWorkspaceModalOpen(false), []);
 
   // Wallets state
-  const [wallets, setWallets] = useState<Wallet[]>(INITIAL_WALLETS);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
 
   // Debts state (Gold)
-  const [debts, setDebts] = useState<DebtItem[]>(INITIAL_DEBTS);
+  const [debts, setDebts] = useState<DebtItem[]>([]);
 
   // Workspace members (B2B)
-  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>(INITIAL_WORKSPACE_MEMBERS);
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>([]);
 
   // Budgeting custom threshold percent (default 80%, Gold users can customize e.g. 50%, 75%, 90%)
   const [warningThresholdPercent, setWarningThresholdPercentState] = useState<number>(80);
 
-  // Load subscription plan from localStorage or user on mount
+  const userId = user?.id;
+  const isDemoUser = userId === 'usr_demo_1';
+
+  // Synchronize and initialize user-scoped wallets, debts, and workspace
   useEffect(() => {
+    // 1. Plan synchronization
     try {
       const storedPlan = localStorage.getItem('cuanly_subscription_tier') as SubscriptionTier;
       if (storedPlan && ['FREE', 'SILVER', 'GOLD', 'B2B'].includes(storedPlan)) {
         setPlanState(storedPlan);
       } else {
         setPlanState('FREE');
-      }
-
-      const storedWallets = localStorage.getItem('cuanly_wallets');
-      if (storedWallets) {
-        setWallets(JSON.parse(storedWallets));
-      }
-
-      const storedDebts = localStorage.getItem('cuanly_debts');
-      if (storedDebts) {
-        setDebts(JSON.parse(storedDebts));
-      }
-
-      const storedMembers = localStorage.getItem('cuanly_workspace_members');
-      if (storedMembers) {
-        setWorkspaceMembers(JSON.parse(storedMembers));
       }
 
       const storedThreshold = localStorage.getItem('cuanly_custom_budget_threshold');
@@ -141,9 +150,92 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
       }
     } catch {
-      // fallback to defaults
+      // fallback
     }
-  }, []);
+
+    if (!user) {
+      setWallets([]);
+      setDebts([]);
+      setWorkspaceMembers([]);
+      return;
+    }
+
+    if (isDemoUser) {
+      try {
+        const storedWallets = localStorage.getItem('cuanly_wallets_usr_demo_1') || localStorage.getItem('cuanly_wallets');
+        setWallets(storedWallets ? JSON.parse(storedWallets) : INITIAL_WALLETS);
+
+        const storedDebts = localStorage.getItem('cuanly_debts_usr_demo_1') || localStorage.getItem('cuanly_debts');
+        setDebts(storedDebts ? JSON.parse(storedDebts) : INITIAL_DEBTS);
+
+        const storedMembers = localStorage.getItem('cuanly_workspace_members_usr_demo_1') || localStorage.getItem('cuanly_workspace_members');
+        setWorkspaceMembers(storedMembers ? JSON.parse(storedMembers) : INITIAL_WORKSPACE_MEMBERS);
+      } catch {
+        setWallets(INITIAL_WALLETS);
+        setDebts(INITIAL_DEBTS);
+        setWorkspaceMembers(INITIAL_WORKSPACE_MEMBERS);
+      }
+      return;
+    }
+
+    // Registered user: strictly user-scoped data starting from 0
+    try {
+      const storedWallets = localStorage.getItem(`cuanly_wallets_${userId}`);
+      const storedDebts = localStorage.getItem(`cuanly_debts_${userId}`);
+      const storedMembers = localStorage.getItem(`cuanly_workspace_members_${userId}`);
+
+      setWallets(storedWallets ? JSON.parse(storedWallets) : []);
+      setDebts(storedDebts ? JSON.parse(storedDebts) : []);
+      setWorkspaceMembers(storedMembers ? JSON.parse(storedMembers) : []);
+    } catch {
+      setWallets([]);
+      setDebts([]);
+      setWorkspaceMembers([]);
+    }
+
+    // Fetch live user data from Database via Backend API
+    walletsApi
+      .getAll()
+      .then((items) => {
+        if (Array.isArray(items)) {
+          setWallets(items);
+          try {
+            localStorage.setItem(`cuanly_wallets_${userId}`, JSON.stringify(items));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend wallets sync notice (offline or local session):', err?.message);
+      });
+
+    debtsApi
+      .getAll()
+      .then((items) => {
+        if (Array.isArray(items)) {
+          setDebts(items);
+          try {
+            localStorage.setItem(`cuanly_debts_${userId}`, JSON.stringify(items));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend debts sync notice (offline or local session):', err?.message);
+      });
+
+    workspaceApi
+      .getMembers()
+      .then((items) => {
+        if (Array.isArray(items)) {
+          setWorkspaceMembers(items);
+          try {
+            localStorage.setItem(`cuanly_workspace_members_${userId}`, JSON.stringify(items));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend workspace sync notice (offline or local session):', err?.message);
+      });
+  }, [user, userId, isDemoUser]);
 
   // Synchronize plan from authenticated user profile
   useEffect(() => {
@@ -254,6 +346,85 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     setUpgradeModalData(null);
   }, []);
 
+  // Modals state for new features
+  const [isBankSyncModalOpen, setIsBankSyncModalOpen] = useState(false);
+  const [isInvestmentModalOpen, setIsInvestmentModalOpen] = useState(false);
+  const [isAiAnalyticsModalOpen, setIsAiAnalyticsModalOpen] = useState(false);
+  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false);
+
+  const closeBankSyncModal = useCallback(() => setIsBankSyncModalOpen(false), []);
+  const closeInvestmentModal = useCallback(() => setIsInvestmentModalOpen(false), []);
+  const closeAiAnalyticsModal = useCallback(() => setIsAiAnalyticsModalOpen(false), []);
+  const closeBusinessModal = useCallback(() => setIsBusinessModalOpen(false), []);
+
+  const openBankSyncModal = useCallback(() => {
+    if (!isAdmin && !hasAccess('GOLD')) {
+      openUpgradeModal(
+        'Bank Sync Otomatis',
+        'GOLD',
+        'Hubungkan dan sinkronisasikan mutasi rekening bank dan e-wallet secara otomatis (BCA, Mandiri, BRI, BNI, GoPay, OVO, Dana).',
+        [
+          'Sinkronisasi otomatis mutasi bank & e-wallet',
+          'Pembaruan saldo kas secara real-time',
+          'Riwayat transaksi otomatis tanpa input manual',
+        ]
+      );
+      return;
+    }
+    setIsBankSyncModalOpen(true);
+  }, [isAdmin, hasAccess, openUpgradeModal]);
+
+  const openInvestmentModal = useCallback(() => {
+    if (!isAdmin && !hasAccess('GOLD')) {
+      openUpgradeModal(
+        'Pelacakan Aset & Investasi',
+        'GOLD',
+        'Monitor portofolio reksadana, saham, emas, crypto, dan properti lengkap dengan kalkulasi net worth dan gain/loss.',
+        [
+          'Pantau nilai bersih (Net Worth) secara real-time',
+          'Pelacakan keuntungan / kerugian (Gain/Loss %)',
+          'Alokasi diversifikasi portofolio investasi terpadu',
+        ]
+      );
+      return;
+    }
+    setIsInvestmentModalOpen(true);
+  }, [isAdmin, hasAccess, openUpgradeModal]);
+
+  const openAiAnalyticsModal = useCallback(() => {
+    if (!isAdmin && !hasAccess('GOLD')) {
+      openUpgradeModal(
+        'Laporan Analitik AI',
+        'GOLD',
+        'Dapatkan skor kesehatan finansial, deteksi anomali pengeluaran, proyeksi arus kas 30 hari, dan rekomendasi cerdas dari AI.',
+        [
+          'Skor kesehatan finansial real-time (0-100)',
+          'Deteksi dini anomali dan lonjakan pengeluaran',
+          'Proyeksi ketahanan arus kas & rekomendasi tabungan cerdas',
+        ]
+      );
+      return;
+    }
+    setIsAiAnalyticsModalOpen(true);
+  }, [isAdmin, hasAccess, openUpgradeModal]);
+
+  const openBusinessModal = useCallback(() => {
+    if (!isAdmin && !hasAccess('B2B')) {
+      openUpgradeModal(
+        'Manajemen Arus Kas Bisnis & Laporan Pajak Sederhana',
+        'B2B',
+        'Kelola arus kas operasional, investasi, dan pendanaan UMKM lengkap dengan kalkulator runway dan estimasi PPh Final 0.5% (PP 23/2018).',
+        [
+          'Manajemen arus kas operasional, investasi & pendanaan bisnis',
+          'Kalkulator ketahanan kas (Business Runway)',
+          'Laporan pajak sederhana PPh Final UMKM 0.5%',
+        ]
+      );
+      return;
+    }
+    setIsBusinessModalOpen(true);
+  }, [isAdmin, hasAccess, openUpgradeModal]);
+
   // Wallets handling
   const addWallet = (wallet: Omit<Wallet, 'id'>) => {
     // If user is on Free tier and already has 2 or more wallets, block and prompt upgrade to Silver
@@ -275,19 +446,51 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       };
     }
 
+    const tempId = `wlt_${Date.now()}`;
     const newWallet: Wallet = {
       ...wallet,
-      id: `wlt_${Date.now()}`,
-      userId: user?.id || 'usr_demo_01',
+      id: tempId,
+      userId: userId || 'usr_registered',
     };
 
     const updated = [...wallets, newWallet];
     setWallets(updated);
     try {
-      localStorage.setItem('cuanly_wallets', JSON.stringify(updated));
+      const key = userId ? `cuanly_wallets_${userId}` : 'cuanly_wallets';
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    walletsApi
+      .create({
+        userId: newWallet.userId,
+        name: newWallet.name,
+        type: newWallet.type,
+        accountNumber: newWallet.accountNumber,
+        balance: newWallet.balance,
+        color: newWallet.color,
+        isShared: newWallet.isShared,
+      })
+      .then((res: any) => {
+        const saved = res?.wallet || res;
+        if (saved && saved.id) {
+          setWallets((prev) => {
+            const synced = prev.map((w) => (w.id === tempId ? { ...w, id: saved.id } : w));
+            if (userId) {
+              try {
+                localStorage.setItem(`cuanly_wallets_${userId}`, JSON.stringify(synced));
+              } catch {}
+            }
+            return synced;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('DB wallet create notice (offline or local session):', err?.message);
+      });
+
     return { success: true };
   };
 
@@ -295,10 +498,16 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const updated = wallets.filter((w) => w.id !== id);
     setWallets(updated);
     try {
-      localStorage.setItem('cuanly_wallets', JSON.stringify(updated));
+      const key = userId ? `cuanly_wallets_${userId}` : 'cuanly_wallets';
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    walletsApi.delete(id).catch((err) => {
+      console.warn('DB wallet delete notice:', err?.message);
+    });
   };
 
   // Debt & Receivables handling (Gold+)
@@ -318,20 +527,52 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return { success: false, error: 'Fitur memerlukan Gold Plan.' };
     }
 
+    const tempId = `debt_${Date.now()}`;
     const newDebt: DebtItem = {
       ...debt,
-      id: `debt_${Date.now()}`,
-      userId: user?.id || 'usr_demo_01',
+      id: tempId,
+      userId: userId || 'usr_registered',
       createdAt: new Date().toISOString(),
     };
 
     const updated = [newDebt, ...debts];
     setDebts(updated);
     try {
-      localStorage.setItem('cuanly_debts', JSON.stringify(updated));
+      const key = userId ? `cuanly_debts_${userId}` : 'cuanly_debts';
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    debtsApi
+      .create({
+        userId: newDebt.userId,
+        type: newDebt.type,
+        personName: newDebt.personName,
+        amount: newDebt.amount,
+        dueDate: newDebt.dueDate,
+        notes: newDebt.notes,
+        isSettled: newDebt.isSettled,
+      })
+      .then((res: any) => {
+        const saved = res?.debt || res;
+        if (saved && saved.id) {
+          setDebts((prev) => {
+            const synced = prev.map((d) => (d.id === tempId ? { ...d, id: saved.id } : d));
+            if (userId) {
+              try {
+                localStorage.setItem(`cuanly_debts_${userId}`, JSON.stringify(synced));
+              } catch {}
+            }
+            return synced;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('DB debt create notice (offline or local session):', err?.message);
+      });
+
     return { success: true };
   };
 
@@ -339,20 +580,32 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const updated = debts.map((d) => (d.id === id ? { ...d, isSettled: !d.isSettled } : d));
     setDebts(updated);
     try {
-      localStorage.setItem('cuanly_debts', JSON.stringify(updated));
+      const key = userId ? `cuanly_debts_${userId}` : 'cuanly_debts';
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    debtsApi.toggleSettle(id).catch((err) => {
+      console.warn('DB debt toggleSettle notice:', err?.message);
+    });
   };
 
   const deleteDebt = (id: string) => {
     const updated = debts.filter((d) => d.id !== id);
     setDebts(updated);
     try {
-      localStorage.setItem('cuanly_debts', JSON.stringify(updated));
+      const key = userId ? `cuanly_debts_${userId}` : 'cuanly_debts';
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    debtsApi.delete(id).catch((err) => {
+      console.warn('DB debt delete notice:', err?.message);
+    });
   };
 
   // Workspace members handling (B2B)
@@ -376,8 +629,9 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return { success: false, error: 'B2B Plan mendukung maksimal 3-5 akun tim.' };
     }
 
+    const tempId = `mem_${Date.now()}`;
     const newMember: WorkspaceMember = {
-      id: `mem_${Date.now()}`,
+      id: tempId,
       name,
       email,
       role: 'MEMBER',
@@ -387,10 +641,37 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const updated = [...workspaceMembers, newMember];
     setWorkspaceMembers(updated);
     try {
-      localStorage.setItem('cuanly_workspace_members', JSON.stringify(updated));
+      const key = userId ? `cuanly_workspace_members_${userId}` : 'cuanly_workspace_members';
+      localStorage.setItem(key, JSON.stringify(updated));
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    workspaceApi
+      .addMember({
+        name,
+        email,
+        role: 'MEMBER',
+      })
+      .then((res: any) => {
+        const saved = res?.member || res;
+        if (saved && saved.id) {
+          setWorkspaceMembers((prev) => {
+            const synced = prev.map((m) => (m.id === tempId ? { ...m, id: saved.id } : m));
+            if (userId) {
+              try {
+                localStorage.setItem(`cuanly_workspace_members_${userId}`, JSON.stringify(synced));
+              } catch {}
+            }
+            return synced;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('DB workspace member notice (offline or local session):', err?.message);
+      });
+
     return { success: true };
   };
 
@@ -454,6 +735,18 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         addWorkspaceMember,
         warningThresholdPercent,
         setWarningThresholdPercent,
+        isBankSyncModalOpen,
+        openBankSyncModal,
+        closeBankSyncModal,
+        isInvestmentModalOpen,
+        openInvestmentModal,
+        closeInvestmentModal,
+        isAiAnalyticsModalOpen,
+        openAiAnalyticsModal,
+        closeAiAnalyticsModal,
+        isBusinessModalOpen,
+        openBusinessModal,
+        closeBusinessModal,
       }}
     >
       {children}

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { DebtItem } from '@/types';
 import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
 import {
@@ -25,6 +26,7 @@ interface DebtManagerModalProps {
 }
 
 export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onClose }) => {
+  const { user } = useAuth();
   const { debts, addDebt, toggleSettleDebt, deleteDebt, hasAccess, openUpgradeModal } =
     useSubscription();
   const { formatCurrency, formatDate, locale, t } = useLanguage();
@@ -36,6 +38,8 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [tenorMonths, setTenorMonths] = useState('1');
+  const [interestRate, setInterestRate] = useState('0');
 
   if (!isOpen) return null;
 
@@ -43,20 +47,32 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
     e.preventDefault();
     if (!personName.trim() || !amount) return;
 
+    const baseAmt = Number(amount);
+    const tenor = parseInt(tenorMonths, 10) || 1;
+    const rate = parseFloat(interestRate) || 0;
+    const totalWithInterest = Math.round(baseAmt * (1 + rate / 100));
+    const installmentAmt = Math.round(totalWithInterest / Math.max(1, tenor));
+
     addDebt({
-      userId: 'usr_demo_01',
+      userId: user?.id || 'usr_registered',
       type,
       personName: personName.trim(),
-      amount: Number(amount),
+      amount: totalWithInterest,
       dueDate: dueDate || new Date().toISOString().split('T')[0],
       notes: notes.trim() || undefined,
       isSettled: false,
+      tenorMonths: tenor,
+      interestRate: rate,
+      installmentAmount: installmentAmt,
+      paidAmount: 0,
     });
 
     setPersonName('');
     setAmount('');
     setDueDate('');
     setNotes('');
+    setTenorMonths('1');
+    setInterestRate('0');
     setIsAddingNew(false);
   };
 
@@ -253,6 +269,40 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs">
+                <div>
+                  <label className="text-[10px] font-extrabold uppercase text-amber-800 dark:text-amber-300 block mb-1">
+                    Tenor (Bulan Cicilan)
+                  </label>
+                  <select
+                    value={tenorMonths}
+                    onChange={(e) => setTenorMonths(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-[#071018] border border-amber-400/30 font-bold"
+                  >
+                    <option value="1">1 Bulan (Lunas Langsung)</option>
+                    <option value="3">3 Bulan (Cicilan 3x)</option>
+                    <option value="6">6 Bulan (Cicilan 6x)</option>
+                    <option value="12">12 Bulan (Cicilan 12x)</option>
+                    <option value="24">24 Bulan (Cicilan 24x)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-extrabold uppercase text-amber-800 dark:text-amber-300 block mb-1">
+                    Estimasi Bunga / Margin (%)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={interestRate}
+                    onChange={(e) => setInterestRate(e.target.value)}
+                    placeholder="0%"
+                    className="w-full px-2.5 py-1.5 text-xs rounded-lg bg-white dark:bg-[#071018] border border-amber-400/30 font-bold"
+                  />
+                </div>
+              </div>
+
               <div className="flex justify-end gap-2 pt-1">
                 <button
                   type="button"
@@ -320,11 +370,16 @@ export const DebtManagerModal: React.FC<DebtManagerModalProps> = ({ isOpen, onCl
                           </span>
                         )}
                       </div>
-                      <p className="text-[11px] text-gray-400 flex items-center gap-2 mt-0.5">
+                      <p className="text-[11px] text-gray-400 flex flex-wrap items-center gap-2 mt-0.5">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {t.modals.debt.due} {formatDate(item.dueDate)}
                         </span>
+                        {item.tenorMonths && item.tenorMonths > 1 && (
+                          <span className="px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-700 dark:text-amber-400 font-bold">
+                            Tenor {item.tenorMonths}x • {item.installmentAmount ? formatCurrency(item.installmentAmount) : ''}/bln
+                          </span>
+                        )}
                         {item.notes && <span>• {item.notes}</span>}
                       </p>
                     </div>

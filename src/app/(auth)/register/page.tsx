@@ -110,7 +110,11 @@ export default function RegisterPage() {
     try {
       const res = await register(name, email, password, username, phone, selectedPlan || undefined);
       if (res.success) {
-        router.push('/beranda');
+        if (selectedPlan && ['SILVER', 'GOLD', 'B2B'].includes(selectedPlan.toUpperCase())) {
+          router.push(`/checkout?plan=${selectedPlan.toLowerCase()}`);
+        } else {
+          router.push('/beranda');
+        }
       } else {
         setErrorMsg(res.error || t.auth.registerFailed);
       }

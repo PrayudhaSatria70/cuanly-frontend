@@ -20,11 +20,12 @@ export interface Wallet {
   id: string;
   userId: string;
   name: string;
-  type: 'CASH' | 'BANK' | 'E_WALLET' | 'SAVINGS';
+  type: 'CASH' | 'BANK' | 'E_WALLET' | 'SAVINGS' | 'INVESTMENT';
   accountNumber?: string;
   balance: number;
   color?: string;
   isShared?: boolean;
+  sharedRole?: 'OWNER' | 'ADMIN' | 'MEMBER';
 }
 
 export interface DebtItem {
@@ -36,7 +37,122 @@ export interface DebtItem {
   dueDate: string;
   notes?: string;
   isSettled: boolean;
+  tenorMonths?: number;
+  interestRate?: number;
+  installmentAmount?: number;
+  paidAmount?: number;
   createdAt: string;
+}
+
+export type InvestmentCategory = 'REKSADANA' | 'SAHAM' | 'EMAS' | 'CRYPTO' | 'PROPERTI';
+
+export interface InvestmentAsset {
+  id: string;
+  userId: string;
+  name: string;
+  category: InvestmentCategory;
+  quantity: number;
+  buyPrice: number;
+  currentPrice: number;
+  totalBuy: number;
+  totalCurrent: number;
+  gainLossAmount: number;
+  gainLossPercent: number;
+  notes?: string;
+  createdAt: string;
+}
+
+export interface InvestmentSummary {
+  totalInvested: number;
+  totalCurrentValue: number;
+  totalGainLoss: number;
+  totalGainLossPercent: number;
+  assetCount: number;
+  categoryBreakdown: Record<string, { value: number; count: number }>;
+}
+
+export type BankInstitution = 'BCA' | 'MANDIRI' | 'BRI' | 'BNI' | 'GOPAY' | 'OVO' | 'DANA';
+
+export interface BankConnection {
+  id: string;
+  userId: string;
+  institution: BankInstitution;
+  accountNumber: string;
+  accountName: string;
+  syncStatus: 'CONNECTED' | 'SYNCING' | 'ERROR' | 'DISCONNECTED';
+  lastSyncAt?: string;
+  autoSync: boolean;
+  createdAt: string;
+}
+
+export interface AiAnomalyItem {
+  type: string;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  title: string;
+  message: string;
+}
+
+export interface AiRecommendationItem {
+  id: string;
+  title: string;
+  description: string;
+  potentialSavings: number;
+}
+
+export interface AiInsightsData {
+  healthScore: number;
+  healthStatus: 'PRIMA' | 'STABIL' | 'PERLU PERHATIAN';
+  savingsRate: number;
+  netSavings: number;
+  totalIncome: number;
+  totalExpense: number;
+  estimatedRunwayDays: number;
+  anomalies: AiAnomalyItem[];
+  recommendations: AiRecommendationItem[];
+}
+
+export interface BusinessProfile {
+  id?: string;
+  userId: string;
+  businessName: string;
+  npwp?: string;
+  period: string;
+  annualRevenue: number;
+  operatingExpense: number;
+  cashRunwayMonths: number;
+  taxRate: number;
+}
+
+export interface BusinessCashflow {
+  period: string;
+  operating: {
+    cashIn: number;
+    cashOut: number;
+    net: number;
+  };
+  investing: {
+    net: number;
+  };
+  financing: {
+    net: number;
+  };
+  netCashflow: number;
+  runwayMonths: number;
+  monthlyBurnRate: number;
+}
+
+export interface BusinessTaxReport {
+  period: string;
+  businessName: string;
+  npwp?: string;
+  grossRevenue: number;
+  exemptThreshold: number;
+  taxableRevenue: number;
+  taxRate: number;
+  taxRateFormatted: string;
+  taxDue: number;
+  status: string;
+  legalReference: string;
 }
 
 export interface WorkspaceMember {
@@ -87,6 +203,7 @@ export interface Transaction {
   categorySlug: string;
   date: string;
   notes?: string;
+  walletId?: string;
   receipt?: ReceiptData;
   createdAt: string;
 }

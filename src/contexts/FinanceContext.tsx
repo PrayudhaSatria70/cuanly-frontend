@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useMemo, useCall
 import { Transaction, Category, BudgetLimit, FinancialSummary } from '@/types';
 import { INITIAL_CATEGORIES, INITIAL_BUDGETS, INITIAL_TRANSACTIONS } from '@/services/mockData';
 import { transactionsApi, categoriesApi, financeApi } from '@/services/api';
+import { useAuth } from './AuthContext';
 
 interface CategoryBudgetInfo {
   limit: number;
@@ -34,39 +35,111 @@ interface FinanceContextType {
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const isDemoUser = userId === 'usr_demo_1';
+
   const [categories, setCategories] = useState<Category[]>(INITIAL_CATEGORIES);
-  const [budgets, setBudgets] = useState<BudgetLimit[]>(INITIAL_BUDGETS);
-  const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
-  const [monthlyAllowance, setMonthlyAllowanceState] = useState<number>(6700000);
+  const [budgets, setBudgets] = useState<BudgetLimit[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [monthlyAllowance, setMonthlyAllowanceState] = useState<number>(0);
   const [isWarningDismissed, setIsWarningDismissed] = useState(false);
 
-  // Load from localStorage on mount
+  // Synchronize and initialize user-scoped financial data
   useEffect(() => {
-    try {
-      const storedTx = localStorage.getItem('cuanly_transactions');
-      if (storedTx) setTransactions(JSON.parse(storedTx));
-
-      const storedBudgets = localStorage.getItem('cuanly_budgets');
-      if (storedBudgets) setBudgets(JSON.parse(storedBudgets));
-
-      const storedCategories = localStorage.getItem('cuanly_categories');
-      if (storedCategories) setCategories(JSON.parse(storedCategories));
-
-      const storedAllowance = localStorage.getItem('cuanly_monthly_allowance');
-      if (storedAllowance) {
-        const parsed = Number(storedAllowance);
-        if (!isNaN(parsed) && parsed > 0) setMonthlyAllowanceState(parsed);
-      }
-    } catch {
-      // fallback to initial
+    if (!user) {
+      setTransactions([]);
+      setBudgets([]);
+      setMonthlyAllowanceState(0);
+      return;
     }
-  }, []);
+
+    if (isDemoUser) {
+      // Demo account loads demo dataset
+      try {
+        const storedTx = localStorage.getItem('cuanly_transactions_usr_demo_1') || localStorage.getItem('cuanly_transactions');
+        setTransactions(storedTx ? JSON.parse(storedTx) : INITIAL_TRANSACTIONS);
+
+        const storedBudgets = localStorage.getItem('cuanly_budgets_usr_demo_1') || localStorage.getItem('cuanly_budgets');
+        setBudgets(storedBudgets ? JSON.parse(storedBudgets) : INITIAL_BUDGETS);
+
+        const storedAllowance = localStorage.getItem('cuanly_monthly_allowance_usr_demo_1') || localStorage.getItem('cuanly_monthly_allowance');
+        setMonthlyAllowanceState(storedAllowance ? Number(storedAllowance) : 6700000);
+      } catch {
+        setTransactions(INITIAL_TRANSACTIONS);
+        setBudgets(INITIAL_BUDGETS);
+        setMonthlyAllowanceState(6700000);
+      }
+      return;
+    }
+
+    // Registered user: strictly user-scoped data starting from 0
+    try {
+      const userTxKey = `cuanly_transactions_${userId}`;
+      const userBudgetKey = `cuanly_budgets_${userId}`;
+      const userAllowanceKey = `cuanly_monthly_allowance_${userId}`;
+
+      const storedTx = localStorage.getItem(userTxKey);
+      const storedBudgets = localStorage.getItem(userBudgetKey);
+      const storedAllowance = localStorage.getItem(userAllowanceKey);
+
+      setTransactions(storedTx ? JSON.parse(storedTx) : []);
+      setBudgets(storedBudgets ? JSON.parse(storedBudgets) : []);
+      setMonthlyAllowanceState(storedAllowance ? Number(storedAllowance) : 0);
+    } catch {
+      setTransactions([]);
+      setBudgets([]);
+      setMonthlyAllowanceState(0);
+    }
+
+    // Fetch live user data from Database via Backend API
+    transactionsApi
+      .getAll()
+      .then((items) => {
+        if (Array.isArray(items)) {
+          setTransactions(items);
+          try {
+            localStorage.setItem(`cuanly_transactions_${userId}`, JSON.stringify(items));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend transactions sync notice (offline or local session):', err?.message);
+      });
+
+    financeApi
+      .getBudgets()
+      .then((items) => {
+        if (Array.isArray(items)) {
+          setBudgets(items);
+          try {
+            localStorage.setItem(`cuanly_budgets_${userId}`, JSON.stringify(items));
+          } catch {}
+        }
+      })
+      .catch((err) => {
+        console.warn('Backend budgets sync notice (offline or local session):', err?.message);
+      });
+
+    financeApi
+      .getSummary()
+      .then((sum) => {
+        if (sum && typeof sum.monthlyAllowance === 'number' && sum.monthlyAllowance > 0) {
+          setMonthlyAllowanceState(sum.monthlyAllowance);
+          try {
+            localStorage.setItem(`cuanly_monthly_allowance_${userId}`, sum.monthlyAllowance.toString());
+          } catch {}
+        }
+      })
+      .catch(() => {});
+  }, [user, userId, isDemoUser]);
 
   // Save to localStorage when state updates
   const persistTransactions = (newTx: Transaction[]) => {
     setTransactions(newTx);
     try {
-      localStorage.setItem('cuanly_transactions', JSON.stringify(newTx));
+      const key = userId ? `cuanly_transactions_${userId}` : 'cuanly_transactions';
+      localStorage.setItem(key, JSON.stringify(newTx));
     } catch {
       // ignore
     }
@@ -75,7 +148,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const persistBudgets = (newBudgets: BudgetLimit[]) => {
     setBudgets(newBudgets);
     try {
-      localStorage.setItem('cuanly_budgets', JSON.stringify(newBudgets));
+      const key = userId ? `cuanly_budgets_${userId}` : 'cuanly_budgets';
+      localStorage.setItem(key, JSON.stringify(newBudgets));
     } catch {
       // ignore
     }
@@ -84,24 +158,41 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const setMonthlyAllowance = (amount: number) => {
     setMonthlyAllowanceState(amount);
     try {
-      localStorage.setItem('cuanly_monthly_allowance', amount.toString());
+      const key = userId ? `cuanly_monthly_allowance_${userId}` : 'cuanly_monthly_allowance';
+      localStorage.setItem(key, amount.toString());
     } catch {
       // ignore
     }
+
+    // Persist to PostgreSQL database via Backend API
+    financeApi.updateAllowance(amount).catch((err) => {
+      console.warn('Backend allowance sync notice:', err?.message);
+    });
   };
 
   const resetToDefaultData = () => {
-    setTransactions(INITIAL_TRANSACTIONS);
-    setBudgets(INITIAL_BUDGETS);
-    setCategories(INITIAL_CATEGORIES);
-    setMonthlyAllowanceState(6700000);
-    try {
-      localStorage.setItem('cuanly_transactions', JSON.stringify(INITIAL_TRANSACTIONS));
-      localStorage.setItem('cuanly_budgets', JSON.stringify(INITIAL_BUDGETS));
-      localStorage.setItem('cuanly_categories', JSON.stringify(INITIAL_CATEGORIES));
-      localStorage.setItem('cuanly_monthly_allowance', '6700000');
-    } catch {
-      // ignore
+    if (isDemoUser) {
+      setTransactions(INITIAL_TRANSACTIONS);
+      setBudgets(INITIAL_BUDGETS);
+      setCategories(INITIAL_CATEGORIES);
+      setMonthlyAllowanceState(6700000);
+      try {
+        localStorage.setItem('cuanly_transactions_usr_demo_1', JSON.stringify(INITIAL_TRANSACTIONS));
+        localStorage.setItem('cuanly_budgets_usr_demo_1', JSON.stringify(INITIAL_BUDGETS));
+        localStorage.setItem('cuanly_monthly_allowance_usr_demo_1', '6700000');
+      } catch {}
+    } else {
+      setTransactions([]);
+      setBudgets([]);
+      setCategories(INITIAL_CATEGORIES);
+      setMonthlyAllowanceState(0);
+      if (userId) {
+        try {
+          localStorage.removeItem(`cuanly_transactions_${userId}`);
+          localStorage.removeItem(`cuanly_budgets_${userId}`);
+          localStorage.removeItem(`cuanly_monthly_allowance_${userId}`);
+        } catch {}
+      }
     }
   };
 
@@ -120,7 +211,8 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (data.categories && Array.isArray(data.categories)) {
       setCategories(data.categories);
       try {
-        localStorage.setItem('cuanly_categories', JSON.stringify(data.categories));
+        const key = userId ? `cuanly_categories_${userId}` : 'cuanly_categories';
+        localStorage.setItem(key, JSON.stringify(data.categories));
       } catch {
         // ignore
       }
@@ -153,7 +245,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const budget = budgets.find(
       (b) => b.categoryId === target.id || b.categorySlug === target.slug
     );
-    const limit = budget ? budget.limitAmount : 1000000;
+    const limit = budget ? budget.limitAmount : 0;
     const spent = getCategorySpent(target.id);
     const percent = limit > 0 ? Math.round((spent / limit) * 100) : 0;
 
@@ -202,7 +294,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     for (const cat of categories.filter((c) => c.type === 'EXPENSE')) {
       const info = getCategoryBudgetInfo(cat.id);
-      if (info.percent >= 80) {
+      if (info.limit > 0 && info.percent >= 80) {
         return {
           categoryId: cat.id,
           categoryName: cat.fallbackName,
@@ -217,9 +309,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const addTransaction = (data: Omit<Transaction, 'id' | 'createdAt'>): Transaction => {
     const targetCat = categories.find((c) => c.id === data.categoryId || c.slug === data.categorySlug);
+    const tempId = `tx_${Date.now()}`;
     const newTx: Transaction = {
       ...data,
-      id: `tx_${Date.now()}`,
+      id: tempId,
+      userId: userId || 'usr_registered',
       currency: data.currency || 'IDR',
       currencySymbol: data.currencySymbol || 'Rp',
       categoryName: targetCat ? targetCat.fallbackName : data.categoryName,
@@ -229,18 +323,62 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const updated = [newTx, ...transactions];
     persistTransactions(updated);
-    setIsWarningDismissed(false); // Reset warning if new expense alters limit
+    setIsWarningDismissed(false);
+
+    // Persist to PostgreSQL database via Backend API
+    transactionsApi
+      .create({
+        userId: newTx.userId,
+        type: newTx.type,
+        amount: newTx.amount,
+        categoryId: newTx.categoryId,
+        categoryName: newTx.categoryName,
+        categorySlug: newTx.categorySlug,
+        date: newTx.date,
+        notes: newTx.notes,
+        currency: newTx.currency,
+        currencySymbol: newTx.currencySymbol,
+        walletId: newTx.walletId,
+        receipt: newTx.receipt,
+      })
+      .then((saved) => {
+        if (saved && saved.id) {
+          setTransactions((prev) => {
+            const synced = prev.map((t) => (t.id === tempId ? { ...t, id: saved.id } : t));
+            if (userId) {
+              try {
+                localStorage.setItem(`cuanly_transactions_${userId}`, JSON.stringify(synced));
+              } catch {}
+            }
+            return synced;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('DB transaction sync notice (offline or local session):', err?.message);
+      });
+
     return newTx;
   };
 
   const updateTransaction = (id: string, updates: Partial<Transaction>) => {
     const updated = transactions.map((t) => (t.id === id ? { ...t, ...updates } : t));
     persistTransactions(updated);
+
+    // Persist to PostgreSQL database via Backend API
+    transactionsApi.update(id, updates).catch((err) => {
+      console.warn('DB transaction update notice:', err?.message);
+    });
   };
 
   const deleteTransaction = (id: string) => {
     const updated = transactions.filter((t) => t.id !== id);
     persistTransactions(updated);
+
+    // Persist to PostgreSQL database via Backend API
+    transactionsApi.delete(id).catch((err) => {
+      console.warn('DB transaction delete notice:', err?.message);
+    });
   };
 
   const updateBudget = (categoryId: string, limitAmount: number) => {
@@ -258,7 +396,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ...budgets,
         {
           id: `bgt_${Date.now()}`,
-          userId: 'usr_demo_01',
+          userId: userId || 'usr_registered',
           categoryId,
           categorySlug: slug,
           limitAmount,
@@ -267,6 +405,11 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       ];
     }
     persistBudgets(updated);
+
+    // Persist to PostgreSQL database via Backend API
+    financeApi.updateBudget(categoryId, limitAmount).catch((err) => {
+      console.warn('DB budget sync notice:', err?.message);
+    });
   };
 
   const dismissWarning = () => {

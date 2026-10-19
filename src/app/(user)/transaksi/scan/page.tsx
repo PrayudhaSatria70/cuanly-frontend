@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useFinance } from '@/contexts/FinanceContext';
 import { useNotification } from '@/contexts/NotificationContext';
 import { GlassCard } from '@/components/common/GlassCard';
@@ -32,6 +33,7 @@ import Link from 'next/link';
 
 export default function ScanReceiptPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const { t, formatCurrency, locale } = useLanguage();
   const { categories, addTransaction } = useFinance();
   const { addNotification } = useNotification();
@@ -224,7 +226,7 @@ export default function ScanReceiptPage() {
     const cat = categories.find((c) => c.id === selectedCatId) || categories[2];
 
     const savedTx = addTransaction({
-      userId: 'usr_demo_01',
+      userId: user?.id || 'usr_registered',
       type: 'EXPENSE',
       amount: totalAmount,
       categoryId: cat.id,
