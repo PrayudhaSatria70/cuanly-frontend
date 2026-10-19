@@ -14,7 +14,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login: (identifier: string, pin: string) => Promise<{ success: boolean; error?: string }>;
   loginAsDemo: (role: Role) => void;
-  register: (name: string, email: string, pin: string, username?: string, phone?: string) => Promise<{ success: boolean; error?: string }>;
+  register: (name: string, email: string, pin: string, username?: string, phone?: string, plan?: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   switchRole: () => void;
   sessionTimeoutMs: number;
@@ -293,7 +293,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string,
     passwordOrPin: string,
     username?: string,
-    phone?: string
+    phone?: string,
+    plan?: string
   ): Promise<{ success: boolean; error?: string }> => {
     if (!name || !email || !passwordOrPin) {
       return {
@@ -308,6 +309,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const resolvedUsername = username
       ? username.trim().toLowerCase().replace(/[^a-z0-9_]/g, '')
       : cleanEmail.split('@')[0].replace(/[^a-z0-9_]/g, '');
+    const targetPlan = (plan?.toUpperCase() as any) || 'FREE';
 
     // 1. Try Backend Registration
     try {
@@ -318,6 +320,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         pin: cleanPass,
         username: resolvedUsername,
         phone: phone?.trim(),
+        plan: targetPlan,
+        subscriptionTier: targetPlan,
       });
 
       if (res && res.success && res.user) {
@@ -365,6 +369,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       role: 'USER',
       password: cleanPass,
       pin: cleanPass,
+      subscriptionPlan: targetPlan,
+      subscriptionTier: targetPlan,
       createdAt: new Date().toISOString(),
     };
 

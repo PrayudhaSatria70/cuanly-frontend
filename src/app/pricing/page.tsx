@@ -37,30 +37,26 @@ export default function PricingPage() {
   const { t, locale } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const { isAuthenticated } = useAuth();
-  const { tier, upgradePlan } = useSubscription();
+  const { tier, upgradePlan, openPlanModal } = useSubscription();
 
   // Billing toggle: 'monthly' or 'annual'
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
-
-  // Selected plan modal for simulated checkout / registration
-  const [selectedPlanModal, setSelectedPlanModal] = useState<{
-    id: string;
-    name: string;
-    price: string;
-    target: string;
-  } | null>(null);
 
   // FAQ accordion active item
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const p = t.pricing;
 
-  const handleSelectPlan = (planId: string, planName: string, price: string, target: string) => {
-    if (isAuthenticated) {
-      setSelectedPlanModal({ id: planId, name: planName, price, target });
-    } else {
-      router.push(`/register?plan=${planId}&billing=${billingCycle}`);
-    }
+  const handleSelectPlan = (planId: string) => {
+    const tierMap: Record<string, SubscriptionTier> = {
+      basic: 'FREE',
+      free: 'FREE',
+      silver: 'SILVER',
+      gold: 'GOLD',
+      b2b: 'B2B',
+    };
+    const targetTier = tierMap[planId.toLowerCase()] || (planId.toUpperCase() as SubscriptionTier);
+    openPlanModal(targetTier);
   };
 
   return (
@@ -230,13 +226,22 @@ export default function PricingPage() {
             {/* ------------------------------------------------------------- */}
             {/* CARD 1: Basic (Free)                                          */}
             {/* ------------------------------------------------------------- */}
-            <div className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-white/85 to-[#F4F8FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95 backdrop-blur-2xl border border-white/80 dark:border-[#4D8DBA]/25 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all relative overflow-hidden group">
+            <div
+              onClick={() => handleSelectPlan('basic')}
+              className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-white/85 to-[#F4F8FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95 backdrop-blur-2xl border border-white/80 dark:border-[#4D8DBA]/25 shadow-xl hover:shadow-2xl hover:border-[#4D8DBA] dark:hover:border-[#8AD6D1] hover:-translate-y-1 transition-all relative overflow-hidden group cursor-pointer"
+            >
               <div>
                 {/* Header & Target Persona */}
                 <div className="space-y-1 pb-4 border-b border-gray-100 dark:border-gray-800">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300">
-                    {p.starterBadge}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-slate-300">
+                      {p.starterBadge}
+                    </span>
+                    <span className="text-[10px] font-bold text-[#4D8DBA] dark:text-[#8AD6D1] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                      <Sparkles className="w-3 h-3" />
+                      <span>{locale === 'en' ? 'View Details' : 'Lihat Detail'}</span>
+                    </span>
+                  </div>
                   <h3 className="text-xl font-extrabold text-[#0C2340] dark:text-white">
                     {p.basicPlanName}
                   </h3>
@@ -283,9 +288,10 @@ export default function PricingPage() {
               <div className="pt-8">
                 <button
                   type="button"
-                  onClick={() =>
-                    handleSelectPlan('basic', p.basicPlanName, p.basicPrice, p.basicTarget)
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPlan('basic');
+                  }}
                   className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-[#0C2340] dark:text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>{p.ctaStartFree}</span>
@@ -297,13 +303,22 @@ export default function PricingPage() {
             {/* ------------------------------------------------------------- */}
             {/* CARD 2: Silver Plan                                           */}
             {/* ------------------------------------------------------------- */}
-            <div className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-white/85 to-[#EDF5FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95 backdrop-blur-2xl border border-[#8AD6D1]/60 dark:border-[#8AD6D1]/35 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all relative overflow-hidden group">
+            <div
+              onClick={() => handleSelectPlan('silver')}
+              className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-white/85 to-[#EDF5FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95 backdrop-blur-2xl border border-[#8AD6D1]/60 dark:border-[#8AD6D1]/35 shadow-xl hover:shadow-2xl hover:border-[#4D8DBA] dark:hover:border-[#8AD6D1] hover:-translate-y-1 transition-all relative overflow-hidden group cursor-pointer"
+            >
               <div>
                 {/* Header & Target Persona */}
                 <div className="space-y-1 pb-4 border-b border-gray-100 dark:border-gray-800">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1]">
-                    {p.popularBadge}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1]">
+                      {p.popularBadge}
+                    </span>
+                    <span className="text-[10px] font-bold text-[#4D8DBA] dark:text-[#8AD6D1] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                      <Sparkles className="w-3 h-3" />
+                      <span>{locale === 'en' ? 'View Details' : 'Lihat Detail'}</span>
+                    </span>
+                  </div>
                   <h3 className="text-xl font-extrabold text-[#0C2340] dark:text-white">
                     {p.silverPlanName}
                   </h3>
@@ -354,14 +369,10 @@ export default function PricingPage() {
               <div className="pt-8">
                 <button
                   type="button"
-                  onClick={() =>
-                    handleSelectPlan(
-                      'silver',
-                      p.silverPlanName,
-                      billingCycle === 'annual' ? 'Rp89.000/tahun' : 'Rp10.000/bulan',
-                      p.silverTarget
-                    )
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPlan('silver');
+                  }}
                   className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] hover:from-[#2E678E] hover:to-[#1C4A6B] text-white transition-all shadow-md shadow-[#4D8DBA]/25 hover:shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>{p.ctaChooseSilver}</span>
@@ -373,7 +384,10 @@ export default function PricingPage() {
             {/* ------------------------------------------------------------- */}
             {/* CARD 3: Gold Plan (HIGHLIGHTED / BEST VALUE)                   */}
             {/* ------------------------------------------------------------- */}
-            <div className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-amber-50/30 to-[#EDF5FA]/90 dark:from-[#0D1926]/95 dark:via-[#191F26]/90 dark:to-[#071018]/95 backdrop-blur-2xl border-2 border-amber-400/80 dark:border-amber-400/60 shadow-2xl hover:shadow-amber-500/10 hover:-translate-y-1.5 transition-all relative overflow-hidden group xl:-mt-2 xl:mb-2">
+            <div
+              onClick={() => handleSelectPlan('gold')}
+              className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-amber-50/30 to-[#EDF5FA]/90 dark:from-[#0D1926]/95 dark:via-[#191F26]/90 dark:to-[#071018]/95 backdrop-blur-2xl border-2 border-amber-400/80 dark:border-amber-400/60 shadow-2xl hover:shadow-amber-500/20 hover:border-amber-500 hover:-translate-y-1.5 transition-all relative overflow-hidden group xl:-mt-2 xl:mb-2 cursor-pointer"
+            >
               {/* Highlight ribbon */}
               <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-400 to-amber-500 text-[#0C2340] text-[10px] font-black uppercase tracking-wider py-1 px-4 rounded-bl-xl shadow-xs">
                 {p.recommendedBadge}
@@ -382,9 +396,15 @@ export default function PricingPage() {
               <div>
                 {/* Header & Target Persona */}
                 <div className="space-y-1 pb-4 border-b border-gray-100 dark:border-gray-800">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-400/20 text-amber-700 dark:text-amber-300">
-                    Power User
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-amber-400/20 text-amber-700 dark:text-amber-300">
+                      Power User
+                    </span>
+                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 pr-14">
+                      <Sparkles className="w-3 h-3" />
+                      <span>{locale === 'en' ? 'View Details' : 'Lihat Detail'}</span>
+                    </span>
+                  </div>
                   <h3 className="text-xl font-extrabold text-[#0C2340] dark:text-white flex items-center gap-1.5">
                     <span>{p.goldPlanName}</span>
                     <Sparkles className="w-4 h-4 text-amber-500" />
@@ -436,14 +456,10 @@ export default function PricingPage() {
               <div className="pt-8">
                 <button
                   type="button"
-                  onClick={() =>
-                    handleSelectPlan(
-                      'gold',
-                      p.goldPlanName,
-                      billingCycle === 'annual' ? 'Rp199.000/tahun' : 'Rp25.000/bulan',
-                      p.goldTarget
-                    )
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPlan('gold');
+                  }}
                   className="w-full py-3.5 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-800 text-white transition-all shadow-lg shadow-amber-500/25 hover:shadow-xl cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>{p.ctaChooseGold}</span>
@@ -455,13 +471,22 @@ export default function PricingPage() {
             {/* ------------------------------------------------------------- */}
             {/* CARD 4: B2B Plan                                              */}
             {/* ------------------------------------------------------------- */}
-            <div className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-white/85 to-[#EDF5FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95 backdrop-blur-2xl border border-[#4D8DBA]/60 dark:border-[#4D8DBA]/40 shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all relative overflow-hidden group">
+            <div
+              onClick={() => handleSelectPlan('b2b')}
+              className="flex flex-col justify-between p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-white/95 via-white/85 to-[#EDF5FA]/90 dark:from-[#0D1926]/95 dark:via-[#0B1520]/90 dark:to-[#071018]/95 backdrop-blur-2xl border border-[#4D8DBA]/60 dark:border-[#4D8DBA]/40 shadow-xl hover:shadow-2xl hover:border-purple-400 hover:-translate-y-1 transition-all relative overflow-hidden group cursor-pointer"
+            >
               <div>
                 {/* Header & Target Persona */}
                 <div className="space-y-1 pb-4 border-b border-gray-100 dark:border-gray-800">
-                  <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
-                    {p.enterpriseBadge}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300">
+                      {p.enterpriseBadge}
+                    </span>
+                    <span className="text-[10px] font-bold text-purple-600 dark:text-purple-300 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                      <Sparkles className="w-3 h-3" />
+                      <span>{locale === 'en' ? 'View Details' : 'Lihat Detail'}</span>
+                    </span>
+                  </div>
                   <h3 className="text-xl font-extrabold text-[#0C2340] dark:text-white flex items-center gap-1.5">
                     <span>{p.b2bPlanName}</span>
                     <Building2 className="w-4 h-4 text-[#4D8DBA]" />
@@ -511,9 +536,10 @@ export default function PricingPage() {
               <div className="pt-8">
                 <button
                   type="button"
-                  onClick={() =>
-                    handleSelectPlan('b2b', p.b2bPlanName, p.b2bPrice, p.b2bTarget)
-                  }
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSelectPlan('b2b');
+                  }}
                   className="w-full py-3 px-4 rounded-xl font-bold text-xs bg-gradient-to-r from-purple-700 to-[#1C4A6B] hover:from-purple-800 hover:to-[#0C2340] text-white transition-all shadow-md shadow-purple-900/20 hover:shadow-lg cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <span>{p.ctaChooseB2B}</span>
@@ -562,8 +588,12 @@ export default function PricingPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-800/80">
                   {/* Row 1: Basic (Free) */}
-                  <tr className="hover:bg-gray-50/50 dark:hover:bg-[#112233]/40 transition-colors">
-                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap">
+                  <tr
+                    onClick={() => handleSelectPlan('basic')}
+                    className="hover:bg-blue-50/60 dark:hover:bg-[#112233]/70 transition-colors cursor-pointer group"
+                    title={locale === 'en' ? 'Click to view Basic Plan details' : 'Klik untuk melihat detail Paket Basic'}
+                  >
+                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap group-hover:text-[#4D8DBA] transition-colors">
                       {p.basicPlanName}
                     </td>
                     <td className="p-4 sm:p-5 text-gray-600 dark:text-slate-300">
@@ -586,8 +616,12 @@ export default function PricingPage() {
                   </tr>
 
                   {/* Row 2: Silver Plan */}
-                  <tr className="hover:bg-gray-50/50 dark:hover:bg-[#112233]/40 transition-colors">
-                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap">
+                  <tr
+                    onClick={() => handleSelectPlan('silver')}
+                    className="hover:bg-blue-50/60 dark:hover:bg-[#112233]/70 transition-colors cursor-pointer group"
+                    title={locale === 'en' ? 'Click to view Silver Plan details' : 'Klik untuk melihat detail Paket Silver'}
+                  >
+                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap group-hover:text-[#4D8DBA] transition-colors">
                       {p.silverPlanName}
                     </td>
                     <td className="p-4 sm:p-5 text-gray-600 dark:text-slate-300 italic">
@@ -615,8 +649,12 @@ export default function PricingPage() {
                   </tr>
 
                   {/* Row 3: Gold Plan */}
-                  <tr className="hover:bg-gray-50/50 dark:hover:bg-[#112233]/40 transition-colors bg-amber-500/5">
-                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap">
+                  <tr
+                    onClick={() => handleSelectPlan('gold')}
+                    className="hover:bg-amber-100/40 dark:hover:bg-amber-950/20 bg-amber-500/5 transition-colors cursor-pointer group"
+                    title={locale === 'en' ? 'Click to view Gold Plan details' : 'Klik untuk melihat detail Paket Gold'}
+                  >
+                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap group-hover:text-amber-600 transition-colors">
                       <span className="flex items-center gap-1.5">
                         <span>{p.goldPlanName}</span>
                         <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-amber-400 text-[#0C2340]">
@@ -649,8 +687,12 @@ export default function PricingPage() {
                   </tr>
 
                   {/* Row 4: B2B Plan */}
-                  <tr className="hover:bg-gray-50/50 dark:hover:bg-[#112233]/40 transition-colors">
-                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap">
+                  <tr
+                    onClick={() => handleSelectPlan('b2b')}
+                    className="hover:bg-purple-50/60 dark:hover:bg-[#1a1133]/60 transition-colors cursor-pointer group"
+                    title={locale === 'en' ? 'Click to view B2B Plan details' : 'Klik untuk melihat detail Paket B2B'}
+                  >
+                    <td className="p-4 sm:p-5 font-bold text-[#0C2340] dark:text-white whitespace-nowrap group-hover:text-purple-600 transition-colors">
                       {p.b2bPlanName}
                     </td>
                     <td className="p-4 sm:p-5 text-gray-600 dark:text-slate-300">
@@ -771,82 +813,7 @@ export default function PricingPage() {
         </section>
       </main>
 
-      {/* ========================================================================= */}
-      {/* MODAL: Active user plan selection confirmation                            */}
-      {/* ========================================================================= */}
-      {selectedPlanModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
-          <div className="w-full max-w-md p-6 rounded-3xl bg-white dark:bg-[#0D1926] border border-[#AEC4D4]/60 dark:border-[#4D8DBA]/40 shadow-2xl space-y-5 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-gray-100 dark:border-gray-800">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 rounded-xl bg-[#8AD6D1]/20 text-[#1C4A6B] dark:text-[#8AD6D1]">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <h3 className="font-extrabold text-sm sm:text-base text-[#0C2340] dark:text-white">
-                  {locale === 'en' ? 'Confirm Selected Plan' : 'Konfirmasi Pilihan Paket'}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedPlanModal(null)}
-                className="p-1 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-white cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
 
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#EDF5FA]/80 to-white dark:from-[#071018] dark:to-[#0B1520] border border-[#AEC4D4]/40 dark:border-[#4D8DBA]/30 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-500">{locale === 'en' ? 'Selected Plan:' : 'Paket Terpilih:'}</span>
-                <span className="text-xs font-extrabold text-[#4D8DBA] dark:text-[#8AD6D1]">
-                  {selectedPlanModal.name}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-500">{locale === 'en' ? 'Price:' : 'Harga:'}</span>
-                <span className="text-sm font-black text-[#0C2340] dark:text-white">
-                  {selectedPlanModal.price}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-500">{locale === 'en' ? 'Target Persona:' : 'Target Persona:'}</span>
-                <span className="text-xs text-gray-700 dark:text-slate-300">
-                  {selectedPlanModal.target}
-                </span>
-              </div>
-            </div>
-
-            <p className="text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
-              {locale === 'en'
-                ? 'Your account is connected. Click the button below to activate this subscription plan simulation.'
-                : 'Status akun Anda saat ini terhubung. Klik tombol di bawah untuk melanjutkan aktivasi simulasi paket langganan ini ke akun Anda.'}
-            </p>
-
-            <div className="flex items-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setSelectedPlanModal(null)}
-                className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-700 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-              >
-                {t.common.cancel}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const targetTier = selectedPlanModal.id.toUpperCase() as SubscriptionTier;
-                  upgradePlan(targetTier);
-                  setSelectedPlanModal(null);
-                  router.push('/beranda');
-                }}
-                className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#4D8DBA] to-[#2E678E] text-white text-xs font-bold hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
-              >
-                <Check className="w-4 h-4" />
-                <span>{locale === 'en' ? 'Activate Now' : 'Aktifkan Sekarang'}</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Footer Note */}
       <footer className="border-t border-gray-200/80 dark:border-[#4D8DBA]/20 py-8 text-center text-xs text-gray-400">

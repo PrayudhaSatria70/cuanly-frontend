@@ -2,9 +2,10 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Crown,
   Sparkles,
@@ -12,15 +13,19 @@ import {
   ArrowRight,
   X,
   Zap,
-  Lock,
-  Building2,
-  ShieldCheck,
 } from 'lucide-react';
 
 export const UpgradeModal: React.FC = () => {
   const router = useRouter();
-  const { isUpgradeModalOpen, upgradeModalData, closeUpgradeModal, upgradePlan, plan: currentPlan } =
-    useSubscription();
+  const pathname = usePathname();
+  const { isAuthenticated } = useAuth();
+  const {
+    isUpgradeModalOpen,
+    upgradeModalData,
+    closeUpgradeModal,
+    upgradePlan,
+    plan: currentPlan,
+  } = useSubscription();
   const { t, locale } = useLanguage();
 
   if (!isUpgradeModalOpen || !upgradeModalData) return null;
@@ -28,6 +33,21 @@ export const UpgradeModal: React.FC = () => {
   const { featureName, requiredPlan, featureDescription, benefits } = upgradeModalData;
 
   const planInfo = {
+    FREE: {
+      title: t.modals.upgrade.basicTitle || 'Basic Plan (Free Forever)',
+      badge: t.modals.upgrade.basicBadge || 'Starter Plan',
+      price: t.modals.upgrade.basicPrice || 'Rp0 / month (Free Forever)',
+      color: 'from-slate-600 via-slate-700 to-slate-800',
+      border: 'border-slate-400/60',
+      badgeBg: 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200',
+      defaultBenefits: t.modals.upgrade.basicBenefits || [
+        'Pencatatan manual arus kas dasar (pemasukan & pengeluaran)',
+        'Maksimal 2 Dompet (Tunai & Rekening Bank)',
+        'Smart OCR Scan Struk Belanja dengan penyimpanan bukti',
+        'Laporan grafik arus kas dan kategori bulanan standar',
+        'Dukungan multi-mata uang dan dwibahasa (ID/EN)',
+      ],
+    },
     SILVER: {
       title: t.modals.upgrade.silverTitle,
       badge: t.modals.upgrade.silverBadge,
@@ -55,17 +75,36 @@ export const UpgradeModal: React.FC = () => {
       badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-950/80 dark:text-purple-300',
       defaultBenefits: t.modals.upgrade.b2bBenefits,
     },
-  }[requiredPlan];
+  }[requiredPlan] || {
+    title: requiredPlan,
+    badge: 'Plan',
+    price: '-',
+    color: 'from-[#4D8DBA] to-[#2E678E]',
+    border: 'border-blue-400',
+    badgeBg: 'bg-blue-100 text-blue-800',
+    defaultBenefits: [],
+  };
 
   const displayBenefits = benefits && benefits.length > 0 ? benefits : planInfo.defaultBenefits;
 
   const handleInstantActivate = () => {
-    upgradePlan(requiredPlan);
+    if (isAuthenticated) {
+      upgradePlan(requiredPlan);
+      closeUpgradeModal();
+      if (pathname === '/pricing') {
+        router.push('/beranda');
+      }
+    } else {
+      closeUpgradeModal();
+      router.push(`/register?plan=${requiredPlan.toLowerCase()}`);
+    }
   };
 
   const handleViewPricing = () => {
     closeUpgradeModal();
-    router.push('/pricing');
+    if (pathname !== '/pricing') {
+      router.push('/pricing');
+    }
   };
 
   return (
@@ -166,7 +205,7 @@ export const UpgradeModal: React.FC = () => {
             onClick={handleViewPricing}
             className="w-full sm:flex-1 py-3 px-4 rounded-xl border border-gray-300 dark:border-[#4D8DBA]/40 text-xs font-bold text-gray-700 dark:text-slate-200 hover:bg-white dark:hover:bg-[#0D1926] hover:text-[#4D8DBA] dark:hover:text-[#8AD6D1] transition-all cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
           >
-            <span>{t.modals.upgrade.viewPricing}</span>
+            <span>{pathname === '/pricing' ? (locale === 'en' ? 'Back to Overview' : 'Kembali ke Ikhtisar') : t.modals.upgrade.viewPricing}</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
@@ -183,5 +222,6 @@ export const UpgradeModal: React.FC = () => {
     </div>
   );
 };
+
 
 

@@ -8,9 +8,6 @@ import { GlassCard } from '@/components/common/GlassCard';
 import { CashflowChart } from '@/components/charts/CashflowChart';
 import { CategoryDonutChart } from '@/components/charts/CategoryDonutChart';
 import { EditAllowanceModal } from '@/components/finance/EditAllowanceModal';
-import { WalletManagerModal } from '@/components/finance/WalletManagerModal';
-import { DebtManagerModal } from '@/components/finance/DebtManagerModal';
-import { SharedWorkspaceModal } from '@/components/finance/SharedWorkspaceModal';
 import { PremiumCrownBadge } from '@/components/common/PremiumCrownBadge';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import {
@@ -36,12 +33,19 @@ export default function BerandaPage() {
   const { t, locale, formatCurrency, formatDate } = useLanguage();
   const { user } = useAuth();
   const { summary, activeBudgetWarning, dismissWarning, transactions } = useFinance();
-  const { tier, hasAccess, openUpgradeModal, wallets, debts, workspaceMembers } = useSubscription();
+  const {
+    tier,
+    hasAccess,
+    openUpgradeModal,
+    wallets,
+    debts,
+    workspaceMembers,
+    openWalletModal,
+    openDebtModal,
+    openWorkspaceModal,
+  } = useSubscription();
 
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
-  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
-  const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
-  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
 
   const recentTransactions = transactions.slice(0, 5);
 
@@ -124,7 +128,7 @@ export default function BerandaPage() {
               </span>
               <button
                 type="button"
-                onClick={() => setIsWalletModalOpen(true)}
+                onClick={openWalletModal}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 title={t.nav.myWallets}
               >
@@ -218,7 +222,7 @@ export default function BerandaPage() {
         {/* Feature 1: Dompet Multi-Akun */}
         <button
           type="button"
-          onClick={() => setIsWalletModalOpen(true)}
+          onClick={openWalletModal}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
         >
           <div className="flex items-center gap-3">
@@ -254,7 +258,7 @@ export default function BerandaPage() {
               );
               return;
             }
-            setIsDebtModalOpen(true);
+            openDebtModal();
           }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-amber-400 transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
         >
@@ -293,7 +297,7 @@ export default function BerandaPage() {
               );
               return;
             }
-            setIsWorkspaceModalOpen(true);
+            openWorkspaceModal();
           }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-purple-400 transition-all text-left flex items-center justify-between group shadow-xs hover:shadow-md cursor-pointer"
         >
@@ -465,24 +469,6 @@ export default function BerandaPage() {
       <EditAllowanceModal
         isOpen={isEditAllowanceOpen}
         onClose={() => setIsEditAllowanceOpen(false)}
-      />
-
-      {/* Wallet Manager Modal */}
-      <WalletManagerModal
-        isOpen={isWalletModalOpen}
-        onClose={() => setIsWalletModalOpen(false)}
-      />
-
-      {/* Debt Manager Modal */}
-      <DebtManagerModal
-        isOpen={isDebtModalOpen}
-        onClose={() => setIsDebtModalOpen(false)}
-      />
-
-      {/* Shared Workspace Modal */}
-      <SharedWorkspaceModal
-        isOpen={isWorkspaceModalOpen}
-        onClose={() => setIsWorkspaceModalOpen(false)}
       />
     </div>
   );

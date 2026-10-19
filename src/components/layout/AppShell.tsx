@@ -7,11 +7,23 @@ import { TopHeader } from '@/components/layout/TopHeader';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { DesktopNav } from '@/components/layout/DesktopNav';
 import { NotificationDrawer } from '@/components/layout/NotificationDrawer';
+import { WalletManagerModal } from '@/components/finance/WalletManagerModal';
+import { DebtManagerModal } from '@/components/finance/DebtManagerModal';
+import { SharedWorkspaceModal } from '@/components/finance/SharedWorkspaceModal';
+import { useSubscription } from '@/contexts/SubscriptionContext';
 
 export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
+  const {
+    isWalletModalOpen,
+    closeWalletModal,
+    isDebtModalOpen,
+    closeDebtModal,
+    isWorkspaceModalOpen,
+    closeWorkspaceModal,
+  } = useSubscription();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -72,6 +84,10 @@ export const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) 
         </main>
       </div>
       <BottomNav />
+      {/* Global feature modals accessible across all routes and roles */}
+      <WalletManagerModal isOpen={isWalletModalOpen} onClose={closeWalletModal} />
+      <DebtManagerModal isOpen={isDebtModalOpen} onClose={closeDebtModal} />
+      <SharedWorkspaceModal isOpen={isWorkspaceModalOpen} onClose={closeWorkspaceModal} />
     </div>
   );
 };

@@ -632,6 +632,8 @@ The backend is structured for immediate zero-config deployment on Vercel:
 1. **Registration Form (`/register`):**
    - User inputs their full name, email, optional username, optional phone number, and creates their credentials via the "Create your Password or PIN" ("Buat Password atau PIN") field.
    - Accepts both alphanumeric passwords with symbols and numeric PINs (min. 4 characters, up to 64 chars).
+   - **Basic Password Security Note & Strength Meter:** Detects overly simple / easily guessable passwords (`1234`, `123456`, repetitive sequences, or length < 6). Displays an actionable amber warning banner advising stronger character combinations alongside a real-time 3-segment strength meter.
+   - **Signup Plan Association:** Query parameter `?plan=...` is captured and visually highlighted via a dedicated badge. The requested tier (`FREE`, `SILVER`, `GOLD`, `B2B`) is included in the registration payload to initialize the user's subscription tier.
    - Interactive show/hide visibility toggle with accessible eye icons (`Eye` and `EyeOff`).
    - Dispatches payload with synchronized `password` and `pin` fields to `POST /api/v1/auth/register`.
 2. **Backend & Database Synchronization:**
@@ -641,4 +643,20 @@ The backend is structured for immediate zero-config deployment on Vercel:
    - User enters their identifier (Username or Email) and their Password or PIN.
    - Backend login receives `{ identifier, password }` matching either credential representation.
    - Client-side fallback validates against overrides, `user.password`, and `user.pin`.
+
+### 8.5 Pricing Plans, Upgrade Modal Flow, and Admin Privilege Architecture
+1. **Interactive Pricing Plan Cards & Comparison Table (`/pricing`):**
+   - Every pricing plan card (`Basic / Free`, `Silver`, `Gold`, `B2B`) and every row in the comparison table is clickable.
+   - Clicking opens the `UpgradeModal` styled with the subscription crown badge, current status indicator, requested feature highlight with sparkles, estimated plan price (`Rp10,000 / month`, `Rp25,000 / month (or Rp199,000/year)`, `Rp59,000 / month`), and green checkmark feature checklist.
+   - Primary action activates the plan simulation or redirects guests to `/register?plan=[TIER]`.
+   - Secondary action routes to `/pricing` or dismisses the modal.
+2. **Global Feature Modals & Live Admin Access:**
+   - Feature modals (`WalletManagerModal`, `DebtManagerModal`, `SharedWorkspaceModal`) are hosted in `AppShell`, accessible on all authenticated routes and roles.
+   - Live admin (`role: 'ADMIN'`) possesses `effectivePlan: 'B2B'` and `hasAccess() === true` across all tiers.
+   - Clicking Multi-Wallets, Debts (Utang & Piutang), or Team Workspace in `DesktopNav` or `BerandaPage` directly launches the corresponding functional management modal without redirection or reload loops.
+3. **Backend API Endpoints (`/api/v1/pricing`):**
+   - `GET /api/v1/pricing/plans`: Returns all tier metadata, pricing, wallet limits, and feature lists.
+   - `GET /api/v1/pricing/my-plan`: Returns current tier, effective plan, admin status, and available plans.
+   - `POST /api/v1/pricing/upgrade`: Updates authenticated user's `subscriptionTier` in database.
+
 

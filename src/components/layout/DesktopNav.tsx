@@ -31,7 +31,14 @@ export const DesktopNav: React.FC = () => {
   const pathname = usePathname();
   const { t } = useLanguage();
   const { role } = useAuth();
-  const { tier, hasAccess, openUpgradeModal } = useSubscription();
+  const {
+    tier,
+    hasAccess,
+    openUpgradeModal,
+    openWalletModal,
+    openDebtModal,
+    openWorkspaceModal,
+  } = useSubscription();
 
   const userItems = [
     { name: t.nav.home, href: '/beranda', icon: Home },
@@ -90,16 +97,17 @@ export const DesktopNav: React.FC = () => {
           </span>
           <div className="mt-2 space-y-1">
             {/* Multi-Dompet */}
-            <Link
-              href="/beranda"
-              className="flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group"
+            <button
+              type="button"
+              onClick={openWalletModal}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <Wallet className="w-4 h-4 text-gray-400 dark:text-slate-400 group-hover:text-[#4D8DBA]" />
                 <span>{t.nav.multiWallet}</span>
               </div>
               {!hasAccess('SILVER') && <PremiumCrownBadge plan="SILVER" />}
-            </Link>
+            </button>
 
             {/* Utang & Piutang (Gold) */}
             <button
@@ -112,7 +120,7 @@ export const DesktopNav: React.FC = () => {
                     t.modals.debt.subtitle
                   );
                 } else {
-                  window.location.href = '/beranda';
+                  openDebtModal();
                 }
               }}
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"
@@ -135,7 +143,7 @@ export const DesktopNav: React.FC = () => {
                     t.modals.workspace.subtitle
                   );
                 } else {
-                  window.location.href = '/beranda';
+                  openWorkspaceModal();
                 }
               }}
               className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-sm font-semibold text-gray-600 dark:text-slate-300 hover:text-[#2E678E] dark:hover:text-white hover:bg-[#AEC4D4]/15 dark:hover:bg-[#4D8DBA]/15 transition-all group text-left cursor-pointer"

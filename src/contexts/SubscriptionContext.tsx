@@ -3,12 +3,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { SubscriptionTier, Wallet, DebtItem, WorkspaceMember } from '@/types';
 import { INITIAL_WALLETS, INITIAL_DEBTS, INITIAL_WORKSPACE_MEMBERS } from '@/services/mockData';
-import { walletsApi, debtsApi, workspaceApi } from '@/services/api';
+import { walletsApi, debtsApi, workspaceApi, pricingApi } from '@/services/api';
 import { useAuth } from './AuthContext';
 
 interface UpgradeModalData {
   featureName: string;
-  requiredPlan: 'SILVER' | 'GOLD' | 'B2B';
+  requiredPlan: SubscriptionTier;
   featureDescription?: string;
   benefits?: string[];
 }
@@ -25,11 +25,25 @@ interface SubscriptionContextType {
   upgradeModalData: UpgradeModalData | null;
   openUpgradeModal: (
     featureName: string,
-    requiredPlan: 'SILVER' | 'GOLD' | 'B2B',
+    requiredPlan: SubscriptionTier,
     featureDescription?: string,
     benefits?: string[]
   ) => void;
+  openPlanModal: (tier: SubscriptionTier) => void;
   closeUpgradeModal: () => void;
+
+  // Global modals control for Wallets, Debts, and Shared Workspace
+  isWalletModalOpen: boolean;
+  openWalletModal: () => void;
+  closeWalletModal: () => void;
+
+  isDebtModalOpen: boolean;
+  openDebtModal: () => void;
+  closeDebtModal: () => void;
+
+  isWorkspaceModalOpen: boolean;
+  openWorkspaceModal: () => void;
+  closeWorkspaceModal: () => void;
 
   // Wallets feature (Free max 2, Silver+ Unlimited)
   wallets: Wallet[];
@@ -68,6 +82,20 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
   const [upgradeModalData, setUpgradeModalData] = useState<UpgradeModalData | null>(null);
 
+  // Global modals state
+  const [isWalletModalOpen, setIsWalletModalOpen] = useState(false);
+  const [isDebtModalOpen, setIsDebtModalOpen] = useState(false);
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+
+  const openWalletModal = useCallback(() => setIsWalletModalOpen(true), []);
+  const closeWalletModal = useCallback(() => setIsWalletModalOpen(false), []);
+
+  const openDebtModal = useCallback(() => setIsDebtModalOpen(true), []);
+  const closeDebtModal = useCallback(() => setIsDebtModalOpen(false), []);
+
+  const openWorkspaceModal = useCallback(() => setIsWorkspaceModalOpen(true), []);
+  const closeWorkspaceModal = useCallback(() => setIsWorkspaceModalOpen(false), []);
+
   // Wallets state
   const [wallets, setWallets] = useState<Wallet[]>(INITIAL_WALLETS);
 
@@ -80,14 +108,13 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   // Budgeting custom threshold percent (default 80%, Gold users can customize e.g. 50%, 75%, 90%)
   const [warningThresholdPercent, setWarningThresholdPercentState] = useState<number>(80);
 
-  // Load subscription plan from localStorage on mount
+  // Load subscription plan from localStorage or user on mount
   useEffect(() => {
     try {
       const storedPlan = localStorage.getItem('cuanly_subscription_tier') as SubscriptionTier;
       if (storedPlan && ['FREE', 'SILVER', 'GOLD', 'B2B'].includes(storedPlan)) {
         setPlanState(storedPlan);
       } else {
-        // Default to FREE so Canva-style premium locks and upgrade pop-up modals are visible
         setPlanState('FREE');
       }
 
@@ -118,6 +145,15 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, []);
 
+  // Synchronize plan from authenticated user profile
+  useEffect(() => {
+    if (user?.subscriptionTier && ['FREE', 'SILVER', 'GOLD', 'B2B'].includes(user.subscriptionTier)) {
+      setPlanState(user.subscriptionTier);
+    } else if (user?.subscriptionPlan && ['FREE', 'SILVER', 'GOLD', 'B2B'].includes(user.subscriptionPlan)) {
+      setPlanState(user.subscriptionPlan);
+    }
+  }, [user]);
+
   const setPlan = useCallback((tier: SubscriptionTier) => {
     setPlanState(tier);
     try {
@@ -132,6 +168,22 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       setPlan(newPlan);
       setIsUpgradeModalOpen(false);
       setUpgradeModalData(null);
+
+      // Persist to user session in localStorage
+      try {
+        const storedUser = localStorage.getItem('cuanly_auth_user');
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          parsed.subscriptionPlan = newPlan;
+          parsed.subscriptionTier = newPlan;
+          localStorage.setItem('cuanly_auth_user', JSON.stringify(parsed));
+        }
+      } catch {}
+
+      // Asynchronously synchronize with Backend & Database
+      pricingApi.upgrade(newPlan).catch((err) => {
+        console.warn('Backend upgrade sync notice (offline or local session):', err?.message);
+      });
     },
     [setPlan]
   );
@@ -151,13 +203,10 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const openUpgradeModal = useCallback(
     (
       featureName: string,
-      requiredPlan: 'SILVER' | 'GOLD' | 'B2B',
+      requiredPlan: SubscriptionTier,
       featureDescription?: string,
       benefits?: string[]
     ) => {
-      // Admin and demo admin never see the upgrade modal
-      if (isAdmin) return;
-
       setUpgradeModalData({
         featureName,
         requiredPlan,
@@ -166,7 +215,38 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       });
       setIsUpgradeModalOpen(true);
     },
-    [isAdmin]
+    []
+  );
+
+  const openPlanModal = useCallback(
+    (targetTier: SubscriptionTier) => {
+      const planHighlights: Record<SubscriptionTier, { name: string; desc: string }> = {
+        FREE: {
+          name: 'Core Smart Money Tracking & OCR',
+          desc: 'Pencatatan harian arus kas, scan struk otomatis dengan AI OCR, dan laporan grafik bulanan.',
+        },
+        SILVER: {
+          name: 'Unlimited Multi-Wallets & CSV Export',
+          desc: 'Kelola seluruh pos rekening dan e-wallet tanpa batasan jumlah serta ekspor laporan ke format CSV/Excel.',
+        },
+        GOLD: {
+          name: 'Debt & Receivables Manager',
+          desc: 'Track loans and receivables due for settlement with custom budgeting alerts and priority backup.',
+        },
+        B2B: {
+          name: 'Team Shared Workspace & Collaborative Multi-Wallets',
+          desc: 'Satu database dompet kas bersama yang dapat diakses, dipantau, dan diedit oleh seluruh anggota tim Anda.',
+        },
+      };
+
+      setUpgradeModalData({
+        featureName: planHighlights[targetTier].name,
+        requiredPlan: targetTier,
+        featureDescription: planHighlights[targetTier].desc,
+      });
+      setIsUpgradeModalOpen(true);
+    },
+    []
   );
 
   const closeUpgradeModal = useCallback(() => {
@@ -352,7 +432,17 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         isUpgradeModalOpen,
         upgradeModalData,
         openUpgradeModal,
+        openPlanModal,
         closeUpgradeModal,
+        isWalletModalOpen,
+        openWalletModal,
+        closeWalletModal,
+        isDebtModalOpen,
+        openDebtModal,
+        closeDebtModal,
+        isWorkspaceModalOpen,
+        openWorkspaceModal,
+        closeWorkspaceModal,
         wallets,
         addWallet,
         deleteWallet,

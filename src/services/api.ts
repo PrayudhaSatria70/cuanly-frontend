@@ -5,7 +5,7 @@ export const authApi = {
   login: (data: { identifier: string; password: string }) =>
     apiClient.post<{ success: boolean; token: string; user: User }>('/auth/login', data),
 
-  register: (data: { name: string; email: string; password: string; pin?: string; username?: string; phone?: string }) =>
+  register: (data: { name: string; email: string; password: string; pin?: string; username?: string; phone?: string; plan?: string; subscriptionTier?: string }) =>
     apiClient.post<{ success: boolean; token: string; user: User }>('/auth/register', data),
 
   getMe: () =>
@@ -22,6 +22,26 @@ export const authApi = {
 
   logout: () =>
     apiClient.post<{ success: boolean }>('/auth/logout'),
+};
+
+export const pricingApi = {
+  getPlans: () =>
+    apiClient.get<{ success: boolean; plans: any[] }>('/pricing'),
+
+  getMyPlan: () =>
+    apiClient.get<{
+      success: boolean;
+      currentTier: string;
+      effectivePlan: any;
+      isAdmin: boolean;
+      allPlans: any[];
+    }>('/pricing/my-plan'),
+
+  upgrade: (plan: string) =>
+    apiClient.post<{ success: boolean; message: string; tier: string; user: User }>('/pricing/upgrade', { plan }),
+
+  subscribe: (plan: string) =>
+    apiClient.put<{ success: boolean; message: string; tier: string; user: User }>('/pricing/subscribe', { plan }),
 };
 
 export const usersApi = {

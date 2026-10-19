@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -8,7 +8,20 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { GlassCard } from '@/components/common/GlassCard';
 import { CuanlyLogo } from '@/components/common/CuanlyLogo';
 import { LanguageSwitcher } from '@/components/common/LanguageSwitcher';
-import { User, Mail, Lock, Phone, ArrowRight, ArrowLeft, Sun, Moon, Eye, EyeOff } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Lock,
+  Phone,
+  ArrowRight,
+  ArrowLeft,
+  Sun,
+  Moon,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Sparkles,
+} from 'lucide-react';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -17,15 +30,72 @@ export default function RegisterPage() {
   const { t, locale } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
 
-
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const planParam = params.get('plan');
+      if (planParam) {
+        setSelectedPlan(planParam.toUpperCase());
+      }
+    }
+  }, []);
+
+  const isPasswordBasic = (pass: string) => {
+    if (!pass) return false;
+    const commonWeak = [
+      '1234',
+      '12345',
+      '123456',
+      '12345678',
+      '123456789',
+      '0000',
+      '1111',
+      '2222',
+      '3333',
+      '4444',
+      '5555',
+      '6666',
+      '7777',
+      '8888',
+      '9999',
+      '4321',
+      '654321',
+      'password',
+      'qwerty',
+      'admin',
+      'cuanly',
+    ];
+    const lower = pass.toLowerCase();
+    if (commonWeak.includes(lower)) return true;
+    if (/^(\d)\1+$/.test(pass)) return true;
+    if (/^(.)\1+$/.test(pass)) return true;
+    if (pass.length < 6) return true;
+    return false;
+  };
+
+  const getPasswordStrength = (pass: string): 'veryWeak' | 'medium' | 'strong' => {
+    if (!pass) return 'veryWeak';
+    if (isPasswordBasic(pass)) return 'veryWeak';
+    const hasLetters = /[a-zA-Z]/.test(pass);
+    const hasNumbers = /\d/.test(pass);
+    const hasSpecial = /[^a-zA-Z0-9]/.test(pass);
+    if (pass.length >= 8 && hasLetters && hasNumbers && hasSpecial) return 'strong';
+    if (pass.length >= 6 && hasLetters && hasNumbers) return 'medium';
+    return 'veryWeak';
+  };
+
+  const isBasic = isPasswordBasic(password);
+  const strength = getPasswordStrength(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,7 +108,7 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
-      const res = await register(name, email, password, username, phone);
+      const res = await register(name, email, password, username, phone, selectedPlan || undefined);
       if (res.success) {
         router.push('/beranda');
       } else {
@@ -109,6 +179,20 @@ export default function RegisterPage() {
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-gradient-to-tr from-[#4D8DBA]/15 to-[#8AD6D1]/10 rounded-full blur-2xl pointer-events-none" />
 
         <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
+          {selectedPlan && (
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-[#8AD6D1]/20 via-[#4D8DBA]/15 to-transparent border border-[#4D8DBA]/30 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#4D8DBA] dark:text-[#8AD6D1]" />
+                <span className="font-semibold text-gray-700 dark:text-slate-200">
+                  {locale === 'en' ? 'Chosen Plan on Signup:' : 'Paket Terpilih Saat Mendaftar:'}
+                </span>
+              </div>
+              <span className="font-extrabold px-2.5 py-0.5 rounded-full bg-[#1C4A6B] text-white">
+                {selectedPlan}
+              </span>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="p-3 bg-gradient-to-r from-rose-500/15 via-rose-500/10 to-transparent backdrop-blur-md border border-rose-500/40 dark:border-rose-700/60 text-rose-700 dark:text-rose-300 text-xs font-bold rounded-xl shadow-xs">
               {errorMsg}
@@ -207,6 +291,65 @@ export default function RegisterPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+
+            {/* Password Feedback: Strength meter and basic password note */}
+            {password.length > 0 && (
+              <div className="space-y-2 pt-2 animate-in fade-in duration-200">
+                {/* Strength Meter Bar */}
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1.5 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden flex gap-1">
+                    <div
+                      className={`h-full flex-1 rounded-full transition-all ${
+                        strength === 'veryWeak'
+                          ? 'bg-rose-500'
+                          : strength === 'medium'
+                          ? 'bg-amber-400'
+                          : 'bg-emerald-500'
+                      }`}
+                    />
+                    <div
+                      className={`h-full flex-1 rounded-full transition-all ${
+                        strength === 'medium'
+                          ? 'bg-amber-400'
+                          : strength === 'strong'
+                          ? 'bg-emerald-500'
+                          : 'bg-transparent'
+                      }`}
+                    />
+                    <div
+                      className={`h-full flex-1 rounded-full transition-all ${
+                        strength === 'strong' ? 'bg-emerald-500' : 'bg-transparent'
+                      }`}
+                    />
+                  </div>
+                  <span
+                    className={`text-[10px] font-bold ${
+                      strength === 'veryWeak'
+                        ? 'text-rose-500'
+                        : strength === 'medium'
+                        ? 'text-amber-500'
+                        : 'text-emerald-500'
+                    }`}
+                  >
+                    {strength === 'veryWeak'
+                      ? t.auth.strengthVeryWeak
+                      : strength === 'medium'
+                      ? t.auth.strengthMedium
+                      : t.auth.strengthStrong}
+                  </span>
+                </div>
+
+                {/* Password Basic Warning Note */}
+                {isBasic && (
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs flex items-start gap-2 animate-in fade-in duration-150">
+                    <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <p className="leading-relaxed">
+                      {t.auth.passwordBasicWarning}
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <button
