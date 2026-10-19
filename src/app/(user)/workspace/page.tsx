@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,7 +18,6 @@ import {
   ArrowRight,
   UserCheck,
   Clock,
-  ExternalLink,
   ShieldAlert,
   Search,
   Filter,
@@ -32,7 +31,6 @@ export default function WorkspacePage() {
     wallets,
     hasAccess,
     openUpgradeModal,
-    openWorkspaceModal,
   } = useSubscription();
   const { formatCurrency, locale, t } = useLanguage();
 
@@ -45,6 +43,22 @@ export default function WorkspacePage() {
   const [searchQuery, setSearchQuery] = useState('');
 
   const isB2B = hasAccess('B2B');
+  const hasTriggeredModalRef = useRef(false);
+
+  // Auto-trigger upgrade modal on mount if account is Free plan / not B2B
+  useEffect(() => {
+    if (!hasTriggeredModalRef.current && user?.role !== 'ADMIN' && !hasAccess('B2B')) {
+      hasTriggeredModalRef.current = true;
+      openUpgradeModal(
+        locale === 'en' ? 'Unlock Team Workspace' : 'Buka Fitur Team Workspace',
+        'B2B',
+        locale === 'en'
+          ? 'Collaborate seamlessly with staff, accountants, and partners.'
+          : 'Kolaborasi tanpa hambatan dengan staf, akuntan, dan mitra bisnis.',
+        t.modals.upgrade.b2bBenefits
+      );
+    }
+  }, [hasAccess, user?.role, openUpgradeModal, locale, t.modals.upgrade]);
 
   // Shared pool calculations
   const sharedWallets = wallets.filter((w) => w.isShared);
@@ -166,14 +180,6 @@ export default function WorkspacePage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={openWorkspaceModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {locale === 'en' ? 'Open Quick Modal' : 'Buka Quick Modal'}
-            </button>
             {isB2B && (
               <button
                 type="button"

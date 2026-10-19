@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,6 @@ import {
   Zap,
   Lock,
   ArrowRight,
-  ExternalLink,
   CheckCircle2,
   RefreshCw,
   TrendingDown,
@@ -33,7 +32,6 @@ export default function AnalitikAiPage() {
   const {
     hasAccess,
     openUpgradeModal,
-    openAiAnalyticsModal,
   } = useSubscription();
 
   const [data, setData] = useState<AiInsightsData | null>(null);
@@ -44,6 +42,21 @@ export default function AnalitikAiPage() {
   const isGoldOrB2B = hasAccess('GOLD');
   const userId = user?.id;
   const isAdminUser = user?.role === 'ADMIN' || user?.username === 'admin' || userId === 'usr_live_admin' || userId === 'usr_admin_01';
+  const hasTriggeredModalRef = useRef(false);
+
+  // Auto-trigger upgrade modal on mount if account is Free plan / not Gold
+  useEffect(() => {
+    if (!hasTriggeredModalRef.current && user?.role !== 'ADMIN' && !hasAccess('GOLD')) {
+      hasTriggeredModalRef.current = true;
+      openUpgradeModal(
+        locale === 'en' ? 'AI Financial Analytics' : 'Laporan Analitik AI',
+        'GOLD',
+        locale === 'en'
+          ? 'Receive AI financial health score, anomaly detection, 30-day cashflow runway projections, and smart savings advice.'
+          : 'Dapatkan skor kesehatan finansial, deteksi anomali pengeluaran, proyeksi arus kas 30 hari, dan rekomendasi cerdas dari AI.'
+      );
+    }
+  }, [hasAccess, user?.role, openUpgradeModal, locale]);
 
   // Load AI Insights
   useEffect(() => {
@@ -215,14 +228,6 @@ export default function AnalitikAiPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={openAiAnalyticsModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {locale === 'en' ? 'Open Quick Modal' : 'Buka Quick Modal'}
-            </button>
             {isGoldOrB2B && (
               <button
                 type="button"

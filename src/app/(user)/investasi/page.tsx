@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -20,7 +20,6 @@ import {
   CircleDollarSign,
   AlertCircle,
   CheckCircle2,
-  ExternalLink,
   Sparkles,
   Lock,
   ArrowRight,
@@ -46,7 +45,6 @@ export default function InvestasiPage() {
   const {
     hasAccess,
     openUpgradeModal,
-    openInvestmentModal,
   } = useSubscription();
 
   const [items, setItems] = useState<InvestmentAsset[]>([]);
@@ -67,6 +65,21 @@ export default function InvestasiPage() {
   const userId = user?.id;
   const isAdminUser = user?.role === 'ADMIN' || user?.username === 'admin' || userId === 'usr_live_admin' || userId === 'usr_admin_01';
   const isDemoUser = userId === 'usr_demo_1' || userId === 'usr_demo_01';
+  const hasTriggeredModalRef = useRef(false);
+
+  // Auto-trigger upgrade modal on mount if account is Free plan / not Gold
+  useEffect(() => {
+    if (!hasTriggeredModalRef.current && user?.role !== 'ADMIN' && !hasAccess('GOLD')) {
+      hasTriggeredModalRef.current = true;
+      openUpgradeModal(
+        locale === 'en' ? 'Unlock Investment Tracker' : 'Buka Pelacak Investasi',
+        'GOLD',
+        locale === 'en'
+          ? 'Track multi-asset classes and automatic net-worth growth.'
+          : 'Pantau portofolio multi-aset dan pertumbuhan kekayaan otomatis.'
+      );
+    }
+  }, [hasAccess, user?.role, openUpgradeModal, locale]);
 
   const calculateFullAsset = (raw: {
     id: string;
@@ -260,14 +273,6 @@ export default function InvestasiPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={openInvestmentModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {locale === 'en' ? 'Open Quick Modal' : 'Buka Quick Modal'}
-            </button>
             {isGoldOrB2B && (
               <button
                 type="button"

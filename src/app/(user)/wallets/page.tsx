@@ -31,7 +31,6 @@ export default function WalletsPage() {
     hasAccess,
     tier,
     openUpgradeModal,
-    openWalletModal,
   } = useSubscription();
   const { formatCurrency, locale, t } = useLanguage();
 

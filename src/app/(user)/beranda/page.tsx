@@ -33,8 +33,10 @@ import {
   Building,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function BerandaPage() {
+  const router = useRouter();
   const { t, locale, formatCurrency, formatDate } = useLanguage();
   const { user } = useAuth();
   const { summary, activeBudgetWarning, dismissWarning, transactions } = useFinance();
@@ -45,13 +47,6 @@ export default function BerandaPage() {
     wallets,
     debts,
     workspaceMembers,
-    openWalletModal,
-    openDebtModal,
-    openWorkspaceModal,
-    openBankSyncModal,
-    openInvestmentModal,
-    openAiAnalyticsModal,
-    openBusinessModal,
   } = useSubscription();
 
   const [isEditAllowanceOpen, setIsEditAllowanceOpen] = useState(false);
@@ -148,7 +143,7 @@ export default function BerandaPage() {
               </span>
               <button
                 type="button"
-                onClick={openWalletModal}
+                onClick={() => router.push('/wallets')}
                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/15 hover:bg-white/25 text-white text-[11px] font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 title={t.nav.myWallets}
               >
@@ -242,7 +237,7 @@ export default function BerandaPage() {
         {/* Feature 1: Dompet Multi-Akun */}
         <button
           type="button"
-          onClick={openWalletModal}
+          onClick={() => router.push('/wallets')}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
@@ -270,15 +265,15 @@ export default function BerandaPage() {
         <button
           type="button"
           onClick={() => {
-            if (!hasAccess('GOLD')) {
+            if (user?.role === 'ADMIN' || hasAccess('GOLD')) {
+              router.push('/debts');
+            } else {
               openUpgradeModal(
                 t.modals.debt.title,
                 'GOLD',
                 t.modals.debt.subtitle
               );
-              return;
             }
-            openDebtModal();
           }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-amber-400 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
@@ -309,15 +304,16 @@ export default function BerandaPage() {
         <button
           type="button"
           onClick={() => {
-            if (!hasAccess('B2B')) {
+            if (user?.role === 'ADMIN' || hasAccess('B2B')) {
+              router.push('/workspace');
+            } else {
               openUpgradeModal(
                 t.modals.workspace.title,
                 'B2B',
-                t.modals.workspace.subtitle
+                t.modals.workspace.subtitle,
+                t.modals.upgrade.b2bBenefits
               );
-              return;
             }
-            openWorkspaceModal();
           }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-purple-400 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
@@ -350,7 +346,19 @@ export default function BerandaPage() {
         {/* Card 1: Bank Sync Otomatis (Gold) */}
         <button
           type="button"
-          onClick={openBankSyncModal}
+          onClick={() => {
+            if (user?.role === 'ADMIN' || hasAccess('GOLD')) {
+              router.push('/bank-sync');
+            } else {
+              openUpgradeModal(
+                locale === 'en' ? 'Automated Bank Sync' : 'Bank Sync Otomatis',
+                'GOLD',
+                locale === 'en'
+                  ? 'Connect and automatically sync mutations and balances from bank accounts and e-wallets.'
+                  : 'Hubungkan dan sinkronisasikan mutasi rekening bank dan e-wallet secara otomatis.'
+              );
+            }
+          }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-[#4D8DBA] cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
@@ -375,7 +383,19 @@ export default function BerandaPage() {
         {/* Card 2: Pelacakan Aset & Investasi (Gold) */}
         <button
           type="button"
-          onClick={openInvestmentModal}
+          onClick={() => {
+            if (user?.role === 'ADMIN' || hasAccess('GOLD')) {
+              router.push('/investasi');
+            } else {
+              openUpgradeModal(
+                locale === 'en' ? 'Asset & Investment Tracking' : 'Pelacakan Aset & Investasi',
+                'GOLD',
+                locale === 'en'
+                  ? 'Monitor mutual funds, stocks, gold, crypto, and real estate portfolios.'
+                  : 'Monitor portofolio reksadana, saham, emas, crypto, dan properti.'
+              );
+            }
+          }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-emerald-500 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
@@ -400,7 +420,19 @@ export default function BerandaPage() {
         {/* Card 3: Laporan Analitik AI (Gold) */}
         <button
           type="button"
-          onClick={openAiAnalyticsModal}
+          onClick={() => {
+            if (user?.role === 'ADMIN' || hasAccess('GOLD')) {
+              router.push('/analitik-ai');
+            } else {
+              openUpgradeModal(
+                locale === 'en' ? 'AI Financial Analytics' : 'Laporan Analitik AI',
+                'GOLD',
+                locale === 'en'
+                  ? 'Receive AI financial health score, anomaly detection, 30-day cashflow runway projections.'
+                  : 'Dapatkan skor kesehatan finansial, deteksi anomali pengeluaran, proyeksi arus kas 30 hari.'
+              );
+            }
+          }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-violet-500 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">
@@ -425,7 +457,20 @@ export default function BerandaPage() {
         {/* Card 4: Bisnis & Pajak UMKM (B2B) */}
         <button
           type="button"
-          onClick={openBusinessModal}
+          onClick={() => {
+            if (user?.role === 'ADMIN' || hasAccess('B2B')) {
+              router.push('/bisnis');
+            } else {
+              openUpgradeModal(
+                locale === 'en' ? 'Business Cashflow & Taxes' : 'Arus Kas Bisnis & Pajak UMKM',
+                'B2B',
+                locale === 'en'
+                  ? 'Standardized 3-pillar cashflow statement paired with an automated PPh Final 0.5% Indonesian SME tax calculator.'
+                  : 'Laporan arus kas 3 pilar berstandar akuntansi dipadukan kalkulator rekapitulasi PPh Final UMKM 0.5%.',
+                t.modals.upgrade.b2bBenefits
+              );
+            }
+          }}
           className="p-4 rounded-2xl bg-white/80 dark:bg-[#0B1520]/80 backdrop-blur-xl border border-gray-200/80 dark:border-[#4D8DBA]/20 hover:border-blue-500 cuanly-card-interactive text-left flex items-center justify-between group shadow-xs cursor-pointer"
         >
           <div className="flex items-center gap-3">

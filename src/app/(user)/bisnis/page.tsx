@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,7 +24,6 @@ import {
   Sparkles,
   Lock,
   ArrowRight,
-  ExternalLink,
   AlertCircle,
   FileText,
   DollarSign,
@@ -37,7 +36,6 @@ export default function BisnisPage() {
   const {
     hasAccess,
     openUpgradeModal,
-    openBusinessModal,
   } = useSubscription();
 
   const [activeTab, setActiveTab] = useState<'cashflow' | 'tax' | 'profile'>('cashflow');
@@ -47,15 +45,31 @@ export default function BisnisPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  const isB2B = hasAccess('B2B');
+  const userId = user?.id;
+  const isAdminUser = user?.role === 'ADMIN' || user?.username === 'admin' || userId === 'usr_live_admin' || userId === 'usr_admin_01';
+  const hasTriggeredModalRef = useRef(false);
+
+  // Auto-trigger upgrade modal on mount if account is Free plan / not B2B
+  useEffect(() => {
+    if (!hasTriggeredModalRef.current && user?.role !== 'ADMIN' && !hasAccess('B2B')) {
+      hasTriggeredModalRef.current = true;
+      openUpgradeModal(
+        locale === 'en' ? 'Unlock Business Cashflow & Taxes' : 'Buka Arus Kas Bisnis & Pajak',
+        'B2B',
+        locale === 'en'
+          ? 'Complete 3-pillar cashflow statement and automated PPh Final 0.5% Indonesian SME tax calculator.'
+          : 'Laporan arus kas 3 pilar lengkap dan kalkulator rekapitulasi PPh Final UMKM 0.5% otomatis.',
+        t.modals.upgrade.b2bBenefits
+      );
+    }
+  }, [hasAccess, user?.role, openUpgradeModal, locale, t.modals.upgrade]);
+
   // Form State
   const [businessName, setBusinessName] = useState('');
   const [npwp, setNpwp] = useState('');
   const [annualRevenue, setAnnualRevenue] = useState('580000000');
   const [operatingExpense, setOperatingExpense] = useState('215000000');
-
-  const isB2B = hasAccess('B2B');
-  const userId = user?.id;
-  const isAdminUser = user?.role === 'ADMIN' || user?.username === 'admin' || userId === 'usr_live_admin' || userId === 'usr_admin_01';
 
   // Load Business Profile & Cashflow
   useEffect(() => {
@@ -251,14 +265,6 @@ export default function BisnisPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={openBusinessModal}
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs sm:text-sm font-semibold transition-all cursor-pointer"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {locale === 'en' ? 'Open Quick Modal' : 'Buka Quick Modal'}
-            </button>
             {isB2B && (
               <button
                 type="button"

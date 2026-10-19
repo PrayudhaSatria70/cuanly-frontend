@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSubscription } from '@/contexts/SubscriptionContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,6 +47,19 @@ export default function DebtsPage() {
   const [interestRate, setInterestRate] = useState('0');
 
   const isGoldOrHigher = hasAccess('GOLD');
+  const hasTriggeredModalRef = useRef(false);
+
+  // Auto-trigger upgrade modal on mount if account is Free plan / not Gold
+  useEffect(() => {
+    if (!hasTriggeredModalRef.current && user?.role !== 'ADMIN' && !hasAccess('GOLD')) {
+      hasTriggeredModalRef.current = true;
+      openUpgradeModal(
+        t.modals.debt.title,
+        'GOLD',
+        t.modals.debt.subtitle
+      );
+    }
+  }, [hasAccess, user?.role, openUpgradeModal, t.modals.debt]);
 
   // Calculations
   const activeReceivables = debts.filter((d) => d.type === 'RECEIVABLE' && !d.isSettled);
